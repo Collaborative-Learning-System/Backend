@@ -28,6 +28,15 @@
         "tsConfigPath": "apps/admin-service/tsconfig.app.json"
       }
     },
+    "api-gateway": {
+      "type": "application",
+      "root": "apps/api-gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+      }
+    },
     "auth-service": {
       "type": "application",
       "root": "apps/auth-service",
@@ -44,6 +53,60 @@
       "sourceRoot": "apps/chat-service/src",
       "compilerOptions": {
         "tsConfigPath": "apps/chat-service/tsconfig.app.json"
+      }
+    },
+    "edu-assistant-service": {
+      "type": "application",
+      "root": "apps/edu-assistant-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/edu-assistant-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/edu-assistant-service/tsconfig.app.json"
+      }
+    },
+    "notification-service": {
+      "type": "application",
+      "root": "apps/notification-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/notification-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/notification-service/tsconfig.app.json"
+      }
+    },
+    "quiz-leaderboard-service": {
+      "type": "application",
+      "root": "apps/quiz-leaderboard-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/quiz-leaderboard-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/quiz-leaderboard-service/tsconfig.app.json"
+      }
+    },
+    "realtime-doc-edit-service": {
+      "type": "application",
+      "root": "apps/realtime-doc-edit-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/realtime-doc-edit-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/realtime-doc-edit-service/tsconfig.app.json"
+      }
+    },
+    "user-service": {
+      "type": "application",
+      "root": "apps/user-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/user-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/user-service/tsconfig.app.json"
+      }
+    },
+    "workspace-group-service": {
+      "type": "application",
+      "root": "apps/workspace-group-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/workspace-group-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/workspace-group-service/tsconfig.app.json"
       }
     }
   }

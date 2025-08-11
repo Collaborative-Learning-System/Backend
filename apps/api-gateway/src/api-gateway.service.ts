@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class AdminServiceService {
+export class ApiGatewayService {
   getHello(): string {
-    return 'Admin Service!';
+    return 'Hello World!';
   }
 }
