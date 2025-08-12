@@ -18,9 +18,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
 var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthServiceController = void 0;
@@ -29,13 +26,14 @@ const auth_service_service_1 = __webpack_require__(/*! ./auth-service.service */
 const signup_dto_1 = __webpack_require__(/*! ./dtos/signup.dto */ "./apps/auth-service/src/dtos/signup.dto.ts");
 const login_dto_1 = __webpack_require__(/*! ./dtos/login.dto */ "./apps/auth-service/src/dtos/login.dto.ts");
 const refresh_token_dto_1 = __webpack_require__(/*! ./dtos/refresh-token.dto */ "./apps/auth-service/src/dtos/refresh-token.dto.ts");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 let AuthServiceController = class AuthServiceController {
     authServiceService;
     constructor(authServiceService) {
         this.authServiceService = authServiceService;
     }
     async signup(signupData) {
-        return this.authServiceService.signup(signupData);
+        return await this.authServiceService.signup(signupData);
     }
     async login(loginData) {
         return this.authServiceService.login(loginData);
@@ -46,22 +44,19 @@ let AuthServiceController = class AuthServiceController {
 };
 exports.AuthServiceController = AuthServiceController;
 __decorate([
-    (0, common_1.Post)('signup'),
-    __param(0, (0, common_1.Body)()),
+    (0, microservices_1.MessagePattern)({ cmd: 'signup' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [typeof (_b = typeof signup_dto_1.SignupDto !== "undefined" && signup_dto_1.SignupDto) === "function" ? _b : Object]),
     __metadata("design:returntype", Promise)
 ], AuthServiceController.prototype, "signup", null);
 __decorate([
-    (0, common_1.Post)('login'),
-    __param(0, (0, common_1.Body)()),
+    (0, microservices_1.MessagePattern)({ cmd: 'login' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [typeof (_c = typeof login_dto_1.LoginDto !== "undefined" && login_dto_1.LoginDto) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], AuthServiceController.prototype, "login", null);
 __decorate([
-    (0, common_1.Post)('refresh-token'),
-    __param(0, (0, common_1.Body)()),
+    (0, microservices_1.MessagePattern)({ cmd: 'refresh-token' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [typeof (_d = typeof refresh_token_dto_1.RefreshTokenDto !== "undefined" && refresh_token_dto_1.RefreshTokenDto) === "function" ? _d : Object]),
     __metadata("design:returntype", Promise)
@@ -189,6 +184,7 @@ const bcrypt = __importStar(__webpack_require__(/*! bcrypt */ "bcrypt"));
 const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
 const refresh_token_entity_1 = __webpack_require__(/*! ./entities/refresh-token.entity */ "./apps/auth-service/src/entities/refresh-token.entity.ts");
 const uuid_1 = __webpack_require__(/*! uuid */ "uuid");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 let AuthServiceService = class AuthServiceService {
     userRepository;
     refreshTokenRepository;
@@ -204,7 +200,10 @@ let AuthServiceService = class AuthServiceService {
             where: { email },
         });
         if (existingUser) {
-            throw new common_1.BadRequestException('Email already in use');
+            throw new microservices_1.RpcException({
+                statusCode: 400,
+                message: 'Email already in use',
+            });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         await this.userRepository.save({
@@ -213,6 +212,7 @@ let AuthServiceService = class AuthServiceService {
             password: hashedPassword,
             role: user_entity_1.UserRole.USER,
         });
+        return "User registered successfully";
     }
     async login(loginData) {
         const { email, password } = loginData;
@@ -515,6 +515,16 @@ module.exports = require("@nestjs/jwt");
 
 /***/ }),
 
+/***/ "@nestjs/microservices":
+/*!****************************************!*\
+  !*** external "@nestjs/microservices" ***!
+  \****************************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/microservices");
+
+/***/ }),
+
 /***/ "@nestjs/typeorm":
 /*!**********************************!*\
   !*** external "@nestjs/typeorm" ***!
@@ -604,17 +614,21 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
 const auth_service_module_1 = __webpack_require__(/*! ./auth-service.module */ "./apps/auth-service/src/auth-service.module.ts");
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 async function bootstrap() {
-    const app = await core_1.NestFactory.create(auth_service_module_1.AuthServiceModule);
+    const app = await core_1.NestFactory.createMicroservice(auth_service_module_1.AuthServiceModule, {
+        transport: microservices_1.Transport.TCP,
+        options: {
+            host: '127.0.0.1',
+            port: 3001,
+        },
+    });
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         forbidNonWhitelisted: true,
     }));
-    app.enableCors({
-        origin: 'http://localhost:5173',
-        credentials: true,
-    });
-    await app.listen(process.env.port ?? 3000);
+    await app.listen();
+    console.log('AuthService is running on TCP port 3001');
 }
 bootstrap();
 
