@@ -65,16 +65,19 @@ exports.ApiGatewayModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const api_gateway_controller_1 = __webpack_require__(/*! ./api-gateway.controller */ "./apps/api-gateway/src/api-gateway.controller.ts");
 const api_gateway_service_1 = __webpack_require__(/*! ./api-gateway.service */ "./apps/api-gateway/src/api-gateway.service.ts");
+
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const authGateway_controller_1 = __webpack_require__(/*! ./auth/authGateway.controller */ "./apps/api-gateway/src/auth/authGateway.controller.ts");
 const user_controller_1 = __webpack_require__(/*! ./user/user.controller */ "./apps/api-gateway/src/user/user.controller.ts");
 const authGateway_service_1 = __webpack_require__(/*! ./auth/authGateway.service */ "./apps/api-gateway/src/auth/authGateway.service.ts");
 const notoficationGateway_module_1 = __webpack_require__(Object(function webpackMissingModule() { var e = new Error("Cannot find module './notofication/notoficationGateway.module'"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
+
 let ApiGatewayModule = class ApiGatewayModule {
 };
 exports.ApiGatewayModule = ApiGatewayModule;
 exports.ApiGatewayModule = ApiGatewayModule = __decorate([
     (0, common_1.Module)({
+
         imports: [
             microservices_1.ClientsModule.register([
                 {
@@ -90,6 +93,7 @@ exports.ApiGatewayModule = ApiGatewayModule = __decorate([
         ],
         controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, user_controller_1.UserController],
         providers: [api_gateway_service_1.ApiGatewayService, authGateway_service_1.AuthGatewayService],
+
     })
 ], ApiGatewayModule);
 
@@ -115,6 +119,7 @@ const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 let ApiGatewayService = class ApiGatewayService {
     getHello() {
         return 'This is API-GATEWAY!';
+
     }
 };
 exports.ApiGatewayService = ApiGatewayService;
@@ -124,6 +129,7 @@ exports.ApiGatewayService = ApiGatewayService = __decorate([
 
 
 /***/ }),
+
 
 /***/ "./apps/api-gateway/src/auth/authGateway.controller.ts":
 /*!*************************************************************!*\
@@ -275,6 +281,7 @@ module.exports = require("@nestjs/common");
 
 module.exports = require("@nestjs/core");
 
+
 /***/ }),
 
 /***/ "@nestjs/microservices":
@@ -295,6 +302,7 @@ module.exports = require("@nestjs/microservices");
 
 module.exports = require("rxjs");
 
+=
 /***/ })
 
 /******/ 	});
@@ -337,12 +345,14 @@ const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
 const api_gateway_module_1 = __webpack_require__(/*! ./api-gateway.module */ "./apps/api-gateway/src/api-gateway.module.ts");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(api_gateway_module_1.ApiGatewayModule);
+
     app.enableCors({
         origin: 'http://localhost:5173',
         credentials: true,
     });
     await app.listen(process.env.port ?? 3000);
     console.log('API gateway is running on port 3000');
+
 }
 bootstrap();
 
