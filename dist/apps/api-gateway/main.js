@@ -157,8 +157,19 @@ let AuthGatewayController = class AuthGatewayController {
     async signup(signupData) {
         return this.authGatewayService.signup(signupData);
     }
-    async login(loginData) {
-        return this.authGatewayService.login(loginData);
+    async login(loginData, res) {
+        const { accessToken, refreshToken } = await this.authGatewayService.login(loginData);
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+        });
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+        });
+        return res.json({ message: 'Login successful' });
     }
 };
 exports.AuthGatewayController = AuthGatewayController;
@@ -172,8 +183,9 @@ __decorate([
 __decorate([
     (0, common_1.Post)('login'),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AuthGatewayController.prototype, "login", null);
 exports.AuthGatewayController = AuthGatewayController = __decorate([
@@ -227,6 +239,65 @@ exports.AuthGatewayService = AuthGatewayService = __decorate([
     __param(0, (0, common_1.Inject)('auth-service')),
     __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
 ], AuthGatewayService);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/main.ts":
+/*!**************************************!*\
+  !*** ./apps/api-gateway/src/main.ts ***!
+  \**************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
+const api_gateway_module_1 = __webpack_require__(/*! ./api-gateway.module */ "./apps/api-gateway/src/api-gateway.module.ts");
+const cookieParser = __importStar(__webpack_require__(/*! cookie-parser */ "cookie-parser"));
+async function bootstrap() {
+    const app = await core_1.NestFactory.create(api_gateway_module_1.ApiGatewayModule);
+    app.enableCors({
+        origin: 'http://localhost:5173',
+        credentials: true,
+    });
+    app.use(cookieParser());
+    await app.listen(process.env.port ?? 3000);
+    console.log('API gateway is running on port 3000');
+}
+bootstrap();
 
 
 /***/ }),
@@ -287,6 +358,16 @@ module.exports = require("@nestjs/microservices");
 
 /***/ }),
 
+/***/ "cookie-parser":
+/*!********************************!*\
+  !*** external "cookie-parser" ***!
+  \********************************/
+/***/ ((module) => {
+
+module.exports = require("cookie-parser");
+
+/***/ }),
+
 /***/ "rxjs":
 /*!***********************!*\
   !*** external "rxjs" ***!
@@ -324,29 +405,11 @@ module.exports = require("rxjs");
 /******/ 	}
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
-(() => {
-var exports = __webpack_exports__;
-/*!**************************************!*\
-  !*** ./apps/api-gateway/src/main.ts ***!
-  \**************************************/
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
-const api_gateway_module_1 = __webpack_require__(/*! ./api-gateway.module */ "./apps/api-gateway/src/api-gateway.module.ts");
-async function bootstrap() {
-    const app = await core_1.NestFactory.create(api_gateway_module_1.ApiGatewayModule);
-    app.enableCors({
-        origin: 'http://localhost:5173',
-        credentials: true,
-    });
-    await app.listen(process.env.port ?? 3000);
-    console.log('API gateway is running on port 3000');
-}
-bootstrap();
-
-})();
-
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __webpack_require__("./apps/api-gateway/src/main.ts");
+/******/ 	
 /******/ })()
 ;
