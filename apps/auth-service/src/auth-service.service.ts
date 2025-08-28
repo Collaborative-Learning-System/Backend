@@ -80,7 +80,7 @@ export class AuthServiceService {
       success: true,
       statusCode: 200,
       message: "User logged in successfully",
-      data: tokens,
+      data: {tokens, userId: user.userId},
     };
   }
 
@@ -134,5 +134,24 @@ export class AuthServiceService {
       id: id,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
+  }
+
+
+  // Get User Data
+  async getUserData(userId: string) {
+    const user = await this.userRepository.findOne({ where: { userId } });
+    if (!user) {
+      return {
+        success: false,
+        statusCode: 404,
+        message: 'User not found',
+      };
+    }
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'User found',
+      data: user,
+    };
   }
 }

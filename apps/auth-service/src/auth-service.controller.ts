@@ -24,6 +24,13 @@ export class AuthServiceController {
     return result;
   }
 
+  // GET : GetUserData
+  @MessagePattern({ cmd: 'get-user-data' })
+  async getUserData(userId: string) {
+    const result = await this.authServiceService.getUserData(userId);
+    return result;
+  }
+
   // POST : Refresh Token
   @MessagePattern({ cmd: 'refresh-token' })
   async refresh(token: RefreshTokenDto) {

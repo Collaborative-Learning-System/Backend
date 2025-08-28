@@ -41,6 +41,10 @@ let AuthServiceController = class AuthServiceController {
         const result = await this.authServiceService.login(loginData);
         return result;
     }
+    async getUserData(userId) {
+        const result = await this.authServiceService.getUserData(userId);
+        return result;
+    }
     async refresh(token) {
         const result = await this.authServiceService.refresh(token.refreshToken);
         return result;
@@ -59,6 +63,12 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_c = typeof login_dto_1.LoginDto !== "undefined" && login_dto_1.LoginDto) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], AuthServiceController.prototype, "login", null);
+__decorate([
+    (0, microservices_1.MessagePattern)({ cmd: 'get-user-data' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AuthServiceController.prototype, "getUserData", null);
 __decorate([
     (0, microservices_1.MessagePattern)({ cmd: 'refresh-token' }),
     __metadata("design:type", Function),
@@ -246,7 +256,7 @@ let AuthServiceService = class AuthServiceService {
             success: true,
             statusCode: 200,
             message: "User logged in successfully",
-            data: tokens,
+            data: { tokens, userId: user.userId },
         };
     }
     async refresh(refreshToken) {
@@ -287,6 +297,22 @@ let AuthServiceService = class AuthServiceService {
             id: id,
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         });
+    }
+    async getUserData(userId) {
+        const user = await this.userRepository.findOne({ where: { userId } });
+        if (!user) {
+            return {
+                success: false,
+                statusCode: 404,
+                message: 'User not found',
+            };
+        }
+        return {
+            success: true,
+            statusCode: 200,
+            message: 'User found',
+            data: user,
+        };
     }
 };
 exports.AuthServiceService = AuthServiceService;

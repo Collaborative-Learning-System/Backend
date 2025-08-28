@@ -1,6 +1,8 @@
-import { Body, Controller, Post, Res, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Post, Res, HttpStatus, UseGuards, Get, Param } from '@nestjs/common';
 import { AuthGatewayService } from './authGateway.service';
 import type { Response } from 'express';
+import { JwtAuthGuard } from '../jwt-auth.guard';
+import { get } from 'http';
 
 @Controller('auth')
 export class AuthGatewayController {
@@ -19,18 +21,31 @@ export class AuthGatewayController {
   async login(@Body() loginData: any, @Res() res: Response) {
     const result = await this.authGatewayService.login(loginData);
     if (result.success) {
-      const { accessToken, refreshToken } = result.data;
+      const accessToken = result.data.tokens.accessToken;
+      const refreshToken = result.data.tokens.refreshToken;
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
+        secure: false,
+        sameSite: 'lax',
       });
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
+        secure: false,
+        sameSite: 'lax',
       });
+      console.log("id", result.data.userId);
       return res.status(HttpStatus.OK).json(result)
+    } else {
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('get-user-data/:userId')
+  async getUserData(@Res() res: Response, @Param('userId') userId: string) {
+    const result = await this.authGatewayService.getUserData(userId);
+    if (result.success) {
+      return res.status(HttpStatus.OK).json(result);
     } else {
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
