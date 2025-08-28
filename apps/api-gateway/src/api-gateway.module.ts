@@ -3,9 +3,7 @@ import { ApiGatewayController } from './api-gateway.controller';
 import { ApiGatewayService } from './api-gateway.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AuthGatewayController } from './auth/authGateway.controller';
-import { UserController } from './user/user.controller';
 import { AuthGatewayService } from './auth/authGateway.service';
-import { NotoficationModule } from './notofication/notoficationGateway.module';
 
 @Module({
   imports: [
@@ -19,9 +17,9 @@ import { NotoficationModule } from './notofication/notoficationGateway.module';
         },
       },
     ]),
-    NotoficationModule,
+    
   ],
-  controllers: [ApiGatewayController, AuthGatewayController, UserController],
+  controllers: [ApiGatewayController, AuthGatewayController],
   providers: [ApiGatewayService, AuthGatewayService],
 })
 export class ApiGatewayModule {}

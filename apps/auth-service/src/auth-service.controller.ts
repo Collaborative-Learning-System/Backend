@@ -12,20 +12,22 @@ export class AuthServiceController {
   // POST : Signup
   @MessagePattern({ cmd: 'signup' })
   async signup(signupData: SignupDto) {
-    return await this.authServiceService.signup(signupData);
+    const result = await this.authServiceService.signup(signupData);
+    console.log("result at auth service controller:", result);
+    return result;
   }
 
   // POST : Login
   @MessagePattern({ cmd: 'login' })
   async login(loginData: LoginDto) {
-    return this.authServiceService.login(loginData);
+    const result = await this.authServiceService.login(loginData);
+    return result;
   }
 
   // POST : Refresh Token
   @MessagePattern({ cmd: 'refresh-token' })
   async refresh(token: RefreshTokenDto) {
-    return this.authServiceService.refresh(token.refreshToken);
+    const result = await this.authServiceService.refresh(token.refreshToken);
+    return result;
   }
-
-  // POST : Logout
 }

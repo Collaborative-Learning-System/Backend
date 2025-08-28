@@ -1,26 +1,35 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
-
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum UserRole {
-    USER = 'user',
-    ADMIN = 'admin',
+  USER = 'user',
+  ADMIN = 'admin',
 }
 
-@Entity()
+@Entity('user')
 export class User {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid', { name: 'userid'})
+  userId: string;
 
-    @Column({ nullable: false })
-    name: string
+  @Column({ name: 'fullname', nullable: false })
+  fullName: string;
 
-    @Column({ nullable: false, unique: true })
-    email: string;
+  @Column({ name: 'email', nullable: false, unique: true })
+  email: string;
 
-    @Column({ nullable: false })
-    password: string;
+  @Column({ name: 'password', nullable: false })
+  password: string;
 
-    @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
-    role: UserRole;   
+  @Column({
+    name: 'role',
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.USER,
+  })
+  role: UserRole;
+
+  @Column({ name: 'bio', nullable: true })
+  bio: string;
+
+  @Column({ name: 'profilepicurl', nullable: true })
+  profilePicUrl: string;
 }
-
