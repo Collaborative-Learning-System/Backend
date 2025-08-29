@@ -33,13 +33,21 @@ let AuthServiceController = class AuthServiceController {
         this.authServiceService = authServiceService;
     }
     async signup(signupData) {
-        return await this.authServiceService.signup(signupData);
+        const result = await this.authServiceService.signup(signupData);
+        console.log("result at auth service controller:", result);
+        return result;
     }
     async login(loginData) {
-        return this.authServiceService.login(loginData);
+        const result = await this.authServiceService.login(loginData);
+        return result;
+    }
+    async getUserData(userId) {
+        const result = await this.authServiceService.getUserData(userId);
+        return result;
     }
     async refresh(token) {
-        return this.authServiceService.refresh(token.refreshToken);
+        const result = await this.authServiceService.refresh(token.refreshToken);
+        return result;
     }
 };
 exports.AuthServiceController = AuthServiceController;
@@ -55,6 +63,12 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_c = typeof login_dto_1.LoginDto !== "undefined" && login_dto_1.LoginDto) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], AuthServiceController.prototype, "login", null);
+__decorate([
+    (0, microservices_1.MessagePattern)({ cmd: 'get-user-data' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AuthServiceController.prototype, "getUserData", null);
 __decorate([
     (0, microservices_1.MessagePattern)({ cmd: 'refresh-token' }),
     __metadata("design:type", Function),
@@ -91,21 +105,26 @@ const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const user_entity_1 = __webpack_require__(/*! ./entities/user.entity */ "./apps/auth-service/src/entities/user.entity.ts");
 const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
 const refresh_token_entity_1 = __webpack_require__(/*! ./entities/refresh-token.entity */ "./apps/auth-service/src/entities/refresh-token.entity.ts");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 let AuthServiceModule = class AuthServiceModule {
 };
 exports.AuthServiceModule = AuthServiceModule;
 exports.AuthServiceModule = AuthServiceModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            config_1.ConfigModule.forRoot({
+                isGlobal: true,
+            }),
             typeorm_1.TypeOrmModule.forRoot({
                 type: 'postgres',
-                host: 'localhost',
-                port: 5432,
-                username: 'postgres',
-                password: 'PostgreYohan',
-                database: 'collaborative_learning_platform',
+                host: 'pg-3846fd49-gamithchanuka123-04a9.g.aivencloud.com',
+                port: 23268,
+                username: 'avnadmin',
+                password: 'AVNS_iMkg6XKH9g3NcJ3CDzG',
+                database: 'defaultdb',
                 entities: [user_entity_1.User, refresh_token_entity_1.RefreshToken],
                 synchronize: true,
+                ssl: { rejectUnauthorized: false },
             }),
             typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, refresh_token_entity_1.RefreshToken]),
             jwt_1.JwtModule.register({
@@ -184,7 +203,6 @@ const bcrypt = __importStar(__webpack_require__(/*! bcrypt */ "bcrypt"));
 const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
 const refresh_token_entity_1 = __webpack_require__(/*! ./entities/refresh-token.entity */ "./apps/auth-service/src/entities/refresh-token.entity.ts");
 const uuid_1 = __webpack_require__(/*! uuid */ "uuid");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 let AuthServiceService = class AuthServiceService {
     userRepository;
     refreshTokenRepository;
@@ -195,48 +213,79 @@ let AuthServiceService = class AuthServiceService {
         this.jwtService = jwtService;
     }
     async signup(signupData) {
-        const { name, email, password } = signupData;
+        const { fullName, email, password } = signupData;
         const existingUser = await this.userRepository.findOne({
             where: { email },
         });
         if (existingUser) {
-            throw new microservices_1.RpcException({
-                statusCode: 400,
+            return {
+                success: false,
+                statusCode: 401,
                 message: 'Email already in use',
-            });
+            };
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         await this.userRepository.save({
-            name,
+            fullName,
             email,
             password: hashedPassword,
             role: user_entity_1.UserRole.USER,
         });
-        return "User registered successfully";
+        return {
+            success: true,
+            statusCode: 201,
+            message: 'User registered successfully',
+        };
     }
     async login(loginData) {
         const { email, password } = loginData;
         const user = await this.userRepository.findOne({ where: { email } });
         if (!user) {
-            throw new common_1.UnauthorizedException('Wrong Credentials');
+            return {
+                success: false,
+                statusCode: 401,
+                message: 'Wrong Credentials',
+            };
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            throw new common_1.UnauthorizedException('Wrong Credentials');
+            return {
+                success: false,
+                statusCode: 401,
+                message: 'Wrong Credentials',
+            };
         }
-        return this.generateUserTokens(user.id);
+        const tokens = await this.generateUserTokens(user.userId);
+        return {
+            success: true,
+            statusCode: 200,
+            message: "User logged in successfully",
+            data: { tokens, userId: user.userId },
+        };
     }
     async refresh(refreshToken) {
         const token = await this.refreshTokenRepository.findOne({
             where: { token: refreshToken },
         });
         if (!token) {
-            throw new common_1.UnauthorizedException('Invalid refresh token');
+            return {
+                success: false,
+                statusCode: 401,
+                message: 'Invalid refresh token',
+            };
         }
         if (token.expiresAt < new Date()) {
-            throw new common_1.UnauthorizedException('Refresh token expired');
+            return {
+                success: false,
+                statusCode: 401,
+                message: 'Refresh token expired',
+            };
         }
-        return this.generateUserTokens(token.id);
+        const tokens = await this.generateUserTokens(token.id);
+        return {
+            success: true,
+            data: tokens,
+        };
     }
     async generateUserTokens(id) {
         const accessToken = this.jwtService.sign({ id }, {
@@ -252,6 +301,22 @@ let AuthServiceService = class AuthServiceService {
             id: id,
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         });
+    }
+    async getUserData(userId) {
+        const user = await this.userRepository.findOne({ where: { userId } });
+        if (!user) {
+            return {
+                success: false,
+                statusCode: 404,
+                message: 'User not found',
+            };
+        }
+        return {
+            success: true,
+            statusCode: 200,
+            message: 'User found',
+            data: user,
+        };
     }
 };
 exports.AuthServiceService = AuthServiceService;
@@ -353,7 +418,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SignupDto = void 0;
 const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
 class SignupDto {
-    name;
+    fullName;
     email;
     password;
 }
@@ -361,7 +426,7 @@ exports.SignupDto = SignupDto;
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], SignupDto.prototype, "name", void 0);
+], SignupDto.prototype, "fullName", void 0);
 __decorate([
     (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
@@ -369,10 +434,10 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.MinLength)(8, {
-        message: 'Password must be at least 8 characters long.'
+        message: 'Password must be at least 8 characters long.',
     }),
     (0, class_validator_1.Matches)(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/, {
-        message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
+        message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
     }),
     __metadata("design:type", String)
 ], SignupDto.prototype, "password", void 0);
@@ -451,36 +516,95 @@ var UserRole;
     UserRole["ADMIN"] = "admin";
 })(UserRole || (exports.UserRole = UserRole = {}));
 let User = class User {
-    id;
-    name;
+    userId;
+    fullName;
     email;
     password;
     role;
+    bio;
+    profilePicUrl;
 };
 exports.User = User;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid', { name: 'userid' }),
     __metadata("design:type", String)
-], User.prototype, "id", void 0);
+], User.prototype, "userId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: false }),
+    (0, typeorm_1.Column)({ name: 'fullname', nullable: false }),
     __metadata("design:type", String)
-], User.prototype, "name", void 0);
+], User.prototype, "fullName", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: false, unique: true }),
+    (0, typeorm_1.Column)({ name: 'email', nullable: false, unique: true }),
     __metadata("design:type", String)
 ], User.prototype, "email", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: false }),
+    (0, typeorm_1.Column)({ name: 'password', nullable: false }),
     __metadata("design:type", String)
 ], User.prototype, "password", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: UserRole, default: UserRole.USER }),
+    (0, typeorm_1.Column)({
+        name: 'role',
+        type: 'enum',
+        enum: UserRole,
+        default: UserRole.USER,
+    }),
     __metadata("design:type", String)
 ], User.prototype, "role", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'bio', nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "bio", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'profilepicurl', nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "profilePicUrl", void 0);
 exports.User = User = __decorate([
-    (0, typeorm_1.Entity)()
+    (0, typeorm_1.Entity)('user')
 ], User);
+
+
+/***/ }),
+
+/***/ "./apps/auth-service/src/filters/validation-exception.filter.ts":
+/*!**********************************************************************!*\
+  !*** ./apps/auth-service/src/filters/validation-exception.filter.ts ***!
+  \**********************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ValidationExceptionFilter = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+let ValidationExceptionFilter = class ValidationExceptionFilter {
+    catch(exception, host) {
+        const response = exception.getResponse();
+        if (typeof response === 'object' &&
+            response['message'] &&
+            Array.isArray(response['message'])) {
+            const validationErrors = response['message'];
+            return {
+                success: false,
+                statusCode: 400,
+                message: validationErrors,
+            };
+        }
+        return {
+            success: false,
+            statusCode: 400,
+            message: response['message'] || 'Bad Request',
+        };
+    }
+};
+exports.ValidationExceptionFilter = ValidationExceptionFilter;
+exports.ValidationExceptionFilter = ValidationExceptionFilter = __decorate([
+    (0, common_1.Catch)(common_1.BadRequestException)
+], ValidationExceptionFilter);
 
 
 /***/ }),
@@ -492,6 +616,16 @@ exports.User = User = __decorate([
 /***/ ((module) => {
 
 module.exports = require("@nestjs/common");
+
+/***/ }),
+
+/***/ "@nestjs/config":
+/*!*********************************!*\
+  !*** external "@nestjs/config" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/config");
 
 /***/ }),
 
@@ -615,6 +749,7 @@ const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
 const auth_service_module_1 = __webpack_require__(/*! ./auth-service.module */ "./apps/auth-service/src/auth-service.module.ts");
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const validation_exception_filter_1 = __webpack_require__(/*! ./filters/validation-exception.filter */ "./apps/auth-service/src/filters/validation-exception.filter.ts");
 async function bootstrap() {
     const app = await core_1.NestFactory.createMicroservice(auth_service_module_1.AuthServiceModule, {
         transport: microservices_1.Transport.TCP,
@@ -627,6 +762,7 @@ async function bootstrap() {
         whitelist: true,
         forbidNonWhitelisted: true,
     }));
+    app.useGlobalFilters(new validation_exception_filter_1.ValidationExceptionFilter());
     await app.listen();
     console.log('AuthService is running on TCP port 3001');
 }

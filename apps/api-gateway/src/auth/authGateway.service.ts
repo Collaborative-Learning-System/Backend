@@ -9,14 +9,46 @@ export class AuthGatewayService {
   ) {}
 
   async signup(signupData: any) {
-    return await lastValueFrom(
-      this.authClient.send({ cmd: 'signup' }, signupData),
-    );
+    try {
+      const result = await lastValueFrom(
+        this.authClient.send({ cmd: 'signup' }, signupData),
+      );
+      return result;
+    } catch (error) {
+      return { success: false, message: error.message || 'Signup failed. Please Try Again Later' };
+    }
   }
 
   async login(loginData: any) {
-    return await lastValueFrom(
-      this.authClient.send({ cmd: 'login' }, loginData),
-    );
+    try {
+      const result = await lastValueFrom(
+        this.authClient.send({ cmd: 'login' }, loginData),
+      );
+      return result;
+    } catch (error) {
+      return { success: false, message: error.message || 'Login failed. Please Try Again Later' };
+    }
+  }
+
+  async getUserData(userId: string) {
+    try {
+      const result = await lastValueFrom(
+        this.authClient.send({ cmd: 'get-user-data' }, userId),
+      );
+      return result;
+    } catch (error) {
+      return { success: false, message: error.message || 'Failed to retrieve user data. Please Try Again Later' };
+    }
+  }
+
+  async refreshToken(refreshToken: any) {
+    try {
+      const result = await lastValueFrom(
+        this.authClient.send({ cmd: 'refresh-token' }, refreshToken),
+      );
+      return result;
+    } catch (error) {
+      return { success: false, message: error.message || 'Token refresh failed. Please Try Again Later' };
+    }
   }
 }

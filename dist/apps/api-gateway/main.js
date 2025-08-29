@@ -28,17 +28,8 @@ let ApiGatewayController = class ApiGatewayController {
     constructor(apiGatewayService) {
         this.apiGatewayService = apiGatewayService;
     }
-    getHello() {
-        return this.apiGatewayService.getHello();
-    }
 };
 exports.ApiGatewayController = ApiGatewayController;
-__decorate([
-    (0, common_1.Get)(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", String)
-], ApiGatewayController.prototype, "getHello", null);
 exports.ApiGatewayController = ApiGatewayController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof api_gateway_service_1.ApiGatewayService !== "undefined" && api_gateway_service_1.ApiGatewayService) === "function" ? _a : Object])
@@ -65,20 +56,21 @@ exports.ApiGatewayModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const api_gateway_controller_1 = __webpack_require__(/*! ./api-gateway.controller */ "./apps/api-gateway/src/api-gateway.controller.ts");
 const api_gateway_service_1 = __webpack_require__(/*! ./api-gateway.service */ "./apps/api-gateway/src/api-gateway.service.ts");
-
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const authGateway_controller_1 = __webpack_require__(/*! ./auth/authGateway.controller */ "./apps/api-gateway/src/auth/authGateway.controller.ts");
-const user_controller_1 = __webpack_require__(/*! ./user/user.controller */ "./apps/api-gateway/src/user/user.controller.ts");
 const authGateway_service_1 = __webpack_require__(/*! ./auth/authGateway.service */ "./apps/api-gateway/src/auth/authGateway.service.ts");
-const notoficationGateway_module_1 = __webpack_require__(Object(function webpackMissingModule() { var e = new Error("Cannot find module './notofication/notoficationGateway.module'"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
-
+const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
+const jwt_auth_guard_1 = __webpack_require__(/*! ./jwt-auth.guard */ "./apps/api-gateway/src/jwt-auth.guard.ts");
 let ApiGatewayModule = class ApiGatewayModule {
 };
 exports.ApiGatewayModule = ApiGatewayModule;
 exports.ApiGatewayModule = ApiGatewayModule = __decorate([
     (0, common_1.Module)({
-
         imports: [
+            jwt_1.JwtModule.register({
+                secret: '1234567890',
+                signOptions: { expiresIn: '1h' },
+            }),
             microservices_1.ClientsModule.register([
                 {
                     name: 'auth-service',
@@ -89,11 +81,10 @@ exports.ApiGatewayModule = ApiGatewayModule = __decorate([
                     },
                 },
             ]),
-            notoficationGateway_module_1.NotoficationModule,
         ],
-        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, user_controller_1.UserController],
-        providers: [api_gateway_service_1.ApiGatewayService, authGateway_service_1.AuthGatewayService],
-
+        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController],
+        providers: [api_gateway_service_1.ApiGatewayService, authGateway_service_1.AuthGatewayService, jwt_auth_guard_1.JwtAuthGuard],
+        exports: [jwt_auth_guard_1.JwtAuthGuard],
     })
 ], ApiGatewayModule);
 
@@ -117,10 +108,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ApiGatewayService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 let ApiGatewayService = class ApiGatewayService {
-    getHello() {
-        return 'This is API-GATEWAY!';
-
-    }
 };
 exports.ApiGatewayService = ApiGatewayService;
 exports.ApiGatewayService = ApiGatewayService = __decorate([
@@ -129,7 +116,6 @@ exports.ApiGatewayService = ApiGatewayService = __decorate([
 
 
 /***/ }),
-
 
 /***/ "./apps/api-gateway/src/auth/authGateway.controller.ts":
 /*!*************************************************************!*\
@@ -155,33 +141,77 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthGatewayController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const authGateway_service_1 = __webpack_require__(/*! ./authGateway.service */ "./apps/api-gateway/src/auth/authGateway.service.ts");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../jwt-auth.guard */ "./apps/api-gateway/src/jwt-auth.guard.ts");
 let AuthGatewayController = class AuthGatewayController {
     authGatewayService;
     constructor(authGatewayService) {
         this.authGatewayService = authGatewayService;
     }
-    async signup(signupData) {
-        return this.authGatewayService.signup(signupData);
+    async signup(signupData, res) {
+        const result = await this.authGatewayService.signup(signupData);
+        if (!result.success) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+        return res.status(common_1.HttpStatus.CREATED).json(result);
     }
-    async login(loginData) {
-        return this.authGatewayService.login(loginData);
+    async login(loginData, res) {
+        const result = await this.authGatewayService.login(loginData);
+        if (result.success) {
+            const accessToken = result.data.tokens.accessToken;
+            const refreshToken = result.data.tokens.refreshToken;
+            res.cookie('accessToken', accessToken, {
+                httpOnly: true,
+                secure: false,
+                sameSite: 'lax',
+            });
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: false,
+                sameSite: 'lax',
+            });
+            console.log("id", result.data.userId);
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        else {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+    }
+    async getUserData(res, userId) {
+        const result = await this.authGatewayService.getUserData(userId);
+        if (result.success) {
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        else {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
     }
 };
 exports.AuthGatewayController = AuthGatewayController;
 __decorate([
     (0, common_1.Post)('signup'),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AuthGatewayController.prototype, "signup", null);
 __decorate([
     (0, common_1.Post)('login'),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AuthGatewayController.prototype, "login", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('get-user-data/:userId'),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Param)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], AuthGatewayController.prototype, "getUserData", null);
 exports.AuthGatewayController = AuthGatewayController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [typeof (_a = typeof authGateway_service_1.AuthGatewayService !== "undefined" && authGateway_service_1.AuthGatewayService) === "function" ? _a : Object])
@@ -221,10 +251,40 @@ let AuthGatewayService = class AuthGatewayService {
         this.authClient = authClient;
     }
     async signup(signupData) {
-        return await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'signup' }, signupData));
+        try {
+            const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'signup' }, signupData));
+            return result;
+        }
+        catch (error) {
+            return { success: false, message: error.message || 'Signup failed. Please Try Again Later' };
+        }
     }
     async login(loginData) {
-        return await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'login' }, loginData));
+        try {
+            const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'login' }, loginData));
+            return result;
+        }
+        catch (error) {
+            return { success: false, message: error.message || 'Login failed. Please Try Again Later' };
+        }
+    }
+    async getUserData(userId) {
+        try {
+            const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'get-user-data' }, userId));
+            return result;
+        }
+        catch (error) {
+            return { success: false, message: error.message || 'Failed to retrieve user data. Please Try Again Later' };
+        }
+    }
+    async refreshToken(refreshToken) {
+        try {
+            const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'refresh-token' }, refreshToken));
+            return result;
+        }
+        catch (error) {
+            return { success: false, message: error.message || 'Token refresh failed. Please Try Again Later' };
+        }
     }
 };
 exports.AuthGatewayService = AuthGatewayService;
@@ -237,10 +297,10 @@ exports.AuthGatewayService = AuthGatewayService = __decorate([
 
 /***/ }),
 
-/***/ "./apps/api-gateway/src/user/user.controller.ts":
-/*!******************************************************!*\
-  !*** ./apps/api-gateway/src/user/user.controller.ts ***!
-  \******************************************************/
+/***/ "./apps/api-gateway/src/jwt-auth.guard.ts":
+/*!************************************************!*\
+  !*** ./apps/api-gateway/src/jwt-auth.guard.ts ***!
+  \************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -250,15 +310,68 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserController = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-let UserController = class UserController {
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-exports.UserController = UserController;
-exports.UserController = UserController = __decorate([
-    (0, common_1.Controller)('user')
-], UserController);
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.JwtAuthGuard = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
+let JwtAuthGuard = class JwtAuthGuard {
+    jwtService;
+    constructor(jwtService) {
+        this.jwtService = jwtService;
+    }
+    canActivate(context) {
+        const req = context.switchToHttp().getRequest();
+        const token = req.cookies?.accessToken;
+        if (!token)
+            throw new common_1.UnauthorizedException('No token found');
+        try {
+            const decoded = this.jwtService.verify(token);
+            req.user = decoded;
+            return true;
+        }
+        catch (error) {
+            throw new common_1.UnauthorizedException('Invalid or expired token');
+        }
+    }
+};
+exports.JwtAuthGuard = JwtAuthGuard;
+exports.JwtAuthGuard = JwtAuthGuard = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _a : Object])
+], JwtAuthGuard);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/main.ts":
+/*!**************************************!*\
+  !*** ./apps/api-gateway/src/main.ts ***!
+  \**************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
+const api_gateway_module_1 = __webpack_require__(/*! ./api-gateway.module */ "./apps/api-gateway/src/api-gateway.module.ts");
+const cookie_parser_1 = __importDefault(__webpack_require__(/*! cookie-parser */ "cookie-parser"));
+async function bootstrap() {
+    const app = await core_1.NestFactory.create(api_gateway_module_1.ApiGatewayModule);
+    app.enableCors({
+        origin: 'http://localhost:5173',
+        credentials: true,
+    });
+    app.use((0, cookie_parser_1.default)());
+    await app.listen(process.env.port ?? 3000);
+    console.log('API gateway is running on port 3000');
+}
+bootstrap();
 
 
 /***/ }),
@@ -281,6 +394,15 @@ module.exports = require("@nestjs/common");
 
 module.exports = require("@nestjs/core");
 
+/***/ }),
+
+/***/ "@nestjs/jwt":
+/*!******************************!*\
+  !*** external "@nestjs/jwt" ***!
+  \******************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/jwt");
 
 /***/ }),
 
@@ -294,6 +416,16 @@ module.exports = require("@nestjs/microservices");
 
 /***/ }),
 
+/***/ "cookie-parser":
+/*!********************************!*\
+  !*** external "cookie-parser" ***!
+  \********************************/
+/***/ ((module) => {
+
+module.exports = require("cookie-parser");
+
+/***/ }),
+
 /***/ "rxjs":
 /*!***********************!*\
   !*** external "rxjs" ***!
@@ -302,7 +434,6 @@ module.exports = require("@nestjs/microservices");
 
 module.exports = require("rxjs");
 
-=
 /***/ })
 
 /******/ 	});
@@ -332,31 +463,11 @@ module.exports = require("rxjs");
 /******/ 	}
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
-(() => {
-var exports = __webpack_exports__;
-/*!**************************************!*\
-  !*** ./apps/api-gateway/src/main.ts ***!
-  \**************************************/
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
-const api_gateway_module_1 = __webpack_require__(/*! ./api-gateway.module */ "./apps/api-gateway/src/api-gateway.module.ts");
-async function bootstrap() {
-    const app = await core_1.NestFactory.create(api_gateway_module_1.ApiGatewayModule);
-
-    app.enableCors({
-        origin: 'http://localhost:5173',
-        credentials: true,
-    });
-    await app.listen(process.env.port ?? 3000);
-    console.log('API gateway is running on port 3000');
-
-}
-bootstrap();
-
-})();
-
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __webpack_require__("./apps/api-gateway/src/main.ts");
+/******/ 	
 /******/ })()
 ;
