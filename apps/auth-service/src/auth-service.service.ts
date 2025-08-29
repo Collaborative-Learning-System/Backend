@@ -79,8 +79,8 @@ export class AuthServiceService {
     return {
       success: true,
       statusCode: 200,
-      message: "User logged in successfully",
-      data: {tokens, userId: user.userId},
+      message: 'User logged in successfully',
+      data: { tokens, userId: user.userId },
     };
   }
 
@@ -136,6 +136,23 @@ export class AuthServiceService {
     });
   }
 
+  // Logout
+  async logout(userId: string) {
+    try {
+      await this.refreshTokenRepository.delete({ id: userId });
+      return {
+        success: true,
+        statusCode: 200,
+        message: 'User logged out successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Logout failed. Please Try Again Later',
+      };
+    }
+  }
 
   // Get User Data
   async getUserData(userId: string) {

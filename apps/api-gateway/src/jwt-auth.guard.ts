@@ -12,11 +12,11 @@ export class JwtAuthGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
-    const token = req.cookies?.accessToken;
-    if (!token) throw new UnauthorizedException('No token found');
+    const accessToken = req.cookies?.accessToken;
+    if (!accessToken) throw new UnauthorizedException('No token found');
 
     try {
-      const decoded = this.jwtService.verify(token);
+      const decoded = this.jwtService.verify(accessToken);
       req.user = decoded;
       return true;
     } catch (error) {

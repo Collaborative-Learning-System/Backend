@@ -24,6 +24,13 @@ export class AuthServiceController {
     return result;
   }
 
+  // POST : Logout
+  @MessagePattern({ cmd: 'logout' })
+  async logOut(userId: string) {
+    const result = await this.authServiceService.logout(userId);
+    return result;
+  }
+
   // GET : GetUserData
   @MessagePattern({ cmd: 'get-user-data' })
   async getUserData(userId: string) {

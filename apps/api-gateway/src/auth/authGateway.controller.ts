@@ -2,7 +2,6 @@ import { Body, Controller, Post, Res, HttpStatus, UseGuards, Get, Param } from '
 import { AuthGatewayService } from './authGateway.service';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../jwt-auth.guard';
-import { get } from 'http';
 
 @Controller('auth')
 export class AuthGatewayController {
@@ -33,11 +32,19 @@ export class AuthGatewayController {
         secure: false,
         sameSite: 'lax',
       });
-      console.log("id", result.data.userId);
       return res.status(HttpStatus.OK).json(result)
     } else {
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
+  }
+
+ // @UseGuards(JwtAuthGuard)
+  @Post('logout/:userId')
+  async logOut(@Res() res: Response, @Param('userId') userId: string) {
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+    const result = await this.authGatewayService.logout(userId);
+    return res.status(HttpStatus.OK).json(result);
   }
 
   @UseGuards(JwtAuthGuard)
