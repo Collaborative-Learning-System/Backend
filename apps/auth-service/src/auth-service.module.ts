@@ -5,15 +5,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'pg-3846fd49-gamithchanuka123-04a9.g.aivencloud.com',
       port: 23268,
       username: 'avnadmin',
-      // password: 'AVNS_iMkg6XKH9g3NcJ3CDzG',
       password: 'AVNS_iMkg6XKH9g3NcJ3CDzG',
       database: 'defaultdb',
       entities: [User, RefreshToken],
