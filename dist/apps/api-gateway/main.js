@@ -169,12 +169,17 @@ let AuthGatewayController = class AuthGatewayController {
                 secure: false,
                 sameSite: 'lax',
             });
-            console.log("id", result.data.userId);
             return res.status(common_1.HttpStatus.OK).json(result);
         }
         else {
             return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
         }
+    }
+    async logOut(res, userId) {
+        res.clearCookie('accessToken');
+        res.clearCookie('refreshToken');
+        const result = await this.authGatewayService.logout(userId);
+        return res.status(common_1.HttpStatus.OK).json(result);
     }
     async getUserData(res, userId) {
         const result = await this.authGatewayService.getUserData(userId);
@@ -203,6 +208,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AuthGatewayController.prototype, "login", null);
+__decorate([
+    (0, common_1.Post)('logout/:userId'),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Param)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], AuthGatewayController.prototype, "logOut", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('get-user-data/:userId'),
@@ -256,7 +269,10 @@ let AuthGatewayService = class AuthGatewayService {
             return result;
         }
         catch (error) {
-            return { success: false, message: error.message || 'Signup failed. Please Try Again Later' };
+            return {
+                success: false,
+                message: error.message || 'Signup failed. Please Try Again Later',
+            };
         }
     }
     async login(loginData) {
@@ -265,7 +281,22 @@ let AuthGatewayService = class AuthGatewayService {
             return result;
         }
         catch (error) {
-            return { success: false, message: error.message || 'Login failed. Please Try Again Later' };
+            return {
+                success: false,
+                message: error.message || 'Login failed. Please Try Again Later',
+            };
+        }
+    }
+    async logout(userId) {
+        try {
+            const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'logout' }, userId));
+            return result;
+        }
+        catch (error) {
+            return {
+                success: false,
+                message: error.message || 'Logout failed. Please Try Again Later',
+            };
         }
     }
     async getUserData(userId) {
@@ -274,7 +305,11 @@ let AuthGatewayService = class AuthGatewayService {
             return result;
         }
         catch (error) {
-            return { success: false, message: error.message || 'Failed to retrieve user data. Please Try Again Later' };
+            return {
+                success: false,
+                message: error.message ||
+                    'Failed to retrieve user data. Please Try Again Later',
+            };
         }
     }
     async refreshToken(refreshToken) {
@@ -283,7 +318,10 @@ let AuthGatewayService = class AuthGatewayService {
             return result;
         }
         catch (error) {
-            return { success: false, message: error.message || 'Token refresh failed. Please Try Again Later' };
+            return {
+                success: false,
+                message: error.message || 'Token refresh failed. Please Try Again Later',
+            };
         }
     }
 };
@@ -325,11 +363,11 @@ let JwtAuthGuard = class JwtAuthGuard {
     }
     canActivate(context) {
         const req = context.switchToHttp().getRequest();
-        const token = req.cookies?.accessToken;
-        if (!token)
+        const accessToken = req.cookies?.accessToken;
+        if (!accessToken)
             throw new common_1.UnauthorizedException('No token found');
         try {
-            const decoded = this.jwtService.verify(token);
+            const decoded = this.jwtService.verify(accessToken);
             req.user = decoded;
             return true;
         }

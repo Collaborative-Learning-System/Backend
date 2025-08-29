@@ -41,6 +41,10 @@ let AuthServiceController = class AuthServiceController {
         const result = await this.authServiceService.login(loginData);
         return result;
     }
+    async logOut(userId) {
+        const result = await this.authServiceService.logout(userId);
+        return result;
+    }
     async getUserData(userId) {
         const result = await this.authServiceService.getUserData(userId);
         return result;
@@ -63,6 +67,12 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_c = typeof login_dto_1.LoginDto !== "undefined" && login_dto_1.LoginDto) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], AuthServiceController.prototype, "login", null);
+__decorate([
+    (0, microservices_1.MessagePattern)({ cmd: 'logout' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AuthServiceController.prototype, "logOut", null);
 __decorate([
     (0, microservices_1.MessagePattern)({ cmd: 'get-user-data' }),
     __metadata("design:type", Function),
@@ -115,21 +125,37 @@ exports.AuthServiceModule = AuthServiceModule = __decorate([
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
             }),
-            typeorm_1.TypeOrmModule.forRoot({
-                type: 'postgres',
-                host: 'pg-3846fd49-gamithchanuka123-04a9.g.aivencloud.com',
-                port: 23268,
-                username: 'avnadmin',
-                password: 'AVNS_iMkg6XKH9g3NcJ3CDzG',
-                database: 'defaultdb',
-                entities: [user_entity_1.User, refresh_token_entity_1.RefreshToken],
-                synchronize: true,
-                ssl: { rejectUnauthorized: false },
+            typeorm_1.TypeOrmModule.forRootAsync({
+                imports: [config_1.ConfigModule],
+                inject: [config_1.ConfigService],
+                useFactory: (configService) => {
+                    return {
+                        type: 'postgres',
+                        host: configService.get('DB_HOST'),
+                        port: configService.get('DB_PORT'),
+                        username: configService.get('DB_USERNAME'),
+                        password: configService.get('DB_PASSWORD'),
+                        database: configService.get('DB_DATABASE'),
+                        entities: [user_entity_1.User, refresh_token_entity_1.RefreshToken],
+                        synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
+                        ssl: {
+                            rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
+                                'true',
+                        },
+                    };
+                },
             }),
             typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, refresh_token_entity_1.RefreshToken]),
-            jwt_1.JwtModule.register({
-                global: true,
-                secret: '1234567890',
+            jwt_1.JwtModule.registerAsync({
+                imports: [config_1.ConfigModule],
+                inject: [config_1.ConfigService],
+                useFactory: async (configService) => ({
+                    global: true,
+                    secret: configService.get('JWT_SECRET'),
+                    signOptions: {
+                        expiresIn: configService.get('JWT_EXPIRES_IN') || '1h',
+                    },
+                }),
             }),
         ],
         controllers: [auth_service_controller_1.AuthServiceController],
@@ -259,7 +285,7 @@ let AuthServiceService = class AuthServiceService {
         return {
             success: true,
             statusCode: 200,
-            message: "User logged in successfully",
+            message: 'User logged in successfully',
             data: { tokens, userId: user.userId },
         };
     }
@@ -301,6 +327,23 @@ let AuthServiceService = class AuthServiceService {
             id: id,
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         });
+    }
+    async logout(userId) {
+        try {
+            await this.refreshTokenRepository.delete({ id: userId });
+            return {
+                success: true,
+                statusCode: 200,
+                message: 'User logged out successfully',
+            };
+        }
+        catch (error) {
+            return {
+                success: false,
+                statusCode: 500,
+                message: 'Logout failed. Please Try Again Later',
+            };
+        }
     }
     async getUserData(userId) {
         const user = await this.userRepository.findOne({ where: { userId } });
@@ -609,6 +652,77 @@ exports.ValidationExceptionFilter = ValidationExceptionFilter = __decorate([
 
 /***/ }),
 
+/***/ "./apps/auth-service/src/main.ts":
+/*!***************************************!*\
+  !*** ./apps/auth-service/src/main.ts ***!
+  \***************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
+const auth_service_module_1 = __webpack_require__(/*! ./auth-service.module */ "./apps/auth-service/src/auth-service.module.ts");
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const validation_exception_filter_1 = __webpack_require__(/*! ./filters/validation-exception.filter */ "./apps/auth-service/src/filters/validation-exception.filter.ts");
+const dotenv = __importStar(__webpack_require__(/*! dotenv */ "dotenv"));
+const path = __importStar(__webpack_require__(/*! path */ "path"));
+const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
+dotenv.config({ path: envPath });
+async function bootstrap() {
+    const app = await core_1.NestFactory.createMicroservice(auth_service_module_1.AuthServiceModule, {
+        transport: microservices_1.Transport.TCP,
+        options: {
+            host: '127.0.0.1',
+            port: 3001,
+        },
+    });
+    app.useGlobalPipes(new common_1.ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+    }));
+    app.useGlobalFilters(new validation_exception_filter_1.ValidationExceptionFilter());
+    await app.listen();
+    console.log('AuthService is running on TCP port 3001');
+}
+bootstrap();
+
+
+/***/ }),
+
 /***/ "@nestjs/common":
 /*!*********************************!*\
   !*** external "@nestjs/common" ***!
@@ -689,6 +803,26 @@ module.exports = require("class-validator");
 
 /***/ }),
 
+/***/ "dotenv":
+/*!*************************!*\
+  !*** external "dotenv" ***!
+  \*************************/
+/***/ ((module) => {
+
+module.exports = require("dotenv");
+
+/***/ }),
+
+/***/ "path":
+/*!***********************!*\
+  !*** external "path" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = require("path");
+
+/***/ }),
+
 /***/ "typeorm":
 /*!**************************!*\
   !*** external "typeorm" ***!
@@ -736,39 +870,11 @@ module.exports = require("uuid");
 /******/ 	}
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
-(() => {
-var exports = __webpack_exports__;
-/*!***************************************!*\
-  !*** ./apps/auth-service/src/main.ts ***!
-  \***************************************/
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
-const auth_service_module_1 = __webpack_require__(/*! ./auth-service.module */ "./apps/auth-service/src/auth-service.module.ts");
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const validation_exception_filter_1 = __webpack_require__(/*! ./filters/validation-exception.filter */ "./apps/auth-service/src/filters/validation-exception.filter.ts");
-async function bootstrap() {
-    const app = await core_1.NestFactory.createMicroservice(auth_service_module_1.AuthServiceModule, {
-        transport: microservices_1.Transport.TCP,
-        options: {
-            host: '127.0.0.1',
-            port: 3001,
-        },
-    });
-    app.useGlobalPipes(new common_1.ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-    }));
-    app.useGlobalFilters(new validation_exception_filter_1.ValidationExceptionFilter());
-    await app.listen();
-    console.log('AuthService is running on TCP port 3001');
-}
-bootstrap();
-
-})();
-
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __webpack_require__("./apps/auth-service/src/main.ts");
+/******/ 	
 /******/ })()
 ;

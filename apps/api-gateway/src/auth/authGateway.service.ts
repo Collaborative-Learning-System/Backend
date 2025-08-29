@@ -15,7 +15,10 @@ export class AuthGatewayService {
       );
       return result;
     } catch (error) {
-      return { success: false, message: error.message || 'Signup failed. Please Try Again Later' };
+      return {
+        success: false,
+        message: error.message || 'Signup failed. Please Try Again Later',
+      };
     }
   }
 
@@ -26,7 +29,24 @@ export class AuthGatewayService {
       );
       return result;
     } catch (error) {
-      return { success: false, message: error.message || 'Login failed. Please Try Again Later' };
+      return {
+        success: false,
+        message: error.message || 'Login failed. Please Try Again Later',
+      };
+    }
+  }
+
+  async logout(userId: string) {
+    try {
+      const result = await lastValueFrom(
+        this.authClient.send({ cmd: 'logout' }, userId)
+      );
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Logout failed. Please Try Again Later',
+      };
     }
   }
 
@@ -37,7 +57,12 @@ export class AuthGatewayService {
       );
       return result;
     } catch (error) {
-      return { success: false, message: error.message || 'Failed to retrieve user data. Please Try Again Later' };
+      return {
+        success: false,
+        message:
+          error.message ||
+          'Failed to retrieve user data. Please Try Again Later',
+      };
     }
   }
 
@@ -48,7 +73,11 @@ export class AuthGatewayService {
       );
       return result;
     } catch (error) {
-      return { success: false, message: error.message || 'Token refresh failed. Please Try Again Later' };
+      return {
+        success: false,
+        message:
+          error.message || 'Token refresh failed. Please Try Again Later',
+      };
     }
   }
 }
