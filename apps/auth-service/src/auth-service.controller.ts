@@ -54,4 +54,11 @@ export class AuthServiceController {
     const result = await this.authServiceService.refresh(token.refreshToken);
     return result;
   }
+
+  // POST: Find User By Email
+  @MessagePattern({ cmd: 'find-user-by-email' })
+  async findUserByEmail(email: string) {
+    const result = await this.authServiceService.findUserByEmail(email);
+    return result;
+  }
 }

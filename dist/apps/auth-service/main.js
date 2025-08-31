@@ -60,6 +60,10 @@ let AuthServiceController = class AuthServiceController {
         const result = await this.authServiceService.refresh(token.refreshToken);
         return result;
     }
+    async findUserByEmail(email) {
+        const result = await this.authServiceService.findUserByEmail(email);
+        return result;
+    }
 };
 exports.AuthServiceController = AuthServiceController;
 __decorate([
@@ -98,6 +102,12 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_e = typeof refresh_token_dto_1.RefreshTokenDto !== "undefined" && refresh_token_dto_1.RefreshTokenDto) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], AuthServiceController.prototype, "refresh", null);
+__decorate([
+    (0, microservices_1.MessagePattern)({ cmd: 'find-user-by-email' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AuthServiceController.prototype, "findUserByEmail", null);
 exports.AuthServiceController = AuthServiceController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [typeof (_a = typeof auth_service_service_1.AuthServiceService !== "undefined" && auth_service_service_1.AuthServiceService) === "function" ? _a : Object])
@@ -393,6 +403,22 @@ let AuthServiceService = class AuthServiceService {
             data: user,
         };
     }
+    async findUserByEmail(email) {
+        const user = await this.userRepository.findOne({ where: { email } });
+        if (!user) {
+            return {
+                success: false,
+                statusCode: 404,
+                message: 'User not Exist with this email',
+            };
+        }
+        return {
+            success: true,
+            statusCode: 200,
+            message: 'User found',
+            data: user,
+        };
+    }
 };
 exports.AuthServiceService = AuthServiceService;
 exports.AuthServiceService = AuthServiceService = __decorate([
@@ -503,6 +529,12 @@ __decorate([
 ], ResetPasswordDto.prototype, "email", void 0);
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MinLength)(8, {
+        message: 'Password must be at least 8 characters long.',
+    }),
+    (0, class_validator_1.Matches)(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/, {
+        message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+    }),
     __metadata("design:type", String)
 ], ResetPasswordDto.prototype, "password", void 0);
 

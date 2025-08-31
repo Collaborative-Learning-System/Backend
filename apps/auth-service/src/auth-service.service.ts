@@ -196,4 +196,22 @@ export class AuthServiceService {
       data: user,
     };
   }
+
+  // Find User By Email
+  async findUserByEmail(email: string) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      return {
+        success: false,
+        statusCode: 404,
+        message: 'User not Exist with this email',
+      };
+    }
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'User found',
+      data: user,
+    };
+  }
 }

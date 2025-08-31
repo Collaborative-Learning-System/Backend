@@ -4,6 +4,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import { ValidationExceptionFilter } from './filters/validation-exception.filter';
 
 // Load environment variables from notification-service/.env
 const envPath = path.resolve(
@@ -31,12 +32,23 @@ async function bootstrap() {
     },
   );
   
-  // Enable validation globally
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+  // // Enable validation globally
+  // app.useGlobalPipes(new ValidationPipe({
+  //   whitelist: true,
+  //   forbidNonWhitelisted: true,
+  //   transform: true,
+  // }));
+
+    // for class validator
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
+  
+    // Apply global validation exception filter
+    app.useGlobalFilters(new ValidationExceptionFilter());
   
   await app.listen();
   console.log('Notification service is running on port 3002');

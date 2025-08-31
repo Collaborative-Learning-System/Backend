@@ -1,15 +1,16 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { EmailDto } from './dtos/email.dto';
 import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
 import { WelcomeEmailDto } from './dtos/welcomeEmail.dto';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class NotificationServiceService implements OnModuleInit {
   private transporter: nodemailer.Transporter;
   private from: string | undefined;
 
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService, @Inject('auth-service') private readonly authClient: ClientProxy) {}
 
   onModuleInit() {
     const host = this.configService.get<string>('EMAIL_HOST');
@@ -31,6 +32,13 @@ export class NotificationServiceService implements OnModuleInit {
   }
 
   async sendResetPasswordEmail(emailDto: EmailDto) {
+
+    const result = await this.authClient.send({ cmd: 'find-user-by-email' }, emailDto.email).toPromise();
+    if (!result.success) {
+      return result;
+    }
+    console.log(result);
+
     const link = this.configService.get<string>('LINK');
     const html = this.resetPasswordTemplate(link);
     console.log("email",emailDto.email)

@@ -72,6 +72,50 @@ __decorate([
 
 /***/ }),
 
+/***/ "./apps/notification-service/src/filters/validation-exception.filter.ts":
+/*!******************************************************************************!*\
+  !*** ./apps/notification-service/src/filters/validation-exception.filter.ts ***!
+  \******************************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ValidationExceptionFilter = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+let ValidationExceptionFilter = class ValidationExceptionFilter {
+    catch(exception, host) {
+        const response = exception.getResponse();
+        if (typeof response === 'object' &&
+            response['message'] &&
+            Array.isArray(response['message'])) {
+            const validationErrors = response['message'];
+            return {
+                success: false,
+                statusCode: 400,
+                message: validationErrors,
+            };
+        }
+        return {
+            success: false,
+            statusCode: 400,
+            message: response['message'] || 'Bad Request',
+        };
+    }
+};
+exports.ValidationExceptionFilter = ValidationExceptionFilter;
+exports.ValidationExceptionFilter = ValidationExceptionFilter = __decorate([
+    (0, common_1.Catch)(common_1.BadRequestException)
+], ValidationExceptionFilter);
+
+
+/***/ }),
+
 /***/ "./apps/notification-service/src/main.ts":
 /*!***********************************************!*\
   !*** ./apps/notification-service/src/main.ts ***!
@@ -119,6 +163,7 @@ const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestj
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const dotenv = __importStar(__webpack_require__(/*! dotenv */ "dotenv"));
 const path = __importStar(__webpack_require__(/*! path */ "path"));
+const validation_exception_filter_1 = __webpack_require__(/*! ./filters/validation-exception.filter */ "./apps/notification-service/src/filters/validation-exception.filter.ts");
 const envPath = path.resolve(process.cwd(), 'apps', 'notification-service', '.env');
 dotenv.config({ path: envPath });
 console.log('Loading .env from:', envPath);
@@ -136,8 +181,8 @@ async function bootstrap() {
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         forbidNonWhitelisted: true,
-        transform: true,
     }));
+    app.useGlobalFilters(new validation_exception_filter_1.ValidationExceptionFilter());
     await app.listen();
     console.log('Notification service is running on port 3002');
 }
@@ -222,6 +267,7 @@ const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const notification_service_controller_1 = __webpack_require__(/*! ./notification-service.controller */ "./apps/notification-service/src/notification-service.controller.ts");
 const notification_service_service_1 = __webpack_require__(/*! ./notification-service.service */ "./apps/notification-service/src/notification-service.service.ts");
 const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 let NotificationServiceModule = class NotificationServiceModule {
 };
 exports.NotificationServiceModule = NotificationServiceModule;
@@ -230,7 +276,15 @@ exports.NotificationServiceModule = NotificationServiceModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
-            })
+            }),
+            microservices_1.ClientsModule.register([{
+                    name: 'auth-service',
+                    transport: microservices_1.Transport.TCP,
+                    options: {
+                        host: '127.0.0.1',
+                        port: 3001,
+                    },
+                }])
         ],
         controllers: [notification_service_controller_1.NotificationServiceController],
         providers: [notification_service_service_1.NotificationServiceService],
@@ -289,18 +343,24 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a;
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.NotificationServiceService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const nodemailer = __importStar(__webpack_require__(/*! nodemailer */ "nodemailer"));
 const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 let NotificationServiceService = class NotificationServiceService {
     configService;
+    authClient;
     transporter;
     from;
-    constructor(configService) {
+    constructor(configService, authClient) {
         this.configService = configService;
+        this.authClient = authClient;
     }
     onModuleInit() {
         const host = this.configService.get('EMAIL_HOST');
@@ -320,6 +380,11 @@ let NotificationServiceService = class NotificationServiceService {
         });
     }
     async sendResetPasswordEmail(emailDto) {
+        const result = await this.authClient.send({ cmd: 'find-user-by-email' }, emailDto.email).toPromise();
+        if (!result.success) {
+            return result;
+        }
+        console.log(result);
         const link = this.configService.get('LINK');
         const html = this.resetPasswordTemplate(link);
         console.log("email", emailDto.email);
@@ -454,7 +519,8 @@ let NotificationServiceService = class NotificationServiceService {
 exports.NotificationServiceService = NotificationServiceService;
 exports.NotificationServiceService = NotificationServiceService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object])
+    __param(1, (0, common_1.Inject)('auth-service')),
+    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object, typeof (_b = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _b : Object])
 ], NotificationServiceService);
 
 
