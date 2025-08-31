@@ -61,6 +61,8 @@ const authGateway_controller_1 = __webpack_require__(/*! ./auth/authGateway.cont
 const authGateway_service_1 = __webpack_require__(/*! ./auth/authGateway.service */ "./apps/api-gateway/src/auth/authGateway.service.ts");
 const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
 const jwt_auth_guard_1 = __webpack_require__(/*! ./jwt-auth.guard */ "./apps/api-gateway/src/jwt-auth.guard.ts");
+const notificationGateway_controller_1 = __webpack_require__(/*! ./notification/notificationGateway.controller */ "./apps/api-gateway/src/notification/notificationGateway.controller.ts");
+const notificationGateway_service_1 = __webpack_require__(/*! ./notification/notificationGateway.service */ "./apps/api-gateway/src/notification/notificationGateway.service.ts");
 let ApiGatewayModule = class ApiGatewayModule {
 };
 exports.ApiGatewayModule = ApiGatewayModule;
@@ -80,10 +82,18 @@ exports.ApiGatewayModule = ApiGatewayModule = __decorate([
                         port: 3001,
                     },
                 },
+                {
+                    name: 'notification-service',
+                    transport: microservices_1.Transport.TCP,
+                    options: {
+                        host: '127.0.0.1',
+                        port: 3002,
+                    },
+                }
             ]),
         ],
-        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController],
-        providers: [api_gateway_service_1.ApiGatewayService, authGateway_service_1.AuthGatewayService, jwt_auth_guard_1.JwtAuthGuard],
+        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController],
+        providers: [api_gateway_service_1.ApiGatewayService, authGateway_service_1.AuthGatewayService, notificationGateway_service_1.NotificationGatewayService, jwt_auth_guard_1.JwtAuthGuard],
         exports: [jwt_auth_guard_1.JwtAuthGuard],
     })
 ], ApiGatewayModule);
@@ -181,6 +191,22 @@ let AuthGatewayController = class AuthGatewayController {
         const result = await this.authGatewayService.logout(userId);
         return res.status(common_1.HttpStatus.OK).json(result);
     }
+    async resetPassword(res, resetData) {
+        const { email, newPassword } = resetData;
+        if (!email || !newPassword) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
+                success: false,
+                message: 'Email and new password are required',
+            });
+        }
+        const result = await this.authGatewayService.resetPassword(email, newPassword);
+        if (result.success) {
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        else {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+    }
     async getUserData(res, userId) {
         const result = await this.authGatewayService.getUserData(userId);
         if (result.success) {
@@ -216,6 +242,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], AuthGatewayController.prototype, "logOut", null);
+__decorate([
+    (0, common_1.Post)('reset-password'),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AuthGatewayController.prototype, "resetPassword", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('get-user-data/:userId'),
@@ -296,6 +330,18 @@ let AuthGatewayService = class AuthGatewayService {
             return {
                 success: false,
                 message: error.message || 'Logout failed. Please Try Again Later',
+            };
+        }
+    }
+    async resetPassword(email, password) {
+        try {
+            const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'reset-password' }, { email, password }));
+            return result;
+        }
+        catch (error) {
+            return {
+                success: false,
+                message: error.message || 'Password reset failed. Please Try Again Later',
             };
         }
     }
@@ -410,6 +456,119 @@ async function bootstrap() {
     console.log('API gateway is running on port 3000');
 }
 bootstrap();
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/notification/notificationGateway.controller.ts":
+/*!*****************************************************************************!*\
+  !*** ./apps/api-gateway/src/notification/notificationGateway.controller.ts ***!
+  \*****************************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.NotificationGatewayController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const notificationGateway_service_1 = __webpack_require__(/*! ./notificationGateway.service */ "./apps/api-gateway/src/notification/notificationGateway.service.ts");
+let NotificationGatewayController = class NotificationGatewayController {
+    notificationGatewayService;
+    constructor(notificationGatewayService) {
+        this.notificationGatewayService = notificationGatewayService;
+    }
+    async sendResetPasswordEmail(body, res) {
+        if (!body.email) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
+                success: false,
+                message: 'Email and full name are required',
+            });
+        }
+        const result = await this.notificationGatewayService.sendResetPasswordEmail(body.email);
+        if (!result.success) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+        return res.status(common_1.HttpStatus.OK).json(result);
+    }
+};
+exports.NotificationGatewayController = NotificationGatewayController;
+__decorate([
+    (0, common_1.Post)('reset-password'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], NotificationGatewayController.prototype, "sendResetPasswordEmail", null);
+exports.NotificationGatewayController = NotificationGatewayController = __decorate([
+    (0, common_1.Controller)('notification'),
+    __metadata("design:paramtypes", [typeof (_a = typeof notificationGateway_service_1.NotificationGatewayService !== "undefined" && notificationGateway_service_1.NotificationGatewayService) === "function" ? _a : Object])
+], NotificationGatewayController);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/notification/notificationGateway.service.ts":
+/*!**************************************************************************!*\
+  !*** ./apps/api-gateway/src/notification/notificationGateway.service.ts ***!
+  \**************************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.NotificationGatewayService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+let NotificationGatewayService = class NotificationGatewayService {
+    notificationClient;
+    constructor(notificationClient) {
+        this.notificationClient = notificationClient;
+    }
+    async sendResetPasswordEmail(email) {
+        try {
+            const result = await (0, rxjs_1.lastValueFrom)(this.notificationClient.send({ cmd: 'reset-password' }, email));
+            return result;
+        }
+        catch (error) {
+            return {
+                success: false,
+                message: error.message || 'Failed to send reset password email',
+            };
+        }
+    }
+};
+exports.NotificationGatewayService = NotificationGatewayService;
+exports.NotificationGatewayService = NotificationGatewayService = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, common_1.Inject)('notification-service')),
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
+], NotificationGatewayService);
 
 
 /***/ }),

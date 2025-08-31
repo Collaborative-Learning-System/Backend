@@ -4,6 +4,7 @@ import { SignupDto } from './dtos/signup.dto';
 import { LoginDto } from './dtos/login.dto';
 import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { MessagePattern } from '@nestjs/microservices';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
 
 @Controller('auth')
 export class AuthServiceController {
@@ -28,6 +29,15 @@ export class AuthServiceController {
   @MessagePattern({ cmd: 'logout' })
   async logOut(userId: string) {
     const result = await this.authServiceService.logout(userId);
+    return result;
+  }
+
+  // POST : Reset Password
+  @MessagePattern({ cmd: 'reset-password' })
+  async resetPassword(resetPasswordData: ResetPasswordDto) {
+    console.log("data",resetPasswordData.email, resetPasswordData.password);
+    const result = await this.authServiceService.resetPassword(resetPasswordData);
+    console.log(result)
     return result;
   }
 

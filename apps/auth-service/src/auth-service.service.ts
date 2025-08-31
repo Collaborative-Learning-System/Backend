@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { stat } from 'fs';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
 
 @Injectable()
 export class AuthServiceService {
@@ -152,6 +153,30 @@ export class AuthServiceService {
         message: 'Logout failed. Please Try Again Later',
       };
     }
+  }
+
+  // Reset Password
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const user = await this.userRepository.findOne({ where: { email: resetPasswordDto.email } });
+    if (!user) {
+      return {
+        success: false,
+        statusCode: 404,
+        message: 'User not found with the provided email',
+      };
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(resetPasswordDto.password, 10);
+    user.password = hashedPassword;
+
+    await this.userRepository.save(user);
+    console.log("Password reset successfully");
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Password reset successfully',
+    };
   }
 
   // Get User Data

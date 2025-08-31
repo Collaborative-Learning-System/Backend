@@ -18,7 +18,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a, _b, _c, _d;
+var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthServiceController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -27,6 +27,7 @@ const signup_dto_1 = __webpack_require__(/*! ./dtos/signup.dto */ "./apps/auth-s
 const login_dto_1 = __webpack_require__(/*! ./dtos/login.dto */ "./apps/auth-service/src/dtos/login.dto.ts");
 const refresh_token_dto_1 = __webpack_require__(/*! ./dtos/refresh-token.dto */ "./apps/auth-service/src/dtos/refresh-token.dto.ts");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const reset_password_dto_1 = __webpack_require__(/*! ./dtos/reset-password.dto */ "./apps/auth-service/src/dtos/reset-password.dto.ts");
 let AuthServiceController = class AuthServiceController {
     authServiceService;
     constructor(authServiceService) {
@@ -43,6 +44,12 @@ let AuthServiceController = class AuthServiceController {
     }
     async logOut(userId) {
         const result = await this.authServiceService.logout(userId);
+        return result;
+    }
+    async resetPassword(resetPasswordData) {
+        console.log("data", resetPasswordData.email, resetPasswordData.password);
+        const result = await this.authServiceService.resetPassword(resetPasswordData);
+        console.log(result);
         return result;
     }
     async getUserData(userId) {
@@ -74,6 +81,12 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthServiceController.prototype, "logOut", null);
 __decorate([
+    (0, microservices_1.MessagePattern)({ cmd: 'reset-password' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_d = typeof reset_password_dto_1.ResetPasswordDto !== "undefined" && reset_password_dto_1.ResetPasswordDto) === "function" ? _d : Object]),
+    __metadata("design:returntype", Promise)
+], AuthServiceController.prototype, "resetPassword", null);
+__decorate([
     (0, microservices_1.MessagePattern)({ cmd: 'get-user-data' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -82,7 +95,7 @@ __decorate([
 __decorate([
     (0, microservices_1.MessagePattern)({ cmd: 'refresh-token' }),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_d = typeof refresh_token_dto_1.RefreshTokenDto !== "undefined" && refresh_token_dto_1.RefreshTokenDto) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [typeof (_e = typeof refresh_token_dto_1.RefreshTokenDto !== "undefined" && refresh_token_dto_1.RefreshTokenDto) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], AuthServiceController.prototype, "refresh", null);
 exports.AuthServiceController = AuthServiceController = __decorate([
@@ -345,6 +358,25 @@ let AuthServiceService = class AuthServiceService {
             };
         }
     }
+    async resetPassword(resetPasswordDto) {
+        const user = await this.userRepository.findOne({ where: { email: resetPasswordDto.email } });
+        if (!user) {
+            return {
+                success: false,
+                statusCode: 404,
+                message: 'User not found with the provided email',
+            };
+        }
+        const hashedPassword = await bcrypt.hash(resetPasswordDto.password, 10);
+        user.password = hashedPassword;
+        await this.userRepository.save(user);
+        console.log("Password reset successfully");
+        return {
+            success: true,
+            statusCode: 200,
+            message: 'Password reset successfully',
+        };
+    }
     async getUserData(userId) {
         const user = await this.userRepository.findOne({ where: { userId } });
         if (!user) {
@@ -437,6 +469,42 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], RefreshTokenDto.prototype, "refreshToken", void 0);
+
+
+/***/ }),
+
+/***/ "./apps/auth-service/src/dtos/reset-password.dto.ts":
+/*!**********************************************************!*\
+  !*** ./apps/auth-service/src/dtos/reset-password.dto.ts ***!
+  \**********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ResetPasswordDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+class ResetPasswordDto {
+    email;
+    password;
+}
+exports.ResetPasswordDto = ResetPasswordDto;
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], ResetPasswordDto.prototype, "email", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], ResetPasswordDto.prototype, "password", void 0);
 
 
 /***/ }),

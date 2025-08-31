@@ -50,6 +50,20 @@ export class AuthGatewayService {
     }
   }
 
+  async resetPassword(email: string, password: string) { 
+    try {
+      const result = await lastValueFrom(
+        this.authClient.send({ cmd: 'reset-password' }, { email, password }),
+      );
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Password reset failed. Please Try Again Later',
+      };
+    }
+  }
+
   async getUserData(userId: string) {
     try {
       const result = await lastValueFrom(

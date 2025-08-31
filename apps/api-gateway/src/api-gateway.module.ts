@@ -6,6 +6,8 @@ import { AuthGatewayController } from './auth/authGateway.controller';
 import { AuthGatewayService } from './auth/authGateway.service';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { NotificationGatewayController } from './notification/notificationGateway.controller';
+import { NotificationGatewayService } from './notification/notificationGateway.service';
 
 @Module({
   imports: [
@@ -22,10 +24,18 @@ import { JwtAuthGuard } from './jwt-auth.guard';
           port: 3001,
         },
       },
+      {
+        name: 'notification-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3002,
+        },
+      }
     ]),
   ],
-  controllers: [ApiGatewayController, AuthGatewayController],
-  providers: [ApiGatewayService, AuthGatewayService, JwtAuthGuard],
+  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController],
+  providers: [ApiGatewayService, AuthGatewayService, NotificationGatewayService, JwtAuthGuard],
   exports: [JwtAuthGuard],
 })
 export class ApiGatewayModule {}

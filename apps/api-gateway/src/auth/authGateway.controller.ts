@@ -47,6 +47,26 @@ export class AuthGatewayController {
     return res.status(HttpStatus.OK).json(result);
   }
 
+  @Post('reset-password')
+  async resetPassword(@Res() res: Response, @Body() resetData: any) {
+    const { email, newPassword } = resetData;
+    if (!email || !newPassword) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        success: false,
+        message: 'Email and new password are required',
+      });
+    }
+    const result = await this.authGatewayService.resetPassword(
+      email,
+      newPassword,
+    );
+    if(result.success) {
+      return res.status(HttpStatus.OK).json(result);
+    } else {
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('get-user-data/:userId')
   async getUserData(@Res() res: Response, @Param('userId') userId: string) {
