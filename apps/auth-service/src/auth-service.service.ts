@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { SignupDto } from './dtos/signup.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,8 +8,7 @@ import { LoginDto } from './dtos/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { v4 as uuidv4 } from 'uuid';
-import { ref } from 'process';
-import { RpcException } from '@nestjs/microservices';
+import { stat } from 'fs';
 
 @Injectable()
 export class AuthServiceService {
@@ -26,19 +21,18 @@ export class AuthServiceService {
   ) {}
 
   async signup(signupData: SignupDto) {
-    const { name, email, password } = signupData;
+    const { fullName, email, password } = signupData;
 
     // check whether the email in use
     const existingUser = await this.userRepository.findOne({
       where: { email },
     });
     if (existingUser) {
-      // throw new BadRequestException('Email already in use');
-      throw new RpcException({
-        statusCode: 400,
+      return {
+        success: false,
+        statusCode: 401,
         message: 'Email already in use',
-      });
-
+      };
     }
 
     // hash the password
@@ -46,13 +40,17 @@ export class AuthServiceService {
 
     // create a new user entity and save it to the database
     await this.userRepository.save({
-      name,
+      fullName,
       email,
       password: hashedPassword,
       role: UserRole.USER,
     });
 
-    return "User registered successfully";
+    return {
+      success: true,
+      statusCode: 201,
+      message: 'User registered successfully',
+    };
   }
 
   async login(loginData: LoginDto) {
@@ -61,37 +59,59 @@ export class AuthServiceService {
     // find user by email
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
-      throw new UnauthorizedException('Wrong Credentials');
+      return {
+        success: false,
+        statusCode: 401,
+        message: 'Wrong Credentials',
+      };
     }
-
     // compare by password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Wrong Credentials');
+      return {
+        success: false,
+        statusCode: 401,
+        message: 'Wrong Credentials',
+      };
     }
-
     // Generate tokens
-    return this.generateUserTokens(user.id);
+    const tokens = await this.generateUserTokens(user.userId);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'User logged in successfully',
+      data: { tokens, userId: user.userId },
+    };
   }
 
   // POST : Refresh Token
   async refresh(refreshToken: string) {
     const token = await this.refreshTokenRepository.findOne({
-      where: { token: refreshToken},
+      where: { token: refreshToken },
     });
 
     if (!token) {
-      throw new UnauthorizedException('Invalid refresh token');
+      return {
+        success: false,
+        statusCode: 401,
+        message: 'Invalid refresh token',
+      };
     }
 
     if (token.expiresAt < new Date()) {
-      throw new UnauthorizedException('Refresh token expired');
+      return {
+        success: false,
+        statusCode: 401,
+        message: 'Refresh token expired',
+      };
     }
 
-    // console.log('Refresh token is valid:', token);
-    // return "Refresh token is valid";
     // Generate new tokens
-    return this.generateUserTokens(token.id);
+    const tokens = await this.generateUserTokens(token.id);
+    return {
+      success: true,
+      data: tokens,
+    };
   }
 
   // generate access and refresh tokens
@@ -114,5 +134,41 @@ export class AuthServiceService {
       id: id,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
+  }
+
+  // Logout
+  async logout(userId: string) {
+    try {
+      await this.refreshTokenRepository.delete({ id: userId });
+      return {
+        success: true,
+        statusCode: 200,
+        message: 'User logged out successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Logout failed. Please Try Again Later',
+      };
+    }
+  }
+
+  // Get User Data
+  async getUserData(userId: string) {
+    const user = await this.userRepository.findOne({ where: { userId } });
+    if (!user) {
+      return {
+        success: false,
+        statusCode: 404,
+        message: 'User not found',
+      };
+    }
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'User found',
+      data: user,
+    };
   }
 }
