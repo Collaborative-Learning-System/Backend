@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { EmailDto } from './dtos/email.dto';
 import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
+import { WelcomeEmailDto } from './dtos/welcomeEmail.dto';
 
 @Injectable()
 export class NotificationServiceService implements OnModuleInit {
@@ -32,8 +33,15 @@ export class NotificationServiceService implements OnModuleInit {
   async sendResetPasswordEmail(emailDto: EmailDto) {
     const link = this.configService.get<string>('LINK');
     const html = this.resetPasswordTemplate(link);
-    return this.sendMail(emailDto, 'Reset Password', undefined, html);
+    console.log("email",emailDto.email)
+    return this.sendMail(emailDto.email, 'Reset Password', undefined, html);
   }
+
+  async sendWelcomeEmail(welcomeDto: WelcomeEmailDto) {
+    const html = this.welcomeEmailTemplate(welcomeDto.fullName);
+    return this.sendMail(welcomeDto.email, 'Welcome to EduCollab', undefined, html);
+  }
+
   resetPasswordTemplate = (link: string | undefined) => `
 <!DOCTYPE html>
 <html lang="en">
@@ -94,7 +102,54 @@ export class NotificationServiceService implements OnModuleInit {
 </body>
 </html>`;
 
-  async sendMail(to: EmailDto, subject: string, text?: string, html?: string) {
+  welcomeEmailTemplate = (fullName: string | undefined) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Welcome - EduCollab</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f7; font-family:Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f4f4f7">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff; border-radius:6px; overflow:hidden; margin:40px auto; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+          <!-- Header Section -->
+          <tr>
+            <td bgcolor="#083c70" style="padding:30px; text-align:left;">
+              <h2 style="margin:0; font-size:20px; font-weight:bold; color:#ffffff;">
+                Welcome to EduCollab, ${fullName}!
+              </h2>
+            </td>
+          </tr>
+          <!-- Body Section -->
+          <tr>
+            <td style="padding:30px; color:#333333; font-size:15px; line-height:1.6;">
+              <p style="margin:0 0 15px 0;">Hi ${fullName}!</p>
+              <p style="margin:0 0 20px 0;">
+                Thank you for joining EduCollab. We're excited to have you on board!
+              </p>
+              <p style="margin:0 0 20px 0;">
+                To get started, please visit our platform and explore the available resources.
+              </p>
+            </td>
+          </tr>
+          <!-- Footer Section -->
+          <tr>
+            <td bgcolor="#fafafa" style="padding:20px; text-align:center; font-size:12px; color:#999999;">
+              &copy; ${new Date().getFullYear()} EduCollab. All rights reserved.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+
+  async sendMail(to: string, subject: string, text?: string, html?: string) {
     console.log(to, subject, text, html);
     try {
       await this.transporter.sendMail({

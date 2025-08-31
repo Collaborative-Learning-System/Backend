@@ -502,6 +502,19 @@ let NotificationGatewayController = class NotificationGatewayController {
         }
         return res.status(common_1.HttpStatus.OK).json(result);
     }
+    async sendWelcomeEmail(body, res) {
+        if (!body.email || !body.fullName) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
+                success: false,
+                message: 'Email and full name are required',
+            });
+        }
+        const result = await this.notificationGatewayService.sendWelcomeEmail(body.email, body.fullName);
+        if (!result.success) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+        return res.status(common_1.HttpStatus.OK).json(result);
+    }
 };
 exports.NotificationGatewayController = NotificationGatewayController;
 __decorate([
@@ -512,6 +525,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], NotificationGatewayController.prototype, "sendResetPasswordEmail", null);
+__decorate([
+    (0, common_1.Post)('welcome-email'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], NotificationGatewayController.prototype, "sendWelcomeEmail", null);
 exports.NotificationGatewayController = NotificationGatewayController = __decorate([
     (0, common_1.Controller)('notification'),
     __metadata("design:paramtypes", [typeof (_a = typeof notificationGateway_service_1.NotificationGatewayService !== "undefined" && notificationGateway_service_1.NotificationGatewayService) === "function" ? _a : Object])
@@ -552,13 +573,25 @@ let NotificationGatewayService = class NotificationGatewayService {
     }
     async sendResetPasswordEmail(email) {
         try {
-            const result = await (0, rxjs_1.lastValueFrom)(this.notificationClient.send({ cmd: 'reset-password' }, email));
+            const result = await (0, rxjs_1.lastValueFrom)(this.notificationClient.send({ cmd: 'reset-password' }, { email }));
             return result;
         }
         catch (error) {
             return {
                 success: false,
                 message: error.message || 'Failed to send reset password email',
+            };
+        }
+    }
+    async sendWelcomeEmail(email, fullName) {
+        try {
+            const result = await (0, rxjs_1.lastValueFrom)(this.notificationClient.send({ cmd: 'welcome-email' }, { email, fullName }));
+            return result;
+        }
+        catch (error) {
+            return {
+                success: false,
+                message: error.message || 'Failed to send welcome email',
             };
         }
     }
