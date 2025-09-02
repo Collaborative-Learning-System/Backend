@@ -1,11 +1,12 @@
-import { Body, Controller, HttpStatus, Post, Res } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Inject, Post, Res } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import type { Response } from 'express';
-import { NotificationGatewayService } from './notificationGateway.service';
+import { lastValueFrom } from 'rxjs';
 
 @Controller('notification')
 export class NotificationGatewayController {
   constructor(
-    private readonly notificationGatewayService: NotificationGatewayService,
+    @Inject('notification-service') private readonly notificationClient: ClientProxy ,
   ) {}
 
   @Post('reset-password')
@@ -19,9 +20,9 @@ export class NotificationGatewayController {
         message: 'Email and full name are required',
       });
     }
-    const result = await this.notificationGatewayService.sendResetPasswordEmail(
-      body.email,
-    );
+   const result = await lastValueFrom(
+     this.notificationClient.send({ cmd: 'reset-password' }, body),
+   );
     if (!result.success) {
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
@@ -39,9 +40,11 @@ export class NotificationGatewayController {
         message: 'Email and full name are required',
       });
     }
-    const result = await this.notificationGatewayService.sendWelcomeEmail(
-      body.email,
-      body.fullName,
+    const result = await lastValueFrom(
+      this.notificationClient.send(
+        { cmd: 'welcome-email' },
+        body,
+      ),
     );
     if (!result.success) {
       return res.status(HttpStatus.BAD_REQUEST).json(result);

@@ -18,14 +18,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a, _b, _c, _d, _e;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthServiceController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const auth_service_service_1 = __webpack_require__(/*! ./auth-service.service */ "./apps/auth-service/src/auth-service.service.ts");
 const signup_dto_1 = __webpack_require__(/*! ./dtos/signup.dto */ "./apps/auth-service/src/dtos/signup.dto.ts");
 const login_dto_1 = __webpack_require__(/*! ./dtos/login.dto */ "./apps/auth-service/src/dtos/login.dto.ts");
-const refresh_token_dto_1 = __webpack_require__(/*! ./dtos/refresh-token.dto */ "./apps/auth-service/src/dtos/refresh-token.dto.ts");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const reset_password_dto_1 = __webpack_require__(/*! ./dtos/reset-password.dto */ "./apps/auth-service/src/dtos/reset-password.dto.ts");
 let AuthServiceController = class AuthServiceController {
@@ -35,7 +34,7 @@ let AuthServiceController = class AuthServiceController {
     }
     async signup(signupData) {
         const result = await this.authServiceService.signup(signupData);
-        console.log("result at auth service controller:", result);
+        console.log('result at auth service controller:', result);
         return result;
     }
     async login(loginData) {
@@ -47,9 +46,7 @@ let AuthServiceController = class AuthServiceController {
         return result;
     }
     async resetPassword(resetPasswordData) {
-        console.log("data", resetPasswordData.email, resetPasswordData.password);
         const result = await this.authServiceService.resetPassword(resetPasswordData);
-        console.log(result);
         return result;
     }
     async getUserData(userId) {
@@ -58,6 +55,7 @@ let AuthServiceController = class AuthServiceController {
     }
     async refresh(token) {
         const result = await this.authServiceService.refresh(token.refreshToken);
+        console.log("result at controller", result);
         return result;
     }
     async findUserByEmail(email) {
@@ -99,7 +97,7 @@ __decorate([
 __decorate([
     (0, microservices_1.MessagePattern)({ cmd: 'refresh-token' }),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_e = typeof refresh_token_dto_1.RefreshTokenDto !== "undefined" && refresh_token_dto_1.RefreshTokenDto) === "function" ? _e : Object]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthServiceController.prototype, "refresh", null);
 __decorate([
@@ -176,7 +174,7 @@ exports.AuthServiceModule = AuthServiceModule = __decorate([
                     global: true,
                     secret: configService.get('JWT_SECRET'),
                     signOptions: {
-                        expiresIn: configService.get('JWT_EXPIRES_IN') || '1h',
+                        expiresIn: configService.get('JWT_EXPIRES_IN') || '1m',
                     },
                 }),
             }),
@@ -313,27 +311,30 @@ let AuthServiceService = class AuthServiceService {
         };
     }
     async refresh(refreshToken) {
-        const token = await this.refreshTokenRepository.findOne({
+        const user = await this.refreshTokenRepository.findOne({
             where: { token: refreshToken },
         });
-        if (!token) {
+        console.log('results', user);
+        if (!user?.token) {
             return {
                 success: false,
                 statusCode: 401,
                 message: 'Invalid refresh token',
             };
         }
-        if (token.expiresAt < new Date()) {
+        if (user.expiresAt < new Date()) {
             return {
                 success: false,
                 statusCode: 401,
                 message: 'Refresh token expired',
             };
         }
-        const tokens = await this.generateUserTokens(token.id);
+        const tokens = await this.generateUserTokens(user.id);
         return {
             success: true,
-            data: tokens,
+            statusCode: 200,
+            message: 'Tokens refreshed successfully',
+            data: { tokens },
         };
     }
     async generateUserTokens(id) {
@@ -348,7 +349,7 @@ let AuthServiceService = class AuthServiceService {
         await this.refreshTokenRepository.save({
             token: refreshToken,
             id: id,
-            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         });
     }
     async logout(userId) {
@@ -369,7 +370,9 @@ let AuthServiceService = class AuthServiceService {
         }
     }
     async resetPassword(resetPasswordDto) {
-        const user = await this.userRepository.findOne({ where: { email: resetPasswordDto.email } });
+        const user = await this.userRepository.findOne({
+            where: { email: resetPasswordDto.email },
+        });
         if (!user) {
             return {
                 success: false,
@@ -377,10 +380,9 @@ let AuthServiceService = class AuthServiceService {
                 message: 'User not found with the provided email',
             };
         }
-        const hashedPassword = await bcrypt.hash(resetPasswordDto.password, 10);
+        const hashedPassword = await bcrypt.hash(resetPasswordDto.newPassword, 10);
         user.password = hashedPassword;
         await this.userRepository.save(user);
-        console.log("Password reset successfully");
         return {
             success: true,
             statusCode: 200,
@@ -418,6 +420,32 @@ let AuthServiceService = class AuthServiceService {
             message: 'User found',
             data: user,
         };
+    }
+    async validateTokens(tokens) {
+        const { accessToken, refreshToken } = tokens;
+        try {
+            const decoded = this.jwtService.verify(accessToken);
+            return {
+                success: true,
+                statusCode: 200,
+                message: 'Access Token is valid',
+                data: decoded,
+            };
+        }
+        catch (error) {
+            try {
+                const result = await this.refresh(refreshToken);
+                return result;
+            }
+            catch (refreshError) {
+                return {
+                    success: false,
+                    statusCode: 401,
+                    message: 'Invalid or expired tokens',
+                    error: refreshError.message,
+                };
+            }
+        }
     }
 };
 exports.AuthServiceService = AuthServiceService;
@@ -468,37 +496,6 @@ __decorate([
 
 /***/ }),
 
-/***/ "./apps/auth-service/src/dtos/refresh-token.dto.ts":
-/*!*********************************************************!*\
-  !*** ./apps/auth-service/src/dtos/refresh-token.dto.ts ***!
-  \*********************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.RefreshTokenDto = void 0;
-const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
-class RefreshTokenDto {
-    refreshToken;
-}
-exports.RefreshTokenDto = RefreshTokenDto;
-__decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], RefreshTokenDto.prototype, "refreshToken", void 0);
-
-
-/***/ }),
-
 /***/ "./apps/auth-service/src/dtos/reset-password.dto.ts":
 /*!**********************************************************!*\
   !*** ./apps/auth-service/src/dtos/reset-password.dto.ts ***!
@@ -520,7 +517,7 @@ exports.ResetPasswordDto = void 0;
 const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
 class ResetPasswordDto {
     email;
-    password;
+    newPassword;
 }
 exports.ResetPasswordDto = ResetPasswordDto;
 __decorate([
@@ -536,7 +533,7 @@ __decorate([
         message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
     }),
     __metadata("design:type", String)
-], ResetPasswordDto.prototype, "password", void 0);
+], ResetPasswordDto.prototype, "newPassword", void 0);
 
 
 /***/ }),

@@ -5,6 +5,7 @@ import { LoginDto } from './dtos/login.dto';
 import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { MessagePattern } from '@nestjs/microservices';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { TokensDto } from './dtos/tokens.dto';
 
 @Controller('auth')
 export class AuthServiceController {
@@ -14,7 +15,7 @@ export class AuthServiceController {
   @MessagePattern({ cmd: 'signup' })
   async signup(signupData: SignupDto) {
     const result = await this.authServiceService.signup(signupData);
-    console.log("result at auth service controller:", result);
+    console.log('result at auth service controller:', result);
     return result;
   }
 
@@ -35,13 +36,12 @@ export class AuthServiceController {
   // POST : Reset Password
   @MessagePattern({ cmd: 'reset-password' })
   async resetPassword(resetPasswordData: ResetPasswordDto) {
-    console.log("data",resetPasswordData.email, resetPasswordData.password);
-    const result = await this.authServiceService.resetPassword(resetPasswordData);
-    console.log(result)
+    const result =
+      await this.authServiceService.resetPassword(resetPasswordData);
     return result;
   }
 
-  // GET : GetUserData
+  // GET : Get User Data
   @MessagePattern({ cmd: 'get-user-data' })
   async getUserData(userId: string) {
     const result = await this.authServiceService.getUserData(userId);
@@ -50,8 +50,9 @@ export class AuthServiceController {
 
   // POST : Refresh Token
   @MessagePattern({ cmd: 'refresh-token' })
-  async refresh(token: RefreshTokenDto) {
+  async refresh(token: { refreshToken: string }) {
     const result = await this.authServiceService.refresh(token.refreshToken);
+    console.log("result at controller", result);
     return result;
   }
 

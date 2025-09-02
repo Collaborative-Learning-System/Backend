@@ -3,11 +3,9 @@ import { ApiGatewayController } from './api-gateway.controller';
 import { ApiGatewayService } from './api-gateway.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AuthGatewayController } from './auth/authGateway.controller';
-import { AuthGatewayService } from './auth/authGateway.service';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { NotificationGatewayController } from './notification/notificationGateway.controller';
-import { NotificationGatewayService } from './notification/notificationGateway.service';
 
 @Module({
   imports: [
@@ -35,7 +33,7 @@ import { NotificationGatewayService } from './notification/notificationGateway.s
     ]),
   ],
   controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController],
-  providers: [ApiGatewayService, AuthGatewayService, NotificationGatewayService, JwtAuthGuard],
+  providers: [ApiGatewayService, JwtAuthGuard],
   exports: [JwtAuthGuard],
 })
 export class ApiGatewayModule {}
