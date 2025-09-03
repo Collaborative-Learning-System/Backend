@@ -13,6 +13,8 @@ export class JwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
     const accessToken = req.cookies?.accessToken;
+    const refreshToken = req.cookies?.refreshToken;
+
     if (!accessToken) throw new UnauthorizedException('No token found');
 
     try {
@@ -20,7 +22,12 @@ export class JwtAuthGuard implements CanActivate {
       req.user = decoded;
       return true;
     } catch (error) {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException({
+        message: 'Invalid or expired token',
+        data: {
+          refreshToken: refreshToken,
+        }
+      });
     }
   }
 }
