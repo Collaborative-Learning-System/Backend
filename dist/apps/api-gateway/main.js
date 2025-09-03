@@ -58,9 +58,9 @@ const api_gateway_controller_1 = __webpack_require__(/*! ./api-gateway.controlle
 const api_gateway_service_1 = __webpack_require__(/*! ./api-gateway.service */ "./apps/api-gateway/src/api-gateway.service.ts");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const authGateway_controller_1 = __webpack_require__(/*! ./auth/authGateway.controller */ "./apps/api-gateway/src/auth/authGateway.controller.ts");
-const authGateway_service_1 = __webpack_require__(/*! ./auth/authGateway.service */ "./apps/api-gateway/src/auth/authGateway.service.ts");
 const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
 const jwt_auth_guard_1 = __webpack_require__(/*! ./jwt-auth.guard */ "./apps/api-gateway/src/jwt-auth.guard.ts");
+const notificationGateway_controller_1 = __webpack_require__(/*! ./notification/notificationGateway.controller */ "./apps/api-gateway/src/notification/notificationGateway.controller.ts");
 let ApiGatewayModule = class ApiGatewayModule {
 };
 exports.ApiGatewayModule = ApiGatewayModule;
@@ -80,10 +80,18 @@ exports.ApiGatewayModule = ApiGatewayModule = __decorate([
                         port: 3001,
                     },
                 },
+                {
+                    name: 'notification-service',
+                    transport: microservices_1.Transport.TCP,
+                    options: {
+                        host: '127.0.0.1',
+                        port: 3002,
+                    },
+                }
             ]),
         ],
-        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController],
-        providers: [api_gateway_service_1.ApiGatewayService, authGateway_service_1.AuthGatewayService, jwt_auth_guard_1.JwtAuthGuard],
+        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController],
+        providers: [api_gateway_service_1.ApiGatewayService, jwt_auth_guard_1.JwtAuthGuard],
         exports: [jwt_auth_guard_1.JwtAuthGuard],
     })
 ], ApiGatewayModule);
@@ -140,22 +148,23 @@ var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthGatewayController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const authGateway_service_1 = __webpack_require__(/*! ./authGateway.service */ "./apps/api-gateway/src/auth/authGateway.service.ts");
 const jwt_auth_guard_1 = __webpack_require__(/*! ../jwt-auth.guard */ "./apps/api-gateway/src/jwt-auth.guard.ts");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
 let AuthGatewayController = class AuthGatewayController {
-    authGatewayService;
-    constructor(authGatewayService) {
-        this.authGatewayService = authGatewayService;
+    authClient;
+    constructor(authClient) {
+        this.authClient = authClient;
     }
     async signup(signupData, res) {
-        const result = await this.authGatewayService.signup(signupData);
+        const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'signup' }, signupData));
         if (!result.success) {
             return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
         }
         return res.status(common_1.HttpStatus.CREATED).json(result);
     }
     async login(loginData, res) {
-        const result = await this.authGatewayService.login(loginData);
+        const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'login' }, loginData));
         if (result.success) {
             const accessToken = result.data.tokens.accessToken;
             const refreshToken = result.data.tokens.refreshToken;
@@ -178,16 +187,62 @@ let AuthGatewayController = class AuthGatewayController {
     async logOut(res, userId) {
         res.clearCookie('accessToken');
         res.clearCookie('refreshToken');
-        const result = await this.authGatewayService.logout(userId);
-        return res.status(common_1.HttpStatus.OK).json(result);
-    }
-    async getUserData(res, userId) {
-        const result = await this.authGatewayService.getUserData(userId);
+        const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'logout' }, userId));
         if (result.success) {
             return res.status(common_1.HttpStatus.OK).json(result);
         }
         else {
             return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+    }
+    async resetPassword(res, resetData) {
+        console.log(resetData);
+        const { email, newPassword } = resetData;
+        if (!email || !newPassword) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
+                success: false,
+                message: 'Email and new password are required',
+            });
+        }
+        const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'reset-password' }, resetData));
+        console.log(result);
+        if (result.success) {
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        else {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+    }
+    async getUserData(res, userId) {
+        const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'get-user-data' }, userId));
+        if (result.success) {
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        else {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+    }
+    async refreshToken(res, refreshToken) {
+        const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'refresh-token' }, refreshToken));
+        if (result.success) {
+            res.clearCookie('accessToken');
+            const accessToken = result.data.tokens.accessToken;
+            const refreshToken = result.data.tokens.refreshToken;
+            res.cookie('accessToken', accessToken, {
+                httpOnly: true,
+                secure: false,
+                sameSite: 'lax',
+            });
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: false,
+                sameSite: 'lax',
+            });
+            console.log("result at gateway :", result);
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        else {
+            return res.status(common_1.HttpStatus.UNAUTHORIZED).json(result);
         }
     }
 };
@@ -217,6 +272,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthGatewayController.prototype, "logOut", null);
 __decorate([
+    (0, common_1.Post)('reset-password'),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AuthGatewayController.prototype, "resetPassword", null);
+__decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('get-user-data/:userId'),
     __param(0, (0, common_1.Res)()),
@@ -225,112 +288,19 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], AuthGatewayController.prototype, "getUserData", null);
+__decorate([
+    (0, common_1.Post)('refresh-token'),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], AuthGatewayController.prototype, "refreshToken", null);
 exports.AuthGatewayController = AuthGatewayController = __decorate([
     (0, common_1.Controller)('auth'),
-    __metadata("design:paramtypes", [typeof (_a = typeof authGateway_service_1.AuthGatewayService !== "undefined" && authGateway_service_1.AuthGatewayService) === "function" ? _a : Object])
-], AuthGatewayController);
-
-
-/***/ }),
-
-/***/ "./apps/api-gateway/src/auth/authGateway.service.ts":
-/*!**********************************************************!*\
-  !*** ./apps/api-gateway/src/auth/authGateway.service.ts ***!
-  \**********************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AuthGatewayService = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
-let AuthGatewayService = class AuthGatewayService {
-    authClient;
-    constructor(authClient) {
-        this.authClient = authClient;
-    }
-    async signup(signupData) {
-        try {
-            const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'signup' }, signupData));
-            return result;
-        }
-        catch (error) {
-            return {
-                success: false,
-                message: error.message || 'Signup failed. Please Try Again Later',
-            };
-        }
-    }
-    async login(loginData) {
-        try {
-            const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'login' }, loginData));
-            return result;
-        }
-        catch (error) {
-            return {
-                success: false,
-                message: error.message || 'Login failed. Please Try Again Later',
-            };
-        }
-    }
-    async logout(userId) {
-        try {
-            const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'logout' }, userId));
-            return result;
-        }
-        catch (error) {
-            return {
-                success: false,
-                message: error.message || 'Logout failed. Please Try Again Later',
-            };
-        }
-    }
-    async getUserData(userId) {
-        try {
-            const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'get-user-data' }, userId));
-            return result;
-        }
-        catch (error) {
-            return {
-                success: false,
-                message: error.message ||
-                    'Failed to retrieve user data. Please Try Again Later',
-            };
-        }
-    }
-    async refreshToken(refreshToken) {
-        try {
-            const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'refresh-token' }, refreshToken));
-            return result;
-        }
-        catch (error) {
-            return {
-                success: false,
-                message: error.message || 'Token refresh failed. Please Try Again Later',
-            };
-        }
-    }
-};
-exports.AuthGatewayService = AuthGatewayService;
-exports.AuthGatewayService = AuthGatewayService = __decorate([
-    (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('auth-service')),
     __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
-], AuthGatewayService);
+], AuthGatewayController);
 
 
 /***/ }),
@@ -364,6 +334,7 @@ let JwtAuthGuard = class JwtAuthGuard {
     canActivate(context) {
         const req = context.switchToHttp().getRequest();
         const accessToken = req.cookies?.accessToken;
+        const refreshToken = req.cookies?.refreshToken;
         if (!accessToken)
             throw new common_1.UnauthorizedException('No token found');
         try {
@@ -372,7 +343,12 @@ let JwtAuthGuard = class JwtAuthGuard {
             return true;
         }
         catch (error) {
-            throw new common_1.UnauthorizedException('Invalid or expired token');
+            throw new common_1.UnauthorizedException({
+                message: 'Invalid or expired token',
+                data: {
+                    refreshToken: refreshToken,
+                }
+            });
         }
     }
 };
@@ -410,6 +386,89 @@ async function bootstrap() {
     console.log('API gateway is running on port 3000');
 }
 bootstrap();
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/notification/notificationGateway.controller.ts":
+/*!*****************************************************************************!*\
+  !*** ./apps/api-gateway/src/notification/notificationGateway.controller.ts ***!
+  \*****************************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.NotificationGatewayController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+let NotificationGatewayController = class NotificationGatewayController {
+    notificationClient;
+    constructor(notificationClient) {
+        this.notificationClient = notificationClient;
+    }
+    async sendResetPasswordEmail(body, res) {
+        if (!body.email) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
+                success: false,
+                message: 'Email and full name are required',
+            });
+        }
+        const result = await (0, rxjs_1.lastValueFrom)(this.notificationClient.send({ cmd: 'reset-password' }, body));
+        if (!result.success) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+        return res.status(common_1.HttpStatus.OK).json(result);
+    }
+    async sendWelcomeEmail(body, res) {
+        if (!body.email || !body.fullName) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
+                success: false,
+                message: 'Email and full name are required',
+            });
+        }
+        const result = await (0, rxjs_1.lastValueFrom)(this.notificationClient.send({ cmd: 'welcome-email' }, body));
+        if (!result.success) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+        return res.status(common_1.HttpStatus.OK).json(result);
+    }
+};
+exports.NotificationGatewayController = NotificationGatewayController;
+__decorate([
+    (0, common_1.Post)('reset-password'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], NotificationGatewayController.prototype, "sendResetPasswordEmail", null);
+__decorate([
+    (0, common_1.Post)('welcome-email'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], NotificationGatewayController.prototype, "sendWelcomeEmail", null);
+exports.NotificationGatewayController = NotificationGatewayController = __decorate([
+    (0, common_1.Controller)('notification'),
+    __param(0, (0, common_1.Inject)('notification-service')),
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
+], NotificationGatewayController);
 
 
 /***/ }),

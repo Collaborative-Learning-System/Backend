@@ -9,6 +9,8 @@ import { JwtService } from '@nestjs/jwt';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { stat } from 'fs';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { TokensDto } from './dtos/tokens.dto';
 
 @Injectable()
 export class AuthServiceService {
@@ -22,7 +24,6 @@ export class AuthServiceService {
 
   async signup(signupData: SignupDto) {
     const { fullName, email, password } = signupData;
-
     // check whether the email in use
     const existingUser = await this.userRepository.findOne({
       where: { email },
@@ -34,10 +35,8 @@ export class AuthServiceService {
         message: 'Email already in use',
       };
     }
-
     // hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
-
     // create a new user entity and save it to the database
     await this.userRepository.save({
       fullName,
@@ -45,7 +44,6 @@ export class AuthServiceService {
       password: hashedPassword,
       role: UserRole.USER,
     });
-
     return {
       success: true,
       statusCode: 201,
@@ -76,6 +74,7 @@ export class AuthServiceService {
     }
     // Generate tokens
     const tokens = await this.generateUserTokens(user.userId);
+
     return {
       success: true,
       statusCode: 200,
@@ -86,11 +85,12 @@ export class AuthServiceService {
 
   // POST : Refresh Token
   async refresh(refreshToken: string) {
-    const token = await this.refreshTokenRepository.findOne({
+    const user = await this.refreshTokenRepository.findOne({
       where: { token: refreshToken },
     });
+    console.log('results', user);
 
-    if (!token) {
+    if (!user?.token) {
       return {
         success: false,
         statusCode: 401,
@@ -98,7 +98,7 @@ export class AuthServiceService {
       };
     }
 
-    if (token.expiresAt < new Date()) {
+    if (user.expiresAt < new Date()) {
       return {
         success: false,
         statusCode: 401,
@@ -107,14 +107,16 @@ export class AuthServiceService {
     }
 
     // Generate new tokens
-    const tokens = await this.generateUserTokens(token.id);
+    const tokens = await this.generateUserTokens(user.id);
     return {
       success: true,
-      data: tokens,
+      statusCode: 200,
+      message: 'Tokens refreshed successfully',
+      data: { tokens },
     };
   }
 
-  // generate access and refresh tokens
+  // generate access tokens
   async generateUserTokens(id: string) {
     const accessToken = this.jwtService.sign(
       { id },
@@ -132,7 +134,7 @@ export class AuthServiceService {
     await this.refreshTokenRepository.save({
       token: refreshToken,
       id: id,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
   }
 
@@ -154,6 +156,31 @@ export class AuthServiceService {
     }
   }
 
+  // Reset Password
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const user = await this.userRepository.findOne({
+      where: { email: resetPasswordDto.email },
+    });
+    if (!user) {
+      return {
+        success: false,
+        statusCode: 404,
+        message: 'User not found with the provided email',
+      };
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(resetPasswordDto.newPassword, 10);
+    user.password = hashedPassword;
+
+    await this.userRepository.save(user);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Password reset successfully',
+    };
+  }
+
   // Get User Data
   async getUserData(userId: string) {
     const user = await this.userRepository.findOne({ where: { userId } });
@@ -170,5 +197,49 @@ export class AuthServiceService {
       message: 'User found',
       data: user,
     };
+  }
+
+  // Find User By Email
+  async findUserByEmail(email: string) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      return {
+        success: false,
+        statusCode: 404,
+        message: 'User not Exist with this email',
+      };
+    }
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'User found',
+      data: user,
+    };
+  }
+
+  // Validate Tokens
+  async validateTokens(tokens: TokensDto) {
+    const { accessToken, refreshToken } = tokens;
+    try {
+      const decoded = this.jwtService.verify(accessToken);
+      return {
+        success: true,
+        statusCode: 200,
+        message: 'Access Token is valid',
+        data: decoded,
+      };
+    } catch (error) {
+      try {
+        const result = await this.refresh(refreshToken);
+        return result;
+      } catch (refreshError) {
+        return {
+          success: false,
+          statusCode: 401,
+          message: 'Invalid or expired tokens',
+          error: refreshError.message,
+        };
+      }
+    }
   }
 }

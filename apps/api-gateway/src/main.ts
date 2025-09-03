@@ -13,7 +13,6 @@ async function bootstrap() {
   app.use(cookieParser());
 
   await app.listen(process.env.port ?? 3000);
-
   console.log('API gateway is running on port 3000');
 }
 
