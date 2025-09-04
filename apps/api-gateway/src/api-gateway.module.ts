@@ -6,6 +6,7 @@ import { AuthGatewayController } from './auth/authGateway.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { NotificationGatewayController } from './notification/notificationGateway.controller';
+import { WorkspaceGatewayController } from './workspace/workspaceGateway.controller';
 
 @Module({
   imports: [
@@ -29,10 +30,18 @@ import { NotificationGatewayController } from './notification/notificationGatewa
           host: '127.0.0.1',
           port: 3002,
         },
+      },
+      {
+        name: 'workspace-group-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3003,
+        },
       }
     ]),
   ],
-  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController],
+  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController, WorkspaceGatewayController],
   providers: [ApiGatewayService, JwtAuthGuard],
   exports: [JwtAuthGuard],
 })

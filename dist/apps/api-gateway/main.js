@@ -61,6 +61,7 @@ const authGateway_controller_1 = __webpack_require__(/*! ./auth/authGateway.cont
 const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
 const jwt_auth_guard_1 = __webpack_require__(/*! ./jwt-auth.guard */ "./apps/api-gateway/src/jwt-auth.guard.ts");
 const notificationGateway_controller_1 = __webpack_require__(/*! ./notification/notificationGateway.controller */ "./apps/api-gateway/src/notification/notificationGateway.controller.ts");
+const workspaceGateway_controller_1 = __webpack_require__(/*! ./workspace/workspaceGateway.controller */ "./apps/api-gateway/src/workspace/workspaceGateway.controller.ts");
 let ApiGatewayModule = class ApiGatewayModule {
 };
 exports.ApiGatewayModule = ApiGatewayModule;
@@ -87,10 +88,18 @@ exports.ApiGatewayModule = ApiGatewayModule = __decorate([
                         host: '127.0.0.1',
                         port: 3002,
                     },
+                },
+                {
+                    name: 'workspace-group-service',
+                    transport: microservices_1.Transport.TCP,
+                    options: {
+                        host: '127.0.0.1',
+                        port: 3003,
+                    },
                 }
             ]),
         ],
-        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController],
+        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController, workspaceGateway_controller_1.WorkspaceGatewayController],
         providers: [api_gateway_service_1.ApiGatewayService, jwt_auth_guard_1.JwtAuthGuard],
         exports: [jwt_auth_guard_1.JwtAuthGuard],
     })
@@ -473,6 +482,226 @@ exports.NotificationGatewayController = NotificationGatewayController = __decora
 
 /***/ }),
 
+/***/ "./apps/api-gateway/src/workspace/dtos/workspace-gateway.dto.ts":
+/*!**********************************************************************!*\
+  !*** ./apps/api-gateway/src/workspace/dtos/workspace-gateway.dto.ts ***!
+  \**********************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.JoinWorkspaceDto = exports.CreateWorkspaceDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+class CreateWorkspaceDto {
+    name;
+    description;
+}
+exports.CreateWorkspaceDto = CreateWorkspaceDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateWorkspaceDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateWorkspaceDto.prototype, "description", void 0);
+class JoinWorkspaceDto {
+    workspaceId;
+}
+exports.JoinWorkspaceDto = JoinWorkspaceDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], JoinWorkspaceDto.prototype, "workspaceId", void 0);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/workspace/workspaceGateway.controller.ts":
+/*!***********************************************************************!*\
+  !*** ./apps/api-gateway/src/workspace/workspaceGateway.controller.ts ***!
+  \***********************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.WorkspaceGatewayController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../jwt-auth.guard */ "./apps/api-gateway/src/jwt-auth.guard.ts");
+const operators_1 = __webpack_require__(/*! rxjs/operators */ "rxjs/operators");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+const workspace_gateway_dto_1 = __webpack_require__(/*! ./dtos/workspace-gateway.dto */ "./apps/api-gateway/src/workspace/dtos/workspace-gateway.dto.ts");
+let WorkspaceGatewayController = class WorkspaceGatewayController {
+    workspaceServiceClient;
+    constructor() {
+        this.workspaceServiceClient = microservices_1.ClientProxyFactory.create({
+            transport: microservices_1.Transport.TCP,
+            options: {
+                host: '127.0.0.1',
+                port: 3003,
+            },
+        });
+    }
+    async createWorkspace(createWorkspaceDto, req) {
+        const userId = req.user.sub;
+        console.log('Create Workspace DTO:----------------', createWorkspaceDto);
+        try {
+            const result = await this.workspaceServiceClient
+                .send('create_workspace', { userId, createWorkspaceDto })
+                .pipe((0, operators_1.timeout)(5000), (0, operators_1.catchError)(err => {
+                if (err instanceof rxjs_1.TimeoutError) {
+                    return (0, rxjs_1.throwError)(() => new common_1.HttpException('Service timeout', common_1.HttpStatus.REQUEST_TIMEOUT));
+                }
+                return (0, rxjs_1.throwError)(() => new common_1.HttpException(err.message || 'Internal server error', common_1.HttpStatus.INTERNAL_SERVER_ERROR));
+            }))
+                .toPromise();
+            return {
+                success: true,
+                message: 'Workspace created successfully',
+                data: result
+            };
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to create workspace', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async joinWorkspace(joinWorkspaceDto, req) {
+        const userId = req.user.sub;
+        try {
+            const result = await this.workspaceServiceClient
+                .send('join_workspace', { userId, joinWorkspaceDto })
+                .pipe((0, operators_1.timeout)(5000), (0, operators_1.catchError)(err => {
+                if (err instanceof rxjs_1.TimeoutError) {
+                    return (0, rxjs_1.throwError)(() => new common_1.HttpException('Service timeout', common_1.HttpStatus.REQUEST_TIMEOUT));
+                }
+                return (0, rxjs_1.throwError)(() => new common_1.HttpException(err.message || 'Internal server error', common_1.HttpStatus.INTERNAL_SERVER_ERROR));
+            }))
+                .toPromise();
+            return {
+                success: true,
+                message: 'Successfully joined workspace',
+                data: result
+            };
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to join workspace', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async getUserWorkspaces(req) {
+        const userId = req.user.sub;
+        try {
+            const result = await this.workspaceServiceClient
+                .send('get_user_workspaces', { userId })
+                .pipe((0, operators_1.timeout)(5000), (0, operators_1.catchError)(err => {
+                if (err instanceof rxjs_1.TimeoutError) {
+                    return (0, rxjs_1.throwError)(() => new common_1.HttpException('Service timeout', common_1.HttpStatus.REQUEST_TIMEOUT));
+                }
+                return (0, rxjs_1.throwError)(() => new common_1.HttpException(err.message || 'Internal server error', common_1.HttpStatus.INTERNAL_SERVER_ERROR));
+            }))
+                .toPromise();
+            return {
+                success: true,
+                message: 'User workspaces retrieved successfully',
+                data: result
+            };
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to retrieve workspaces', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async getWorkspaceById(workspaceId, req) {
+        const userId = req.user.sub;
+        try {
+            const result = await this.workspaceServiceClient
+                .send('get_workspace_by_id', { workspaceId, userId })
+                .pipe((0, operators_1.timeout)(5000), (0, operators_1.catchError)(err => {
+                if (err instanceof rxjs_1.TimeoutError) {
+                    return (0, rxjs_1.throwError)(() => new common_1.HttpException('Service timeout', common_1.HttpStatus.REQUEST_TIMEOUT));
+                }
+                return (0, rxjs_1.throwError)(() => new common_1.HttpException(err.message || 'Internal server error', common_1.HttpStatus.INTERNAL_SERVER_ERROR));
+            }))
+                .toPromise();
+            return {
+                success: true,
+                message: 'Workspace retrieved successfully',
+                data: result
+            };
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to retrieve workspace', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async onModuleDestroy() {
+        await this.workspaceServiceClient.close();
+    }
+};
+exports.WorkspaceGatewayController = WorkspaceGatewayController;
+__decorate([
+    (0, common_1.Post)(),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_a = typeof workspace_gateway_dto_1.CreateWorkspaceDto !== "undefined" && workspace_gateway_dto_1.CreateWorkspaceDto) === "function" ? _a : Object, Object]),
+    __metadata("design:returntype", Promise)
+], WorkspaceGatewayController.prototype, "createWorkspace", null);
+__decorate([
+    (0, common_1.Post)('join'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_b = typeof workspace_gateway_dto_1.JoinWorkspaceDto !== "undefined" && workspace_gateway_dto_1.JoinWorkspaceDto) === "function" ? _b : Object, Object]),
+    __metadata("design:returntype", Promise)
+], WorkspaceGatewayController.prototype, "joinWorkspace", null);
+__decorate([
+    (0, common_1.Get)(),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], WorkspaceGatewayController.prototype, "getUserWorkspaces", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], WorkspaceGatewayController.prototype, "getWorkspaceById", null);
+exports.WorkspaceGatewayController = WorkspaceGatewayController = __decorate([
+    (0, common_1.Controller)('api/workspaces'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __metadata("design:paramtypes", [])
+], WorkspaceGatewayController);
+
+
+/***/ }),
+
 /***/ "@nestjs/common":
 /*!*********************************!*\
   !*** external "@nestjs/common" ***!
@@ -513,6 +742,16 @@ module.exports = require("@nestjs/microservices");
 
 /***/ }),
 
+/***/ "class-validator":
+/*!**********************************!*\
+  !*** external "class-validator" ***!
+  \**********************************/
+/***/ ((module) => {
+
+module.exports = require("class-validator");
+
+/***/ }),
+
 /***/ "cookie-parser":
 /*!********************************!*\
   !*** external "cookie-parser" ***!
@@ -530,6 +769,16 @@ module.exports = require("cookie-parser");
 /***/ ((module) => {
 
 module.exports = require("rxjs");
+
+/***/ }),
+
+/***/ "rxjs/operators":
+/*!*********************************!*\
+  !*** external "rxjs/operators" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("rxjs/operators");
 
 /***/ })
 
