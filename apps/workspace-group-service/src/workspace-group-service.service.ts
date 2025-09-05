@@ -2,12 +2,13 @@ import { Injectable, ConflictException, NotFoundException, BadRequestException }
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Workspace } from './entities/workspace.entity';
-import { WorkspaceMember } from './entities/workspace-member.entity';
+import { WorkspaceMember } from './entities/workspace_user.entity';
 import { 
   CreateWorkspaceDto, 
   JoinWorkspaceDto, 
   WorkspaceResponseDto, 
-  UserWorkspacesResponseDto 
+  UserWorkspacesResponseDto,
+  AllWorkspacesResponseDto
 } from './dtos/workspace.dto';
 
 @Injectable()
@@ -24,38 +25,54 @@ export class WorkspaceGroupServiceService {
   }
 
   async createWorkspace(userId: string, createWorkspaceDto: CreateWorkspaceDto): Promise<WorkspaceResponseDto> {
+    console.log('Service method - userId:', userId);
+    console.log('Service method - createWorkspaceDto:', createWorkspaceDto);
+    
+    // Temporary fix: use a test userId if the passed userId is undefined/null
+    const finalUserId = userId || 'test-user-id-12345';
+    console.log('Final userId to use:', finalUserId);
+    
     try {
       // Create workspace
       const workspace = this.workspaceRepository.create({
-        workspacename: createWorkspaceDto.name,
+        workspacename: createWorkspaceDto.workspacename,
         description: createWorkspaceDto.description,
       });
 
       const savedWorkspace = await this.workspaceRepository.save(workspace);
+      console.log('Saved Workspace:', savedWorkspace);
 
       // Add creator as admin member
       const adminMember = this.workspaceMemberRepository.create({
         workspaceid: savedWorkspace.workspaceid,
-        userid: userId,
+        userid: finalUserId,
         role: 'admin',
       });
-
-      await this.workspaceMemberRepository.save(adminMember);
+      
+      console.log('Creating admin member:', adminMember);
+      const savedMember = await this.workspaceMemberRepository.save(adminMember);
+      console.log('Saved admin member:', savedMember);
 
       return {
         id: savedWorkspace.workspaceid,
         name: savedWorkspace.workspacename,
         description: savedWorkspace.description,
-        adminId: userId, // The creator is the admin
+        adminId: finalUserId,
         role: 'admin',
       };
     } catch (error) {
+      console.error('Error creating workspace:', error);
       throw new ConflictException('Failed to create workspace');
     }
   }
 
   async joinWorkspace(userId: string, joinWorkspaceDto: JoinWorkspaceDto): Promise<WorkspaceResponseDto> {
     const { workspaceId } = joinWorkspaceDto;
+
+    // Validate input
+    if (!userId || !workspaceId) {
+      throw new BadRequestException('User ID and Workspace ID are required');
+    }
 
     // Check if workspace exists
     const workspace = await this.workspaceRepository.findOne({
@@ -72,17 +89,27 @@ export class WorkspaceGroupServiceService {
     });
 
     if (existingMember) {
-      throw new ConflictException('User is already a member of this workspace');
+      // Check if user is the admin (creator) of the workspace
+      if (existingMember.role === 'admin') {
+        throw new ConflictException('You cannot join a workspace that you created. You are already the admin of this workspace.');
+      }
+      // User is already a member
+      throw new ConflictException('You have already joined this workspace.');
     }
 
-    // Add user as member
-    const member = this.workspaceMemberRepository.create({
-      workspaceid: workspaceId,
-      userid: userId,
-      role: 'member',
-    });
+    try {
+      // Add user as member
+      const member = this.workspaceMemberRepository.create({
+        workspaceid: workspaceId,
+        userid: userId,
+        role: 'member',
+      });
 
-    await this.workspaceMemberRepository.save(member);
+      await this.workspaceMemberRepository.save(member);
+    } catch (error) {
+      console.error('Error saving workspace member:', error);
+      throw new ConflictException('Failed to join workspace. Please try again.');
+    }
 
     // Get member count
     const memberCount = await this.workspaceMemberRepository.count({
@@ -105,9 +132,14 @@ export class WorkspaceGroupServiceService {
   }
 
   async getUserWorkspaces(userId: string): Promise<UserWorkspacesResponseDto> {
+    console.log('getUserWorkspaces called with userId:', userId);
+    
     const userMemberships = await this.workspaceMemberRepository.find({
       where: { userid: userId },
     });
+    
+    console.log('Found memberships for user:', userMemberships);
+    console.log('Number of memberships:', userMemberships.length);
 
     const workspaces = await Promise.all(
       userMemberships.map(async (membership) => {
@@ -142,6 +174,9 @@ export class WorkspaceGroupServiceService {
 
     // Filter out null values
     const validWorkspaces = workspaces.filter(workspace => workspace !== null);
+
+    console.log('Final workspaces to return:', validWorkspaces);
+    console.log('Total count:', validWorkspaces.length);
 
     return {
       workspaces: validWorkspaces,
@@ -183,6 +218,58 @@ export class WorkspaceGroupServiceService {
       adminId: adminMember?.userid || '',
       memberCount,
       role: membership.role,
+    };
+  }
+
+  async getAllWorkspaces(): Promise<AllWorkspacesResponseDto> {
+    const workspaces = await this.workspaceRepository.find({
+      select: ['workspaceid', 'workspacename'],
+    });
+
+    const workspaceList = workspaces.map(workspace => ({
+      id: workspace.workspaceid,
+      name: workspace.workspacename,
+    }));
+
+    return {
+      workspaces: workspaceList,
+      totalCount: workspaceList.length,
+    };
+  }
+
+  async checkMembershipStatus(userId: string, workspaceId: string): Promise<{ isMember: boolean; role?: string; message: string }> {
+    if (!userId || !workspaceId) {
+      throw new BadRequestException('User ID and Workspace ID are required');
+    }
+
+    // Check if workspace exists
+    const workspace = await this.workspaceRepository.findOne({
+      where: { workspaceid: workspaceId },
+    });
+
+    if (!workspace) {
+      return { 
+        isMember: false, 
+        message: 'Workspace not found' 
+      };
+    }
+
+    // Check if user is a member
+    const membership = await this.workspaceMemberRepository.findOne({
+      where: { workspaceid: workspaceId, userid: userId },
+    });
+
+    if (!membership) {
+      return { 
+        isMember: false, 
+        message: 'User is not a member of this workspace' 
+      };
+    }
+
+    return { 
+      isMember: true, 
+      role: membership.role,
+      message: `User is a ${membership.role} of this workspace` 
     };
   }
 }

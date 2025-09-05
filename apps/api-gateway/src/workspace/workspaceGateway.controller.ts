@@ -13,7 +13,7 @@ import { ClientProxy, ClientProxyFactory, Transport } from '@nestjs/microservice
 import { JwtAuthGuard } from '../jwt-auth.guard';
 import { catchError, timeout } from 'rxjs/operators';
 import { throwError, TimeoutError } from 'rxjs';
-import { CreateWorkspaceDto, JoinWorkspaceDto } from './dtos/workspace-gateway.dto';
+import { CreateWorkspaceDto, JoinWorkspaceDto, GetWorkspaceDetailsDto } from './dtos/workspace-gateway.dto';
 
 @Controller('api/workspaces')
 @UseGuards(JwtAuthGuard)
@@ -32,11 +32,18 @@ export class WorkspaceGatewayController {
 
   @Post()
   async createWorkspace(@Body() createWorkspaceDto: CreateWorkspaceDto, @Request() req: any) {
-    const userId = req.user.sub;
-    console.log('Create Workspace DTO:----------------', createWorkspaceDto);
+
+    const userId = req.user.sub || req.user.userId || req.user.id;
+
+    // Transform the DTO to match what the workspace service expects
+    const workspaceServiceDto = {
+      workspacename: createWorkspaceDto.workspacename,
+      description: createWorkspaceDto.description
+    };
+    
     try {
       const result = await this.workspaceServiceClient
-        .send('create_workspace', { userId, createWorkspaceDto })
+        .send('create_workspace', { userId, createWorkspaceDto: workspaceServiceDto })
         .pipe(
           timeout(5000),
           catchError(err => {
@@ -63,7 +70,11 @@ export class WorkspaceGatewayController {
 
   @Post('join')
   async joinWorkspace(@Body() joinWorkspaceDto: JoinWorkspaceDto, @Request() req: any) {
-    const userId = req.user.sub;
+    const userId = req.user.sub || req.user.userId || req.user.id;
+    
+    if (!userId) {
+      throw new HttpException('User ID not found in token', HttpStatus.UNAUTHORIZED);
+    }
     
     try {
       const result = await this.workspaceServiceClient
@@ -74,6 +85,20 @@ export class WorkspaceGatewayController {
             if (err instanceof TimeoutError) {
               return throwError(() => new HttpException('Service timeout', HttpStatus.REQUEST_TIMEOUT));
             }
+            
+            // Handle specific workspace errors
+            if (err.message) {
+              if (err.message.includes('already joined this workspace')) {
+                return throwError(() => new HttpException('You have already joined this workspace', HttpStatus.CONFLICT));
+              }
+              if (err.message.includes('cannot join a workspace that you created')) {
+                return throwError(() => new HttpException('You cannot join a workspace that you created. You are already the admin of this workspace', HttpStatus.CONFLICT));
+              }
+              if (err.message.includes('Workspace not found')) {
+                return throwError(() => new HttpException('Workspace not found', HttpStatus.NOT_FOUND));
+              }
+            }
+            
             return throwError(() => new HttpException(err.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR));
           })
         )
@@ -81,7 +106,6 @@ export class WorkspaceGatewayController {
       
       return {
         success: true,
-        message: 'Successfully joined workspace',
         data: result
       };
     } catch (error) {
@@ -94,7 +118,11 @@ export class WorkspaceGatewayController {
 
   @Get()
   async getUserWorkspaces(@Request() req: any) {
-    const userId = req.user.sub;
+    const userId = req.user.sub || req.user.userId || req.user.id;
+    
+    if (!userId) {
+      throw new HttpException('User ID not found in token', HttpStatus.UNAUTHORIZED);
+    }
     
     try {
       const result = await this.workspaceServiceClient
@@ -112,7 +140,7 @@ export class WorkspaceGatewayController {
       
       return {
         success: true,
-        message: 'User workspaces retrieved successfully',
+        message: 'User workspaces retrieved successfully!!!',
         data: result
       };
     } catch (error) {
@@ -123,13 +151,11 @@ export class WorkspaceGatewayController {
     }
   }
 
-  @Get(':id')
-  async getWorkspaceById(@Param('id') workspaceId: string, @Request() req: any) {
-    const userId = req.user.sub;
-    
+  @Get('available')
+  async getAllWorkspaces() {
     try {
       const result = await this.workspaceServiceClient
-        .send('get_workspace_by_id', { workspaceId, userId })
+        .send('get_all_workspaces', {})
         .pipe(
           timeout(5000),
           catchError(err => {
@@ -143,12 +169,57 @@ export class WorkspaceGatewayController {
       
       return {
         success: true,
-        message: 'Workspace retrieved successfully',
+        message: 'Available workspaces retrieved successfully',
         data: result
       };
     } catch (error) {
       throw new HttpException(
-        error.message || 'Failed to retrieve workspace',
+        error.message || 'Failed to retrieve available workspaces',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Post('details')
+  async getWorkspaceDetails(@Body() getWorkspaceDetailsDto: GetWorkspaceDetailsDto, @Request() req: any) {
+    const userId = req.user.sub || req.user.userId || req.user.id;
+    if (!userId) {
+      throw new HttpException('User ID not found in token', HttpStatus.UNAUTHORIZED);
+    }
+    
+    try {
+      const result = await this.workspaceServiceClient
+        .send('get_workspace_details', { userId, workspaceId: getWorkspaceDetailsDto.workspaceId })
+        .pipe(
+          timeout(5000),
+          catchError(err => {
+            if (err instanceof TimeoutError) {
+              return throwError(() => new HttpException('Service timeout', HttpStatus.REQUEST_TIMEOUT));
+            }
+            
+            // Handle specific workspace errors
+            if (err.message) {
+              if (err.message.includes('Workspace not found')) {
+                return throwError(() => new HttpException('Workspace not found', HttpStatus.NOT_FOUND));
+              }
+              if (err.message.includes('not a member')) {
+                return throwError(() => new HttpException('You are not a member of this workspace', HttpStatus.FORBIDDEN));
+              }
+            }
+            
+            return throwError(() => new HttpException(err.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR));
+          })
+        )
+        .toPromise();
+      
+      return {
+        success: true,
+        message: 'Workspace details retrieved successfully',
+        data: result
+      };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to retrieve workspace details',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }

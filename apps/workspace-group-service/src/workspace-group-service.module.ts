@@ -4,7 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { WorkspaceGroupServiceController } from './workspace-group-service.controller';
 import { WorkspaceGroupServiceService } from './workspace-group-service.service';
 import { Workspace } from './entities/workspace.entity';
-import { WorkspaceMember } from './entities/workspace-member.entity';
+import { WorkspaceMember } from './entities/workspace_user.entity';
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import { WorkspaceMember } from './entities/workspace-member.entity';
         
         if (usePostgres) {
           // PostgreSQL configuration
-          return {
+          const config: any = {
             type: 'postgres',
             host: configService.get<string>('DB_HOST') || 'localhost',
             port: configService.get<number>('DB_PORT') || 5432,
@@ -28,12 +28,18 @@ import { WorkspaceMember } from './entities/workspace-member.entity';
             database: configService.get<string>('DB_DATABASE') || 'collaborative_learning',
             entities: [Workspace, WorkspaceMember],
             synchronize: configService.get<string>('DB_SYNCHRONIZE') === 'true' || false,
-            ssl: {
-              rejectUnauthorized: configService.get<string>('DB_SSL_REJECT_UNAUTHORIZED') === 'true',
-            },
           };
+
+          // Only add SSL configuration if enabled
+          if (configService.get<string>('DB_SSL_ENABLED') === 'true') {
+            config.ssl = {
+              rejectUnauthorized: configService.get<string>('DB_SSL_REJECT_UNAUTHORIZED') === 'true',
+            };
+          }
+
+          return config;
         } else {
-          // SQLite configuration for development
+          // SQLite configuration (fallback)
           return {
             type: 'sqlite',
             database: 'workspace_dev.db',

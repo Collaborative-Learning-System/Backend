@@ -3,7 +3,7 @@ import { IsString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 export class CreateWorkspaceDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  workspacename: string;
 
   @IsString()
   @IsOptional()
@@ -11,6 +11,12 @@ export class CreateWorkspaceDto {
 }
 
 export class JoinWorkspaceDto {
+  @IsUUID()
+  @IsNotEmpty()
+  workspaceId: string;
+}
+
+export class GetWorkspaceDetailsDto {
   @IsUUID()
   @IsNotEmpty()
   workspaceId: string;
