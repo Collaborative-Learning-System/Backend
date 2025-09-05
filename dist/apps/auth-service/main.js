@@ -174,7 +174,7 @@ exports.AuthServiceModule = AuthServiceModule = __decorate([
                     global: true,
                     secret: configService.get('JWT_SECRET'),
                     signOptions: {
-                        expiresIn: configService.get('JWT_EXPIRES_IN') || '1m',
+                        expiresIn: configService.get('JWT_EXPIRES_IN') || '24h',
                     },
                 }),
             }),
@@ -339,7 +339,7 @@ let AuthServiceService = class AuthServiceService {
     }
     async generateUserTokens(id) {
         const accessToken = this.jwtService.sign({ id }, {
-            expiresIn: '1h',
+            expiresIn: '24h',
         });
         const refreshToken = (0, uuid_1.v4)();
         await this.saveRefreshToken(refreshToken, id);

@@ -121,7 +121,7 @@ export class AuthServiceService {
     const accessToken = this.jwtService.sign(
       { id },
       {
-        expiresIn: '1h',
+        expiresIn: '24h',
       },
     );
     const refreshToken = uuidv4();
