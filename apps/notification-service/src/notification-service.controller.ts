@@ -3,6 +3,7 @@ import { NotificationServiceService } from './notification-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { EmailDto } from './dtos/email.dto';
 import { WelcomeEmailDto } from './dtos/welcomeEmail.dto';
+import { ActivityDto } from './dtos/activity.dto';
 
 @Controller()
 export class NotificationServiceController {
@@ -20,5 +21,18 @@ export class NotificationServiceController {
   @MessagePattern({ cmd: 'welcome-email' })
   async sendWelcomeEmail(welcomeDto: WelcomeEmailDto) {
     return this.notificationServiceService.sendWelcomeEmail(welcomeDto);
+  }
+
+  // POST : Log Activities
+  @MessagePattern({ cmd: 'log-activity' })
+  async logActivity(activityDto: ActivityDto) {
+    console.log(activityDto);
+    return this.notificationServiceService.logActivity(activityDto);
+  }
+
+  // GET : Get Logs by User ID
+  @MessagePattern({ cmd: 'get-logs-by-user' })
+  async getLogsByUserId(userId: string) {
+    return this.notificationServiceService.getLogsByUserId(userId);
   }
 }

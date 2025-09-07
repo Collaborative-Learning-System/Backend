@@ -32,7 +32,7 @@ __decorate([
     __metadata("design:type", String)
 ], Workspace.prototype, "workspaceid", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
+    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
     __metadata("design:type", String)
 ], Workspace.prototype, "workspacename", void 0);
 __decorate([
@@ -144,6 +144,69 @@ exports.WorkspaceExceptionFilter = WorkspaceExceptionFilter;
 exports.WorkspaceExceptionFilter = WorkspaceExceptionFilter = __decorate([
     (0, common_1.Catch)(common_1.ConflictException, common_1.NotFoundException, common_1.BadRequestException)
 ], WorkspaceExceptionFilter);
+
+
+/***/ }),
+
+/***/ "./apps/workspace-group-service/src/main.ts":
+/*!**************************************************!*\
+  !*** ./apps/workspace-group-service/src/main.ts ***!
+  \**************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
+const workspace_group_service_module_1 = __webpack_require__(/*! ./workspace-group-service.module */ "./apps/workspace-group-service/src/workspace-group-service.module.ts");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const dotenv = __importStar(__webpack_require__(/*! dotenv */ "dotenv"));
+const path = __importStar(__webpack_require__(/*! path */ "path"));
+const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
+dotenv.config({ path: envPath });
+async function bootstrap() {
+    const app = await core_1.NestFactory.createMicroservice(workspace_group_service_module_1.WorkspaceGroupServiceModule, {
+        transport: microservices_1.Transport.TCP,
+        options: {
+            host: '127.0.0.1',
+            port: 3003,
+        },
+    });
+    await app.listen();
+}
+bootstrap();
 
 
 /***/ }),
@@ -305,33 +368,20 @@ exports.WorkspaceGroupServiceModule = WorkspaceGroupServiceModule = __decorate([
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
                 useFactory: (configService) => {
-                    const usePostgres = configService.get('USE_POSTGRES') === 'true';
-                    if (usePostgres) {
-                        const config = {
-                            type: 'postgres',
-                            host: configService.get('DB_HOST') || 'localhost',
-                            port: configService.get('DB_PORT') || 5432,
-                            username: configService.get('DB_USERNAME') || 'postgres',
-                            password: configService.get('DB_PASSWORD') || 'password',
-                            database: configService.get('DB_DATABASE') || 'collaborative_learning',
-                            entities: [workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember],
-                            synchronize: configService.get('DB_SYNCHRONIZE') === 'true' || false,
-                        };
-                        if (configService.get('DB_SSL_ENABLED') === 'true') {
-                            config.ssl = {
-                                rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') === 'true',
-                            };
-                        }
-                        return config;
-                    }
-                    else {
-                        return {
-                            type: 'sqlite',
-                            database: 'workspace_dev.db',
-                            entities: [workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember],
-                            synchronize: true,
-                        };
-                    }
+                    return {
+                        type: 'postgres',
+                        host: configService.get('DB_HOST'),
+                        port: configService.get('DB_PORT'),
+                        username: configService.get('DB_USERNAME'),
+                        password: configService.get('DB_PASSWORD'),
+                        database: configService.get('DB_DATABASE'),
+                        entities: [workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember],
+                        synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
+                        ssl: {
+                            rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
+                                'true',
+                        },
+                    };
                 },
             }),
             typeorm_1.TypeOrmModule.forFeature([workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember]),
@@ -629,6 +679,26 @@ module.exports = require("@nestjs/typeorm");
 
 /***/ }),
 
+/***/ "dotenv":
+/*!*************************!*\
+  !*** external "dotenv" ***!
+  \*************************/
+/***/ ((module) => {
+
+module.exports = require("dotenv");
+
+/***/ }),
+
+/***/ "path":
+/*!***********************!*\
+  !*** external "path" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = require("path");
+
+/***/ }),
+
 /***/ "typeorm":
 /*!**************************!*\
   !*** external "typeorm" ***!
@@ -666,31 +736,11 @@ module.exports = require("typeorm");
 /******/ 	}
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
-(() => {
-var exports = __webpack_exports__;
-/*!**************************************************!*\
-  !*** ./apps/workspace-group-service/src/main.ts ***!
-  \**************************************************/
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
-const workspace_group_service_module_1 = __webpack_require__(/*! ./workspace-group-service.module */ "./apps/workspace-group-service/src/workspace-group-service.module.ts");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-async function bootstrap() {
-    const app = await core_1.NestFactory.createMicroservice(workspace_group_service_module_1.WorkspaceGroupServiceModule, {
-        transport: microservices_1.Transport.TCP,
-        options: {
-            host: '127.0.0.1',
-            port: 3003,
-        },
-    });
-    await app.listen();
-}
-bootstrap();
-
-})();
-
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __webpack_require__("./apps/workspace-group-service/src/main.ts");
+/******/ 	
 /******/ })()
 ;
