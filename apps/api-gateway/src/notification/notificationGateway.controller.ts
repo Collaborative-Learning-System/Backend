@@ -75,7 +75,6 @@ export class NotificationGatewayController {
     const result = await lastValueFrom(
       this.notificationClient.send({ cmd: 'get-logs-by-user' }, userId),
     );
-    console.log("logs for fetching", result.data);
     if (!result.success) {
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }

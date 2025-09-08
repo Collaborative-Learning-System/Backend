@@ -32,7 +32,7 @@ __decorate([
     __metadata("design:type", String)
 ], Workspace.prototype, "workspaceid", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
+    (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
     __metadata("design:type", String)
 ], Workspace.prototype, "workspacename", void 0);
 __decorate([

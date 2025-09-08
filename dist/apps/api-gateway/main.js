@@ -470,7 +470,6 @@ let NotificationGatewayController = class NotificationGatewayController {
     }
     async getLogsByUserId(userId, res) {
         const result = await (0, rxjs_1.lastValueFrom)(this.notificationClient.send({ cmd: 'get-logs-by-user' }, userId));
-        console.log("logs for fetching", result.data);
         if (!result.success) {
             return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
         }

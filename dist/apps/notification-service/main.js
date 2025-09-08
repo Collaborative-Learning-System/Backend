@@ -316,7 +316,6 @@ let NotificationServiceController = class NotificationServiceController {
         return this.notificationServiceService.sendWelcomeEmail(welcomeDto);
     }
     async logActivity(activityDto) {
-        console.log(activityDto);
         return this.notificationServiceService.logActivity(activityDto);
     }
     async getLogsByUserId(userId) {
@@ -668,7 +667,6 @@ let NotificationServiceService = class NotificationServiceService {
     }
     async getLogsByUserId(userId) {
         const logs = await this.loggingRepository.find({ where: { userId } });
-        console.log("logs for fetching", logs);
         return { success: true, statusCode: 201, data: logs };
     }
 };

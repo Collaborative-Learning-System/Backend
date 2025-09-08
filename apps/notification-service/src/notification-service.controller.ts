@@ -26,7 +26,6 @@ export class NotificationServiceController {
   // POST : Log Activities
   @MessagePattern({ cmd: 'log-activity' })
   async logActivity(activityDto: ActivityDto) {
-    console.log(activityDto);
     return this.notificationServiceService.logActivity(activityDto);
   }
 

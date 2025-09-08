@@ -202,7 +202,6 @@ export class NotificationServiceService implements OnModuleInit {
 
   async getLogsByUserId(userId: string) {
     const logs = await this.loggingRepository.find({ where: { userId } });
-    console.log("logs for fetching", logs);
     return { success: true, statusCode: 201, data: logs };
   }
 }
