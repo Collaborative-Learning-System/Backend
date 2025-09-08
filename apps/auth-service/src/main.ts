@@ -8,6 +8,7 @@ import * as path from 'path';
 
 // for .env loads
 const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
+console.log('Loading .env from:', envPath);
 dotenv.config({ path: envPath });
 
 async function bootstrap() {

@@ -17,6 +17,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
+        const isProduction = process.env.NODE_ENV === 'production';
+        const useSSL = configService.get<string>('USE_SSL') === 'true';
+        
         return {
           type: 'postgres',
           host: configService.get<string>('DB_HOST'),
@@ -26,11 +29,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           database: configService.get<string>('DB_DATABASE'),
           entities: [User, RefreshToken],
           synchronize: configService.get<string>('DB_SYNCHRONIZE') === 'true',
-          ssl: {
+          ssl: useSSL ? {
             rejectUnauthorized:
               configService.get<string>('DB_SSL_REJECT_UNAUTHORIZED') ===
               'true',
-          },
+          } : false,
         };
       },
     }),
