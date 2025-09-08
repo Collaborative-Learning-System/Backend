@@ -16,6 +16,12 @@ export class JoinWorkspaceDto {
   workspaceId: string;
 }
 
+export class LeaveWorkspaceDto {
+  @IsUUID()
+  @IsNotEmpty()
+  workspaceId: string;
+}
+
 export class GetUserWorkspacesDto {
   @IsUUID()
   @IsNotEmpty()
@@ -43,5 +49,79 @@ export class WorkspaceSelectionDto {
 
 export class AllWorkspacesResponseDto {
   workspaces: WorkspaceSelectionDto[];
+  totalCount: number;
+}
+
+// Group DTOs
+export class CreateGroupDto {
+  @IsString()
+  @IsNotEmpty()
+  groupname: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+}
+
+export class GroupResponseDto {
+  id: string;
+  name: string;
+  description?: string;
+  workspaceId: string;
+  isMember: boolean;
+}
+
+export class WorkspaceGroupsResponseDto {
+  groups: GroupResponseDto[];
+  totalCount: number;
+}
+
+// Group Join/Leave DTOs
+export class JoinLeaveGroupDto {
+  @IsUUID()
+  @IsNotEmpty()
+  groupId: string;
+}
+
+export class GroupActionResponseDto {
+  message: string;
+  action: 'joined' | 'left';
+  groupId: string;
+  groupName: string;
+}
+
+// Chat DTOs
+export class SendChatMessageDto {
+  @IsUUID()
+  @IsNotEmpty()
+  groupId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  text: string;
+}
+
+export class ChatMessageResponseDto {
+  chatId: string;
+  groupId: string;
+  userId: string;
+  text: string;
+  sentAt: Date;
+}
+
+export class GetChatHistoryDto {
+  @IsUUID()
+  @IsNotEmpty()
+  groupId: string;
+
+  @IsOptional()
+  limit?: number = 50;
+
+  @IsOptional()
+  offset?: number = 0;
+}
+
+export class ChatHistoryResponseDto {
+  messages: ChatMessageResponseDto[];
   totalCount: number;
 }

@@ -5,6 +5,9 @@ import { WorkspaceGroupServiceController } from './workspace-group-service.contr
 import { WorkspaceGroupServiceService } from './workspace-group-service.service';
 import { Workspace } from './entities/workspace.entity';
 import { WorkspaceMember } from './entities/workspace_user.entity';
+import { Group } from './entities/group.entity';
+import { GroupMember } from './entities/group-member.entity';
+import { ChatMessage } from './entities/chat-message.entity';
 
 @Module({
   imports: [
@@ -26,7 +29,7 @@ import { WorkspaceMember } from './entities/workspace_user.entity';
             username: configService.get<string>('DB_USERNAME') || 'postgres',
             password: configService.get<string>('DB_PASSWORD') || 'password',
             database: configService.get<string>('DB_DATABASE') || 'collaborative_learning',
-            entities: [Workspace, WorkspaceMember],
+            entities: [Workspace, WorkspaceMember, Group, GroupMember, ChatMessage],
             synchronize: configService.get<string>('DB_SYNCHRONIZE') === 'true' || false,
           };
 
@@ -38,18 +41,10 @@ import { WorkspaceMember } from './entities/workspace_user.entity';
           }
 
           return config;
-        } else {
-          // SQLite configuration (fallback)
-          return {
-            type: 'sqlite',
-            database: 'workspace_dev.db',
-            entities: [Workspace, WorkspaceMember],
-            synchronize: true,
-          };
-        }
+        } 
       },
     }),
-    TypeOrmModule.forFeature([Workspace, WorkspaceMember]),
+    TypeOrmModule.forFeature([Workspace, WorkspaceMember, Group, GroupMember, ChatMessage]),
   ],
   controllers: [WorkspaceGroupServiceController],
   providers: [WorkspaceGroupServiceService],

@@ -60,8 +60,11 @@ const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestj
 const authGateway_controller_1 = __webpack_require__(/*! ./auth/authGateway.controller */ "./apps/api-gateway/src/auth/authGateway.controller.ts");
 const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
 const jwt_auth_guard_1 = __webpack_require__(/*! ./jwt-auth.guard */ "./apps/api-gateway/src/jwt-auth.guard.ts");
+const ws_jwt_auth_guard_1 = __webpack_require__(/*! ./ws-jwt-auth.guard */ "./apps/api-gateway/src/ws-jwt-auth.guard.ts");
 const notificationGateway_controller_1 = __webpack_require__(/*! ./notification/notificationGateway.controller */ "./apps/api-gateway/src/notification/notificationGateway.controller.ts");
 const workspaceGateway_controller_1 = __webpack_require__(/*! ./workspace/workspaceGateway.controller */ "./apps/api-gateway/src/workspace/workspaceGateway.controller.ts");
+const chat_gateway_1 = __webpack_require__(/*! ./chat/chat.gateway */ "./apps/api-gateway/src/chat/chat.gateway.ts");
+const chat_controller_1 = __webpack_require__(/*! ./chat/chat.controller */ "./apps/api-gateway/src/chat/chat.controller.ts");
 let ApiGatewayModule = class ApiGatewayModule {
 };
 exports.ApiGatewayModule = ApiGatewayModule;
@@ -99,8 +102,8 @@ exports.ApiGatewayModule = ApiGatewayModule = __decorate([
                 }
             ]),
         ],
-        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController, workspaceGateway_controller_1.WorkspaceGatewayController],
-        providers: [api_gateway_service_1.ApiGatewayService, jwt_auth_guard_1.JwtAuthGuard],
+        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController, workspaceGateway_controller_1.WorkspaceGatewayController, chat_controller_1.ChatController],
+        providers: [api_gateway_service_1.ApiGatewayService, jwt_auth_guard_1.JwtAuthGuard, ws_jwt_auth_guard_1.WsJwtAuthGuard, chat_gateway_1.ChatGateway],
         exports: [jwt_auth_guard_1.JwtAuthGuard],
     })
 ], ApiGatewayModule);
@@ -314,6 +317,386 @@ exports.AuthGatewayController = AuthGatewayController = __decorate([
 
 /***/ }),
 
+/***/ "./apps/api-gateway/src/chat/chat.controller.ts":
+/*!******************************************************!*\
+  !*** ./apps/api-gateway/src/chat/chat.controller.ts ***!
+  \******************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ChatController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const common_2 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../jwt-auth.guard */ "./apps/api-gateway/src/jwt-auth.guard.ts");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+let ChatController = class ChatController {
+    workspaceService;
+    constructor(workspaceService) {
+        this.workspaceService = workspaceService;
+    }
+    async getChatHistory(groupId, limit = '50', offset = '0', req) {
+        try {
+            const userId = req.user?.sub || req.user?.userId;
+            const chatHistory = await (0, rxjs_1.firstValueFrom)(this.workspaceService.send('get_chat_history', {
+                userId,
+                getChatHistoryDto: {
+                    groupId,
+                    limit: parseInt(limit),
+                    offset: parseInt(offset)
+                }
+            }));
+            return {
+                success: true,
+                data: chatHistory
+            };
+        }
+        catch (error) {
+            console.error('Error getting chat history:', error);
+            return {
+                success: false,
+                message: 'Failed to get chat history',
+                error: error.message
+            };
+        }
+    }
+    async sendMessage(body, req) {
+        try {
+            const userId = req.user?.sub || req.user?.userId;
+            const savedMessage = await (0, rxjs_1.firstValueFrom)(this.workspaceService.send('send_chat_message', {
+                userId,
+                sendChatMessageDto: {
+                    groupId: body.groupId,
+                    text: body.text
+                }
+            }));
+            return {
+                success: true,
+                data: savedMessage
+            };
+        }
+        catch (error) {
+            console.error('Error sending message:', error);
+            return {
+                success: false,
+                message: 'Failed to send message',
+                error: error.message
+            };
+        }
+    }
+    async getGroupMembers(groupId, req) {
+        try {
+            const members = await (0, rxjs_1.firstValueFrom)(this.workspaceService.send('get_group_members', {
+                groupId
+            }));
+            return {
+                success: true,
+                data: members
+            };
+        }
+        catch (error) {
+            console.error('Error getting group members:', error);
+            return {
+                success: false,
+                message: 'Failed to get group members',
+                error: error.message
+            };
+        }
+    }
+};
+exports.ChatController = ChatController;
+__decorate([
+    (0, common_1.Get)('history/:groupId'),
+    __param(0, (0, common_1.Param)('groupId')),
+    __param(1, (0, common_1.Query)('limit')),
+    __param(2, (0, common_1.Query)('offset')),
+    __param(3, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "getChatHistory", null);
+__decorate([
+    (0, common_1.Post)('send'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "sendMessage", null);
+__decorate([
+    (0, common_1.Get)('group/:groupId/members'),
+    __param(0, (0, common_1.Param)('groupId')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "getGroupMembers", null);
+exports.ChatController = ChatController = __decorate([
+    (0, common_1.Controller)('chat'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_2.Inject)('workspace-group-service')),
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
+], ChatController);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/chat/chat.gateway.ts":
+/*!***************************************************!*\
+  !*** ./apps/api-gateway/src/chat/chat.gateway.ts ***!
+  \***************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b, _c;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ChatGateway = void 0;
+const websockets_1 = __webpack_require__(/*! @nestjs/websockets */ "@nestjs/websockets");
+const socket_io_1 = __webpack_require__(/*! socket.io */ "socket.io");
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+const ws_jwt_auth_guard_1 = __webpack_require__(/*! ../ws-jwt-auth.guard */ "./apps/api-gateway/src/ws-jwt-auth.guard.ts");
+let ChatGateway = class ChatGateway {
+    workspaceService;
+    jwtService;
+    server;
+    connectedUsers = new Map();
+    constructor(workspaceService, jwtService) {
+        this.workspaceService = workspaceService;
+        this.jwtService = jwtService;
+    }
+    async handleConnection(client) {
+        try {
+            const isAuthenticated = ws_jwt_auth_guard_1.WsJwtAuthGuard.authenticateSocket(client, this.jwtService);
+            if (!isAuthenticated || !client.userId) {
+                console.log('Authentication failed, disconnecting client');
+                client.disconnect();
+                return;
+            }
+            console.log(`User ${client.userId} connected with socket ${client.id}`);
+            this.connectedUsers.set(client.userId, client);
+            client.emit('connection_success', {
+                userId: client.userId,
+                message: 'Successfully authenticated via cookies/token'
+            });
+        }
+        catch (error) {
+            console.error('Connection authentication failed:', error);
+            client.disconnect();
+        }
+    }
+    handleDisconnect(client) {
+        if (client.userId) {
+            console.log(`User ${client.userId} disconnected`);
+            this.connectedUsers.delete(client.userId);
+        }
+    }
+    async handleJoinGroup(client, data) {
+        try {
+            if (!client.userId) {
+                client.emit('error', { message: 'Not authenticated' });
+                return;
+            }
+            client.join(`group_${data.groupId}`);
+            if (!client.userGroups) {
+                client.userGroups = [];
+            }
+            if (!client.userGroups.includes(data.groupId)) {
+                client.userGroups.push(data.groupId);
+            }
+            console.log(`User ${client.userId} joined group ${data.groupId}`);
+            client.emit('joined_group', { groupId: data.groupId });
+        }
+        catch (error) {
+            console.error('Error joining group:', error);
+            client.emit('error', { message: 'Failed to join group' });
+        }
+    }
+    async handleLeaveGroup(client, data) {
+        try {
+            if (!client.userId) {
+                client.emit('error', { message: 'Not authenticated' });
+                return;
+            }
+            client.leave(`group_${data.groupId}`);
+            if (client.userGroups) {
+                client.userGroups = client.userGroups.filter(groupId => groupId !== data.groupId);
+            }
+            console.log(`User ${client.userId} left group ${data.groupId}`);
+            client.emit('left_group', { groupId: data.groupId });
+        }
+        catch (error) {
+            console.error('Error leaving group:', error);
+            client.emit('error', { message: 'Failed to leave group' });
+        }
+    }
+    async handleSendMessage(client, data) {
+        try {
+            if (!client.userId) {
+                client.emit('error', { message: 'Not authenticated' });
+                return;
+            }
+            console.log(`User ${client.userId} sending message to group ${data.groupId}:`, data.text);
+            const savedMessage = await (0, rxjs_1.firstValueFrom)(this.workspaceService.send('send_chat_message', {
+                userId: client.userId,
+                sendChatMessageDto: {
+                    groupId: data.groupId,
+                    text: data.text
+                }
+            }));
+            console.log('Message saved:', savedMessage);
+            this.server.to(`group_${data.groupId}`).emit('new_message', {
+                chatId: savedMessage.chatId,
+                groupId: savedMessage.groupId,
+                userId: savedMessage.userId,
+                text: savedMessage.text,
+                sentAt: savedMessage.sentAt
+            });
+            client.emit('message_sent', {
+                chatId: savedMessage.chatId,
+                status: 'delivered'
+            });
+        }
+        catch (error) {
+            console.error('Error sending message:', error);
+            client.emit('error', {
+                message: 'Failed to send message',
+                details: error.message
+            });
+        }
+    }
+    async handleGetChatHistory(client, data) {
+        try {
+            if (!client.userId) {
+                client.emit('error', { message: 'Not authenticated' });
+                return;
+            }
+            console.log(`User ${client.userId} requesting chat history for group ${data.groupId}`);
+            const chatHistory = await (0, rxjs_1.firstValueFrom)(this.workspaceService.send('get_chat_history', {
+                userId: client.userId,
+                getChatHistoryDto: {
+                    groupId: data.groupId,
+                    limit: data.limit || 50,
+                    offset: data.offset || 0
+                }
+            }));
+            client.emit('chat_history', {
+                groupId: data.groupId,
+                messages: chatHistory.messages,
+                totalCount: chatHistory.totalCount
+            });
+        }
+        catch (error) {
+            console.error('Error getting chat history:', error);
+            client.emit('error', {
+                message: 'Failed to get chat history',
+                details: error.message
+            });
+        }
+    }
+    getConnectedUsers() {
+        return Array.from(this.connectedUsers.keys());
+    }
+    isUserConnected(userId) {
+        return this.connectedUsers.has(userId);
+    }
+    sendToUser(userId, event, data) {
+        const userSocket = this.connectedUsers.get(userId);
+        if (userSocket) {
+            userSocket.emit(event, data);
+            return true;
+        }
+        return false;
+    }
+    broadcastToGroup(groupId, event, data) {
+        this.server.to(`group_${groupId}`).emit(event, data);
+    }
+};
+exports.ChatGateway = ChatGateway;
+__decorate([
+    (0, websockets_1.WebSocketServer)(),
+    __metadata("design:type", typeof (_c = typeof socket_io_1.Server !== "undefined" && socket_io_1.Server) === "function" ? _c : Object)
+], ChatGateway.prototype, "server", void 0);
+__decorate([
+    (0, common_1.UseGuards)(ws_jwt_auth_guard_1.WsJwtAuthGuard),
+    (0, websockets_1.SubscribeMessage)('join_group'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], ChatGateway.prototype, "handleJoinGroup", null);
+__decorate([
+    (0, common_1.UseGuards)(ws_jwt_auth_guard_1.WsJwtAuthGuard),
+    (0, websockets_1.SubscribeMessage)('leave_group'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], ChatGateway.prototype, "handleLeaveGroup", null);
+__decorate([
+    (0, common_1.UseGuards)(ws_jwt_auth_guard_1.WsJwtAuthGuard),
+    (0, websockets_1.SubscribeMessage)('send_message'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], ChatGateway.prototype, "handleSendMessage", null);
+__decorate([
+    (0, common_1.UseGuards)(ws_jwt_auth_guard_1.WsJwtAuthGuard),
+    (0, websockets_1.SubscribeMessage)('get_chat_history'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], ChatGateway.prototype, "handleGetChatHistory", null);
+exports.ChatGateway = ChatGateway = __decorate([
+    (0, common_1.Injectable)(),
+    (0, websockets_1.WebSocketGateway)({
+        cors: {
+            origin: "*",
+            methods: ["GET", "POST"]
+        },
+        namespace: '/chat'
+    }),
+    __param(0, (0, common_1.Inject)('workspace-group-service')),
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object, typeof (_b = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _b : Object])
+], ChatGateway);
+
+
+/***/ }),
+
 /***/ "./apps/api-gateway/src/jwt-auth.guard.ts":
 /*!************************************************!*\
   !*** ./apps/api-gateway/src/jwt-auth.guard.ts ***!
@@ -387,8 +770,10 @@ const cookie_parser_1 = __importDefault(__webpack_require__(/*! cookie-parser */
 async function bootstrap() {
     const app = await core_1.NestFactory.create(api_gateway_module_1.ApiGatewayModule);
     app.enableCors({
-        origin: 'http://localhost:5173',
+        origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5500', 'http://localhost:8080'],
         credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
     });
     app.use((0, cookie_parser_1.default)());
     await app.listen(process.env.port ?? 3000);
@@ -499,7 +884,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.GetWorkspaceDetailsDto = exports.JoinWorkspaceDto = exports.CreateWorkspaceDto = void 0;
+exports.JoinLeaveGroupDto = exports.CreateGroupDto = exports.GetWorkspaceDetailsDto = exports.LeaveWorkspaceDto = exports.JoinWorkspaceDto = exports.CreateWorkspaceDto = void 0;
 const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
 class CreateWorkspaceDto {
     workspacename;
@@ -525,6 +910,15 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], JoinWorkspaceDto.prototype, "workspaceId", void 0);
+class LeaveWorkspaceDto {
+    workspaceId;
+}
+exports.LeaveWorkspaceDto = LeaveWorkspaceDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], LeaveWorkspaceDto.prototype, "workspaceId", void 0);
 class GetWorkspaceDetailsDto {
     workspaceId;
 }
@@ -534,6 +928,30 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], GetWorkspaceDetailsDto.prototype, "workspaceId", void 0);
+class CreateGroupDto {
+    groupname;
+    description;
+}
+exports.CreateGroupDto = CreateGroupDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateGroupDto.prototype, "groupname", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateGroupDto.prototype, "description", void 0);
+class JoinLeaveGroupDto {
+    groupId;
+}
+exports.JoinLeaveGroupDto = JoinLeaveGroupDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], JoinLeaveGroupDto.prototype, "groupId", void 0);
 
 
 /***/ }),
@@ -557,7 +975,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a, _b, _c, _d, _e, _f;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WorkspaceGatewayController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -636,6 +1054,42 @@ let WorkspaceGatewayController = class WorkspaceGatewayController {
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to join workspace', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async leaveWorkspace(leaveWorkspaceDto, req) {
+        const userId = req.user.sub || req.user.userId || req.user.id;
+        if (!userId) {
+            throw new common_1.HttpException('User ID not found in token', common_1.HttpStatus.UNAUTHORIZED);
+        }
+        try {
+            const result = await this.workspaceServiceClient
+                .send('leave_workspace', { userId, leaveWorkspaceDto })
+                .pipe((0, operators_1.timeout)(5000), (0, operators_1.catchError)(err => {
+                if (err instanceof rxjs_1.TimeoutError) {
+                    return (0, rxjs_1.throwError)(() => new common_1.HttpException('Service timeout', common_1.HttpStatus.REQUEST_TIMEOUT));
+                }
+                if (err.message) {
+                    if (err.message.includes('Workspace not found')) {
+                        return (0, rxjs_1.throwError)(() => new common_1.HttpException('Workspace not found', common_1.HttpStatus.NOT_FOUND));
+                    }
+                    if (err.message.includes('not a member')) {
+                        return (0, rxjs_1.throwError)(() => new common_1.HttpException('You are not a member of this workspace', common_1.HttpStatus.FORBIDDEN));
+                    }
+                    if (err.message.includes('admins cannot leave')) {
+                        return (0, rxjs_1.throwError)(() => new common_1.HttpException('Workspace admins cannot leave their own workspace. You must transfer admin rights or delete the workspace instead.', common_1.HttpStatus.BAD_REQUEST));
+                    }
+                }
+                return (0, rxjs_1.throwError)(() => new common_1.HttpException(err.message || 'Internal server error', common_1.HttpStatus.INTERNAL_SERVER_ERROR));
+            }))
+                .toPromise();
+            return {
+                success: true,
+                message: 'Successfully left the workspace',
+                data: result
+            };
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to leave workspace', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     async getUserWorkspaces(req) {
@@ -717,6 +1171,110 @@ let WorkspaceGatewayController = class WorkspaceGatewayController {
             throw new common_1.HttpException(error.message || 'Failed to retrieve workspace details', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    async createGroup(workspaceId, createGroupDto, req) {
+        const userId = req.user.sub || req.user.userId || req.user.id;
+        if (!userId) {
+            throw new common_1.HttpException('User ID not found in token', common_1.HttpStatus.UNAUTHORIZED);
+        }
+        try {
+            const result = await this.workspaceServiceClient
+                .send('create_group', { userId, workspaceId, createGroupDto })
+                .pipe((0, operators_1.timeout)(5000), (0, operators_1.catchError)(err => {
+                if (err instanceof rxjs_1.TimeoutError) {
+                    return (0, rxjs_1.throwError)(() => new common_1.HttpException('Service timeout', common_1.HttpStatus.REQUEST_TIMEOUT));
+                }
+                if (err.message) {
+                    if (err.message.includes('Workspace not found')) {
+                        return (0, rxjs_1.throwError)(() => new common_1.HttpException('Workspace not found', common_1.HttpStatus.NOT_FOUND));
+                    }
+                    if (err.message.includes('not a member')) {
+                        return (0, rxjs_1.throwError)(() => new common_1.HttpException('You are not a member of this workspace', common_1.HttpStatus.FORBIDDEN));
+                    }
+                    if (err.message.includes('Only workspace admins')) {
+                        return (0, rxjs_1.throwError)(() => new common_1.HttpException('Only workspace admins can create groups', common_1.HttpStatus.FORBIDDEN));
+                    }
+                    if (err.message.includes('group with this name already exists')) {
+                        return (0, rxjs_1.throwError)(() => new common_1.HttpException('A group with this name already exists in this workspace', common_1.HttpStatus.CONFLICT));
+                    }
+                }
+                return (0, rxjs_1.throwError)(() => new common_1.HttpException(err.message || 'Internal server error', common_1.HttpStatus.INTERNAL_SERVER_ERROR));
+            }))
+                .toPromise();
+            return {
+                success: true,
+                data: result
+            };
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to create group', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async getWorkspaceGroups(workspaceId, req) {
+        const userId = req.user.sub || req.user.userId || req.user.id;
+        if (!userId) {
+            throw new common_1.HttpException('User ID not found in token', common_1.HttpStatus.UNAUTHORIZED);
+        }
+        try {
+            const result = await this.workspaceServiceClient
+                .send('get_workspace_groups', { userId, workspaceId })
+                .pipe((0, operators_1.timeout)(5000), (0, operators_1.catchError)(err => {
+                if (err instanceof rxjs_1.TimeoutError) {
+                    return (0, rxjs_1.throwError)(() => new common_1.HttpException('Service timeout', common_1.HttpStatus.REQUEST_TIMEOUT));
+                }
+                if (err.message) {
+                    if (err.message.includes('Workspace not found')) {
+                        return (0, rxjs_1.throwError)(() => new common_1.HttpException('Workspace not found', common_1.HttpStatus.NOT_FOUND));
+                    }
+                    if (err.message.includes('not a member')) {
+                        return (0, rxjs_1.throwError)(() => new common_1.HttpException('You are not a member of this workspace', common_1.HttpStatus.FORBIDDEN));
+                    }
+                }
+                return (0, rxjs_1.throwError)(() => new common_1.HttpException(err.message || 'Internal server error', common_1.HttpStatus.INTERNAL_SERVER_ERROR));
+            }))
+                .toPromise();
+            return {
+                success: true,
+                message: 'Groups retrieved successfully',
+                data: result
+            };
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to retrieve groups', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async joinLeaveGroup(joinLeaveGroupDto, req) {
+        const userId = req.user.sub || req.user.userId || req.user.id;
+        if (!userId) {
+            throw new common_1.HttpException('User ID not found in token', common_1.HttpStatus.UNAUTHORIZED);
+        }
+        try {
+            const result = await this.workspaceServiceClient
+                .send('join_leave_group', { userId, joinLeaveGroupDto })
+                .pipe((0, operators_1.timeout)(5000), (0, operators_1.catchError)(err => {
+                if (err instanceof rxjs_1.TimeoutError) {
+                    return (0, rxjs_1.throwError)(() => new common_1.HttpException('Service timeout', common_1.HttpStatus.REQUEST_TIMEOUT));
+                }
+                if (err.message) {
+                    if (err.message.includes('Group not found')) {
+                        return (0, rxjs_1.throwError)(() => new common_1.HttpException('Group not found', common_1.HttpStatus.NOT_FOUND));
+                    }
+                    if (err.message.includes('not a member of the workspace')) {
+                        return (0, rxjs_1.throwError)(() => new common_1.HttpException('You are not a member of the workspace that contains this group', common_1.HttpStatus.FORBIDDEN));
+                    }
+                }
+                return (0, rxjs_1.throwError)(() => new common_1.HttpException(err.message || 'Internal server error', common_1.HttpStatus.INTERNAL_SERVER_ERROR));
+            }))
+                .toPromise();
+            return {
+                success: true,
+                message: result.message,
+                data: result
+            };
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to perform group operation', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
     async onModuleDestroy() {
         await this.workspaceServiceClient.close();
     }
@@ -739,6 +1297,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], WorkspaceGatewayController.prototype, "joinWorkspace", null);
 __decorate([
+    (0, common_1.Post)('leave'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_c = typeof workspace_gateway_dto_1.LeaveWorkspaceDto !== "undefined" && workspace_gateway_dto_1.LeaveWorkspaceDto) === "function" ? _c : Object, Object]),
+    __metadata("design:returntype", Promise)
+], WorkspaceGatewayController.prototype, "leaveWorkspace", null);
+__decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
@@ -756,14 +1322,145 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof workspace_gateway_dto_1.GetWorkspaceDetailsDto !== "undefined" && workspace_gateway_dto_1.GetWorkspaceDetailsDto) === "function" ? _c : Object, Object]),
+    __metadata("design:paramtypes", [typeof (_d = typeof workspace_gateway_dto_1.GetWorkspaceDetailsDto !== "undefined" && workspace_gateway_dto_1.GetWorkspaceDetailsDto) === "function" ? _d : Object, Object]),
     __metadata("design:returntype", Promise)
 ], WorkspaceGatewayController.prototype, "getWorkspaceDetails", null);
+__decorate([
+    (0, common_1.Post)(':workspaceId/groups'),
+    __param(0, (0, common_1.Param)('workspaceId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, typeof (_e = typeof workspace_gateway_dto_1.CreateGroupDto !== "undefined" && workspace_gateway_dto_1.CreateGroupDto) === "function" ? _e : Object, Object]),
+    __metadata("design:returntype", Promise)
+], WorkspaceGatewayController.prototype, "createGroup", null);
+__decorate([
+    (0, common_1.Get)(':workspaceId/groups'),
+    __param(0, (0, common_1.Param)('workspaceId')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], WorkspaceGatewayController.prototype, "getWorkspaceGroups", null);
+__decorate([
+    (0, common_1.Post)('groups/join-leave'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_f = typeof workspace_gateway_dto_1.JoinLeaveGroupDto !== "undefined" && workspace_gateway_dto_1.JoinLeaveGroupDto) === "function" ? _f : Object, Object]),
+    __metadata("design:returntype", Promise)
+], WorkspaceGatewayController.prototype, "joinLeaveGroup", null);
 exports.WorkspaceGatewayController = WorkspaceGatewayController = __decorate([
     (0, common_1.Controller)('api/workspaces'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [])
 ], WorkspaceGatewayController);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/ws-jwt-auth.guard.ts":
+/*!***************************************************!*\
+  !*** ./apps/api-gateway/src/ws-jwt-auth.guard.ts ***!
+  \***************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var WsJwtAuthGuard_1;
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.WsJwtAuthGuard = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
+let WsJwtAuthGuard = WsJwtAuthGuard_1 = class WsJwtAuthGuard {
+    jwtService;
+    constructor(jwtService) {
+        this.jwtService = jwtService;
+    }
+    canActivate(context) {
+        const client = context.switchToWs().getClient();
+        try {
+            const cookies = this.parseCookies(client.handshake.headers.cookie);
+            let accessToken = cookies?.accessToken;
+            if (!accessToken) {
+                accessToken = client.handshake.auth?.token ||
+                    client.handshake.headers?.authorization?.replace('Bearer ', '');
+            }
+            if (!accessToken) {
+                throw new common_1.UnauthorizedException('No token found');
+            }
+            const decoded = this.jwtService.verify(accessToken);
+            client.user = decoded;
+            client.userId = decoded.id || decoded.userId || decoded.sub;
+            return true;
+        }
+        catch (error) {
+            console.error('WebSocket authentication failed:', error);
+            return false;
+        }
+    }
+    parseCookies(cookieHeader) {
+        if (!cookieHeader)
+            return {};
+        return cookieHeader
+            .split(';')
+            .reduce((cookies, cookie) => {
+            const [name, value] = cookie.trim().split('=');
+            if (name && value) {
+                cookies[name] = decodeURIComponent(value);
+            }
+            return cookies;
+        }, {});
+    }
+    static authenticateSocket(client, jwtService) {
+        try {
+            const cookies = WsJwtAuthGuard_1.parseCookiesStatic(client.handshake.headers.cookie);
+            let accessToken = cookies?.accessToken;
+            if (!accessToken) {
+                accessToken = client.handshake.auth?.token ||
+                    client.handshake.headers?.authorization?.replace('Bearer ', '');
+            }
+            if (!accessToken) {
+                return false;
+            }
+            const decoded = jwtService.verify(accessToken);
+            client.user = decoded;
+            client.userId = decoded.id || decoded.userId || decoded.sub;
+            return true;
+        }
+        catch (error) {
+            console.error('WebSocket authentication failed:', error.message);
+            return false;
+        }
+    }
+    static parseCookiesStatic(cookieHeader) {
+        if (!cookieHeader)
+            return {};
+        return cookieHeader
+            .split(';')
+            .reduce((cookies, cookie) => {
+            const [name, value] = cookie.trim().split('=');
+            if (name && value) {
+                cookies[name] = decodeURIComponent(value);
+            }
+            return cookies;
+        }, {});
+    }
+};
+exports.WsJwtAuthGuard = WsJwtAuthGuard;
+exports.WsJwtAuthGuard = WsJwtAuthGuard = WsJwtAuthGuard_1 = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _a : Object])
+], WsJwtAuthGuard);
 
 
 /***/ }),
@@ -808,6 +1505,16 @@ module.exports = require("@nestjs/microservices");
 
 /***/ }),
 
+/***/ "@nestjs/websockets":
+/*!*************************************!*\
+  !*** external "@nestjs/websockets" ***!
+  \*************************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/websockets");
+
+/***/ }),
+
 /***/ "class-validator":
 /*!**********************************!*\
   !*** external "class-validator" ***!
@@ -845,6 +1552,16 @@ module.exports = require("rxjs");
 /***/ ((module) => {
 
 module.exports = require("rxjs/operators");
+
+/***/ }),
+
+/***/ "socket.io":
+/*!****************************!*\
+  !*** external "socket.io" ***!
+  \****************************/
+/***/ ((module) => {
+
+module.exports = require("socket.io");
 
 /***/ })
 
