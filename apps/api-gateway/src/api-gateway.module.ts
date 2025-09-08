@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { NotificationGatewayController } from './notification/notificationGateway.controller';
 import { WorkspaceGatewayController } from './workspace/workspaceGateway.controller';
+import { QuizGatewayController } from './quiz/quizGateway.controller';
 
 @Module({
   imports: [
@@ -38,10 +39,19 @@ import { WorkspaceGatewayController } from './workspace/workspaceGateway.control
           host: '127.0.0.1',
           port: 3003,
         },
+      },
+      {
+        name: 'quiz-leaderboard-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3004,
+        },
       }
+
     ]),
   ],
-  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController, WorkspaceGatewayController],
+  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController, WorkspaceGatewayController, QuizGatewayController],
   providers: [ApiGatewayService, JwtAuthGuard],
   exports: [JwtAuthGuard],
 })

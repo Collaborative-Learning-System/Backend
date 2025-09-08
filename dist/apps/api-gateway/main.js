@@ -62,6 +62,7 @@ const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
 const jwt_auth_guard_1 = __webpack_require__(/*! ./jwt-auth.guard */ "./apps/api-gateway/src/jwt-auth.guard.ts");
 const notificationGateway_controller_1 = __webpack_require__(/*! ./notification/notificationGateway.controller */ "./apps/api-gateway/src/notification/notificationGateway.controller.ts");
 const workspaceGateway_controller_1 = __webpack_require__(/*! ./workspace/workspaceGateway.controller */ "./apps/api-gateway/src/workspace/workspaceGateway.controller.ts");
+const quizGateway_controller_1 = __webpack_require__(/*! ./quiz/quizGateway.controller */ "./apps/api-gateway/src/quiz/quizGateway.controller.ts");
 let ApiGatewayModule = class ApiGatewayModule {
 };
 exports.ApiGatewayModule = ApiGatewayModule;
@@ -96,10 +97,18 @@ exports.ApiGatewayModule = ApiGatewayModule = __decorate([
                         host: '127.0.0.1',
                         port: 3003,
                     },
+                },
+                {
+                    name: 'quiz-leaderboard-service',
+                    transport: microservices_1.Transport.TCP,
+                    options: {
+                        host: '127.0.0.1',
+                        port: 3004,
+                    },
                 }
             ]),
         ],
-        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController, workspaceGateway_controller_1.WorkspaceGatewayController],
+        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController, workspaceGateway_controller_1.WorkspaceGatewayController, quizGateway_controller_1.QuizGatewayController],
         providers: [api_gateway_service_1.ApiGatewayService, jwt_auth_guard_1.JwtAuthGuard],
         exports: [jwt_auth_guard_1.JwtAuthGuard],
     })
@@ -478,6 +487,207 @@ exports.NotificationGatewayController = NotificationGatewayController = __decora
     __param(0, (0, common_1.Inject)('notification-service')),
     __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
 ], NotificationGatewayController);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/quiz/dtos/quiz-gateway.dto.ts":
+/*!************************************************************!*\
+  !*** ./apps/api-gateway/src/quiz/dtos/quiz-gateway.dto.ts ***!
+  \************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GetQuizDto = exports.CreateQuizDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+class CreateQuizDto {
+    groupId;
+    title;
+    description;
+    timeLimit;
+    fullMarks;
+    difficulty;
+    instructions;
+}
+exports.CreateQuizDto = CreateQuizDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateQuizDto.prototype, "groupId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)({ message: 'Title must be a string' }),
+    __metadata("design:type", String)
+], CreateQuizDto.prototype, "title", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateQuizDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Min)(1, { message: 'Time limit must be at least 1 minute' }),
+    (0, class_validator_1.Max)(480, { message: 'Time limit cannot exceed 8 hours' }),
+    __metadata("design:type", Number)
+], CreateQuizDto.prototype, "timeLimit", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateQuizDto.prototype, "fullMarks", void 0);
+__decorate([
+    (0, class_validator_1.IsEnum)(['EASY', 'MEDIUM', 'HARD']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateQuizDto.prototype, "difficulty", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateQuizDto.prototype, "instructions", void 0);
+class GetQuizDto {
+    quizId;
+}
+exports.GetQuizDto = GetQuizDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], GetQuizDto.prototype, "quizId", void 0);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/quiz/quizGateway.controller.ts":
+/*!*************************************************************!*\
+  !*** ./apps/api-gateway/src/quiz/quizGateway.controller.ts ***!
+  \*************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.QuizGatewayController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../jwt-auth.guard */ "./apps/api-gateway/src/jwt-auth.guard.ts");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+const quiz_gateway_dto_1 = __webpack_require__(/*! ./dtos/quiz-gateway.dto */ "./apps/api-gateway/src/quiz/dtos/quiz-gateway.dto.ts");
+let QuizGatewayController = class QuizGatewayController {
+    quizClient;
+    constructor(quizClient) {
+        this.quizClient = quizClient;
+    }
+    async createQuiz(createQuizDto, req, res) {
+        try {
+            const userId = req.user.sub || req.user.userId || req.user.id;
+            const quizData = {
+                ...createQuizDto,
+            };
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send({ cmd: 'create_quiz' }, quizData));
+            if (!result.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.CREATED).json(result);
+        }
+        catch (error) {
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Error creating quiz: ' + error.message,
+                data: null,
+            });
+        }
+    }
+    async getQuiz(quizId, res) {
+        try {
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send({ cmd: 'get_quiz' }, { quizId }));
+            if (!result.success) {
+                return res.status(common_1.HttpStatus.NOT_FOUND).json(result);
+            }
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        catch (error) {
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Error retrieving quiz: ' + error.message,
+                data: null,
+            });
+        }
+    }
+    async getQuizzesByGroup(groupId, res) {
+        try {
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send({ cmd: 'get_quizzes_by_group' }, { groupId }));
+            if (!result.success) {
+                return res.status(common_1.HttpStatus.NOT_FOUND).json(result);
+            }
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        catch (error) {
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Error retrieving quizzes: ' + error.message,
+                data: null,
+            });
+        }
+    }
+};
+exports.QuizGatewayController = QuizGatewayController;
+__decorate([
+    (0, common_1.Post)(),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_b = typeof quiz_gateway_dto_1.CreateQuizDto !== "undefined" && quiz_gateway_dto_1.CreateQuizDto) === "function" ? _b : Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], QuizGatewayController.prototype, "createQuiz", null);
+__decorate([
+    (0, common_1.Get)(':quizId'),
+    __param(0, (0, common_1.Param)('quizId')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], QuizGatewayController.prototype, "getQuiz", null);
+__decorate([
+    (0, common_1.Get)('group/:groupId'),
+    __param(0, (0, common_1.Param)('groupId')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], QuizGatewayController.prototype, "getQuizzesByGroup", null);
+exports.QuizGatewayController = QuizGatewayController = __decorate([
+    (0, common_1.Controller)('quiz'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Inject)('quiz-leaderboard-service')),
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
+], QuizGatewayController);
 
 
 /***/ }),

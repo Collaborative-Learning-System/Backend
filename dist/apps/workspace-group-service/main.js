@@ -428,9 +428,6 @@ let WorkspaceGroupServiceService = class WorkspaceGroupServiceService {
         this.workspaceRepository = workspaceRepository;
         this.workspaceMemberRepository = workspaceMemberRepository;
     }
-    getHello() {
-        return 'Hello World!';
-    }
     async createWorkspace(userId, createWorkspaceDto) {
         console.log('Service method - userId:', userId);
         console.log('Service method - createWorkspaceDto:', createWorkspaceDto);

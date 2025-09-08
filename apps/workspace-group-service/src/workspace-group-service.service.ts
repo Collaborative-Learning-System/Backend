@@ -20,9 +20,7 @@ export class WorkspaceGroupServiceService {
     private workspaceMemberRepository: Repository<WorkspaceMember>,
   ) {}
 
-  getHello(): string {
-    return 'Hello World!';
-  }
+
 
   async createWorkspace(userId: string, createWorkspaceDto: CreateWorkspaceDto): Promise<WorkspaceResponseDto> {
     console.log('Service method - userId:', userId);
