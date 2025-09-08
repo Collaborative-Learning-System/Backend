@@ -150,6 +150,8 @@ exports.AuthServiceModule = AuthServiceModule = __decorate([
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
                 useFactory: (configService) => {
+                    const isProduction = process.env.NODE_ENV === 'production';
+                    const useSSL = configService.get('USE_SSL') === 'true';
                     return {
                         type: 'postgres',
                         host: configService.get('DB_HOST'),
@@ -159,10 +161,10 @@ exports.AuthServiceModule = AuthServiceModule = __decorate([
                         database: configService.get('DB_DATABASE'),
                         entities: [user_entity_1.User, refresh_token_entity_1.RefreshToken],
                         synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
-                        ssl: {
+                        ssl: useSSL ? {
                             rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
                                 'true',
-                        },
+                        } : false,
                     };
                 },
             }),
@@ -798,6 +800,7 @@ const validation_exception_filter_1 = __webpack_require__(/*! ./filters/validati
 const dotenv = __importStar(__webpack_require__(/*! dotenv */ "dotenv"));
 const path = __importStar(__webpack_require__(/*! path */ "path"));
 const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
+console.log('Loading .env from:', envPath);
 dotenv.config({ path: envPath });
 async function bootstrap() {
     const app = await core_1.NestFactory.createMicroservice(auth_service_module_1.AuthServiceModule, {

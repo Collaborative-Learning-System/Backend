@@ -13,7 +13,7 @@ import { ClientProxy, ClientProxyFactory, Transport } from '@nestjs/microservice
 import { JwtAuthGuard } from '../jwt-auth.guard';
 import { catchError, timeout } from 'rxjs/operators';
 import { throwError, TimeoutError } from 'rxjs';
-import { CreateWorkspaceDto, JoinWorkspaceDto, GetWorkspaceDetailsDto } from './dtos/workspace-gateway.dto';
+import { CreateWorkspaceDto, JoinWorkspaceDto, LeaveWorkspaceDto, GetWorkspaceDetailsDto, CreateGroupDto, JoinLeaveGroupDto } from './dtos/workspace-gateway.dto';
 
 @Controller('api/workspaces')
 @UseGuards(JwtAuthGuard)
@@ -111,6 +111,55 @@ export class WorkspaceGatewayController {
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to join workspace',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Post('leave')
+  async leaveWorkspace(@Body() leaveWorkspaceDto: LeaveWorkspaceDto, @Request() req: any) {
+    const userId = req.user.sub || req.user.userId || req.user.id;
+    
+    if (!userId) {
+      throw new HttpException('User ID not found in token', HttpStatus.UNAUTHORIZED);
+    }
+    
+    try {
+      const result = await this.workspaceServiceClient
+        .send('leave_workspace', { userId, leaveWorkspaceDto })
+        .pipe(
+          timeout(5000),
+          catchError(err => {
+            if (err instanceof TimeoutError) {
+              return throwError(() => new HttpException('Service timeout', HttpStatus.REQUEST_TIMEOUT));
+            }
+            
+            // Handle specific workspace errors
+            if (err.message) {
+              if (err.message.includes('Workspace not found')) {
+                return throwError(() => new HttpException('Workspace not found', HttpStatus.NOT_FOUND));
+              }
+              if (err.message.includes('not a member')) {
+                return throwError(() => new HttpException('You are not a member of this workspace', HttpStatus.FORBIDDEN));
+              }
+              if (err.message.includes('admins cannot leave')) {
+                return throwError(() => new HttpException('Workspace admins cannot leave their own workspace. You must transfer admin rights or delete the workspace instead.', HttpStatus.BAD_REQUEST));
+              }
+            }
+            
+            return throwError(() => new HttpException(err.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR));
+          })
+        )
+        .toPromise();
+      
+      return {
+        success: true,
+        message: 'Successfully left the workspace',
+        data: result
+      };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to leave workspace',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
@@ -220,6 +269,149 @@ export class WorkspaceGatewayController {
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to retrieve workspace details',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Post(':workspaceId/groups')
+  async createGroup(@Param('workspaceId') workspaceId: string, @Body() createGroupDto: CreateGroupDto, @Request() req: any) {
+    const userId = req.user.sub || req.user.userId || req.user.id;
+    
+    if (!userId) {
+      throw new HttpException('User ID not found in token', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const result = await this.workspaceServiceClient
+        .send('create_group', { userId, workspaceId, createGroupDto })
+        .pipe(
+          timeout(5000),
+          catchError(err => {
+            if (err instanceof TimeoutError) {
+              return throwError(() => new HttpException('Service timeout', HttpStatus.REQUEST_TIMEOUT));
+            }
+            
+            // Handle specific group creation errors
+            if (err.message) {
+              if (err.message.includes('Workspace not found')) {
+                return throwError(() => new HttpException('Workspace not found', HttpStatus.NOT_FOUND));
+              }
+              if (err.message.includes('not a member')) {
+                return throwError(() => new HttpException('You are not a member of this workspace', HttpStatus.FORBIDDEN));
+              }
+              if (err.message.includes('Only workspace admins')) {
+                return throwError(() => new HttpException('Only workspace admins can create groups', HttpStatus.FORBIDDEN));
+              }
+              if (err.message.includes('group with this name already exists')) {
+                return throwError(() => new HttpException('A group with this name already exists in this workspace', HttpStatus.CONFLICT));
+              }
+            }
+            
+            return throwError(() => new HttpException(err.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR));
+          })
+        )
+        .toPromise();
+      
+      return {
+        success: true,
+        data: result
+      };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to create group',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Get(':workspaceId/groups')
+  async getWorkspaceGroups(@Param('workspaceId') workspaceId: string, @Request() req: any) {
+    const userId = req.user.sub || req.user.userId || req.user.id;
+    
+    if (!userId) {
+      throw new HttpException('User ID not found in token', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const result = await this.workspaceServiceClient
+        .send('get_workspace_groups', { userId, workspaceId })
+        .pipe(
+          timeout(5000),
+          catchError(err => {
+            if (err instanceof TimeoutError) {
+              return throwError(() => new HttpException('Service timeout', HttpStatus.REQUEST_TIMEOUT));
+            }
+            
+            // Handle specific errors
+            if (err.message) {
+              if (err.message.includes('Workspace not found')) {
+                return throwError(() => new HttpException('Workspace not found', HttpStatus.NOT_FOUND));
+              }
+              if (err.message.includes('not a member')) {
+                return throwError(() => new HttpException('You are not a member of this workspace', HttpStatus.FORBIDDEN));
+              }
+            }
+            
+            return throwError(() => new HttpException(err.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR));
+          })
+        )
+        .toPromise();
+      
+      return {
+        success: true,
+        message: 'Groups retrieved successfully',
+        data: result
+      };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to retrieve groups',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Post('groups/join-leave')
+  async joinLeaveGroup(@Body() joinLeaveGroupDto: JoinLeaveGroupDto, @Request() req: any) {
+    const userId = req.user.sub || req.user.userId || req.user.id;
+    
+    if (!userId) {
+      throw new HttpException('User ID not found in token', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const result = await this.workspaceServiceClient
+        .send('join_leave_group', { userId, joinLeaveGroupDto })
+        .pipe(
+          timeout(5000),
+          catchError(err => {
+            if (err instanceof TimeoutError) {
+              return throwError(() => new HttpException('Service timeout', HttpStatus.REQUEST_TIMEOUT));
+            }
+            
+            // Handle specific errors
+            if (err.message) {
+              if (err.message.includes('Group not found')) {
+                return throwError(() => new HttpException('Group not found', HttpStatus.NOT_FOUND));
+              }
+              if (err.message.includes('not a member of the workspace')) {
+                return throwError(() => new HttpException('You are not a member of the workspace that contains this group', HttpStatus.FORBIDDEN));
+              }
+            }
+            
+            return throwError(() => new HttpException(err.message || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR));
+          })
+        )
+        .toPromise();
+      
+      return {
+        success: true,
+        message: result.message,
+        data: result
+      };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to perform group operation',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }

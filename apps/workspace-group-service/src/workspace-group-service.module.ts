@@ -5,6 +5,9 @@ import { WorkspaceGroupServiceController } from './workspace-group-service.contr
 import { WorkspaceGroupServiceService } from './workspace-group-service.service';
 import { Workspace } from './entities/workspace.entity';
 import { WorkspaceMember } from './entities/workspace_user.entity';
+import { Group } from './entities/group.entity';
+import { GroupMember } from './entities/group-member.entity';
+import { ChatMessage } from './entities/chat-message.entity';
 
 @Module({
   imports: [
