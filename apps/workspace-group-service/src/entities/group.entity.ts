@@ -9,7 +9,7 @@ export class Group {
   @Column({ type: 'uuid', nullable: false })
   workspaceid: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   groupname: string;
 
   @Column({ type: 'text', nullable: true })

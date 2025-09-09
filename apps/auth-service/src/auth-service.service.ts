@@ -19,7 +19,7 @@ export class AuthServiceService {
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async signup(signupData: SignupDto) {
     const { fullName, email, password } = signupData;
@@ -194,7 +194,7 @@ export class AuthServiceService {
       success: true,
       statusCode: 200,
       message: 'User found',
-      data: user,
+      data: { userId: user.userId, fullName: user.fullName, email: user.email, role: user.role, bio: user.bio},
     };
   }
 
@@ -240,5 +240,36 @@ export class AuthServiceService {
         };
       }
     }
+  }
+
+  // Update Profile
+  async updateProfile(updateData) {
+    console.log(updateData)
+    const user = await this.userRepository.findOne({ where: { userId: updateData.userId } });
+    if (!user) {
+      return {
+        success: false,
+        statusCode: 404,
+        message: 'User not found',
+      };
+    }
+
+    const IsEmailExist = await this.userRepository.findOne({ where: { email: updateData.email } });
+    if (IsEmailExist && IsEmailExist.email !== user.email) {
+      return {
+        success: false,
+        statusCode: 409,
+        message: 'Email already exists',
+      };
+    }
+    user.fullName = updateData.fullName;
+    user.email = updateData.email;
+    user.bio = updateData.bio;
+    await this.userRepository.save(user);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Profile updated successfully',
+    };
   }
 }

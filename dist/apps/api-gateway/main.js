@@ -257,6 +257,16 @@ let AuthGatewayController = class AuthGatewayController {
             return res.status(common_1.HttpStatus.UNAUTHORIZED).json(result);
         }
     }
+    async updateProfile(updateData, res) {
+        const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'update-profile' }, updateData));
+        if (result.success) {
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        else {
+            console.log("result at gateway:", result);
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+    }
 };
 exports.AuthGatewayController = AuthGatewayController;
 __decorate([
@@ -308,6 +318,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], AuthGatewayController.prototype, "refreshToken", null);
+__decorate([
+    (0, common_1.Post)('update-profile'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AuthGatewayController.prototype, "updateProfile", null);
 exports.AuthGatewayController = AuthGatewayController = __decorate([
     (0, common_1.Controller)('auth'),
     __param(0, (0, common_1.Inject)('auth-service')),

@@ -18,7 +18,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a, _b, _c, _d;
+var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthServiceController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -27,6 +27,7 @@ const signup_dto_1 = __webpack_require__(/*! ./dtos/signup.dto */ "./apps/auth-s
 const login_dto_1 = __webpack_require__(/*! ./dtos/login.dto */ "./apps/auth-service/src/dtos/login.dto.ts");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const reset_password_dto_1 = __webpack_require__(/*! ./dtos/reset-password.dto */ "./apps/auth-service/src/dtos/reset-password.dto.ts");
+const updateProfileDto_dto_1 = __webpack_require__(/*! ./dtos/updateProfileDto.dto */ "./apps/auth-service/src/dtos/updateProfileDto.dto.ts");
 let AuthServiceController = class AuthServiceController {
     authServiceService;
     constructor(authServiceService) {
@@ -60,6 +61,11 @@ let AuthServiceController = class AuthServiceController {
     }
     async findUserByEmail(email) {
         const result = await this.authServiceService.findUserByEmail(email);
+        return result;
+    }
+    async updateProfile(updateData) {
+        const result = await this.authServiceService.updateProfile(updateData);
+        console.log("Update profile result:", result);
         return result;
     }
 };
@@ -106,6 +112,12 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AuthServiceController.prototype, "findUserByEmail", null);
+__decorate([
+    (0, microservices_1.MessagePattern)({ cmd: 'update-profile' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_e = typeof updateProfileDto_dto_1.UpdateProfileDto !== "undefined" && updateProfileDto_dto_1.UpdateProfileDto) === "function" ? _e : Object]),
+    __metadata("design:returntype", Promise)
+], AuthServiceController.prototype, "updateProfile", null);
 exports.AuthServiceController = AuthServiceController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [typeof (_a = typeof auth_service_service_1.AuthServiceService !== "undefined" && auth_service_service_1.AuthServiceService) === "function" ? _a : Object])
@@ -150,8 +162,6 @@ exports.AuthServiceModule = AuthServiceModule = __decorate([
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
                 useFactory: (configService) => {
-                    const isProduction = process.env.NODE_ENV === 'production';
-                    const useSSL = configService.get('USE_SSL') === 'true';
                     return {
                         type: 'postgres',
                         host: configService.get('DB_HOST'),
@@ -161,10 +171,10 @@ exports.AuthServiceModule = AuthServiceModule = __decorate([
                         database: configService.get('DB_DATABASE'),
                         entities: [user_entity_1.User, refresh_token_entity_1.RefreshToken],
                         synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
-                        ssl: useSSL ? {
+                        ssl: {
                             rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
                                 'true',
-                        } : false,
+                        },
                     };
                 },
             }),
@@ -404,7 +414,7 @@ let AuthServiceService = class AuthServiceService {
             success: true,
             statusCode: 200,
             message: 'User found',
-            data: user,
+            data: { userId: user.userId, fullName: user.fullName, email: user.email, role: user.role, bio: user.bio },
         };
     }
     async findUserByEmail(email) {
@@ -448,6 +458,34 @@ let AuthServiceService = class AuthServiceService {
                 };
             }
         }
+    }
+    async updateProfile(updateData) {
+        console.log(updateData);
+        const user = await this.userRepository.findOne({ where: { userId: updateData.userId } });
+        if (!user) {
+            return {
+                success: false,
+                statusCode: 404,
+                message: 'User not found',
+            };
+        }
+        const IsEmailExist = await this.userRepository.findOne({ where: { email: updateData.email } });
+        if (IsEmailExist && IsEmailExist.email !== user.email) {
+            return {
+                success: false,
+                statusCode: 409,
+                message: 'Email already exists',
+            };
+        }
+        user.fullName = updateData.fullName;
+        user.email = updateData.email;
+        user.bio = updateData.bio;
+        await this.userRepository.save(user);
+        return {
+            success: true,
+            statusCode: 200,
+            message: 'Profile updated successfully',
+        };
     }
 };
 exports.AuthServiceService = AuthServiceService;
@@ -583,6 +621,53 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], SignupDto.prototype, "password", void 0);
+
+
+/***/ }),
+
+/***/ "./apps/auth-service/src/dtos/updateProfileDto.dto.ts":
+/*!************************************************************!*\
+  !*** ./apps/auth-service/src/dtos/updateProfileDto.dto.ts ***!
+  \************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UpdateProfileDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+class UpdateProfileDto {
+    userId;
+    fullName;
+    email;
+    bio;
+}
+exports.UpdateProfileDto = UpdateProfileDto;
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], UpdateProfileDto.prototype, "userId", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], UpdateProfileDto.prototype, "fullName", void 0);
+__decorate([
+    (0, class_validator_1.IsEmail)({}, { message: 'Invalid email format' }),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], UpdateProfileDto.prototype, "email", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateProfileDto.prototype, "bio", void 0);
 
 
 /***/ }),

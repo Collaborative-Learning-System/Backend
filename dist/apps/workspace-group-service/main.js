@@ -154,7 +154,7 @@ __decorate([
     __metadata("design:type", String)
 ], Group.prototype, "workspaceid", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
+    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
     __metadata("design:type", String)
 ], Group.prototype, "groupname", void 0);
 __decorate([
@@ -203,7 +203,7 @@ __decorate([
     __metadata("design:type", String)
 ], Workspace.prototype, "workspaceid", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
+    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
     __metadata("design:type", String)
 ], Workspace.prototype, "workspacename", void 0);
 __decorate([
@@ -654,7 +654,7 @@ exports.WorkspaceGroupServiceModule = WorkspaceGroupServiceModule = __decorate([
                         username: configService.get('DB_USERNAME'),
                         password: configService.get('DB_PASSWORD'),
                         database: configService.get('DB_DATABASE'),
-                        entities: [workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember],
+                        entities: [workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember, group_entity_1.Group, group_member_entity_1.GroupMember, chat_message_entity_1.ChatMessage],
                         synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
                         ssl: {
                             rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
@@ -720,25 +720,19 @@ let WorkspaceGroupServiceService = class WorkspaceGroupServiceService {
         return 'Hello World!';
     }
     async createWorkspace(userId, createWorkspaceDto) {
-        console.log('Service method - userId:', userId);
-        console.log('Service method - createWorkspaceDto:', createWorkspaceDto);
         const finalUserId = userId || 'test-user-id-12345';
-        console.log('Final userId to use:', finalUserId);
         try {
             const workspace = this.workspaceRepository.create({
                 workspacename: createWorkspaceDto.workspacename,
                 description: createWorkspaceDto.description,
             });
             const savedWorkspace = await this.workspaceRepository.save(workspace);
-            console.log('Saved Workspace:', savedWorkspace);
             const adminMember = this.workspaceMemberRepository.create({
                 workspaceid: savedWorkspace.workspaceid,
-                userid: finalUserId,
+                userid: userId,
                 role: 'admin',
             });
-            console.log('Creating admin member:', adminMember);
-            const savedMember = await this.workspaceMemberRepository.save(adminMember);
-            console.log('Saved admin member:', savedMember);
+            await this.workspaceMemberRepository.save(adminMember);
             return {
                 id: savedWorkspace.workspaceid,
                 name: savedWorkspace.workspacename,
@@ -748,7 +742,6 @@ let WorkspaceGroupServiceService = class WorkspaceGroupServiceService {
             };
         }
         catch (error) {
-            console.error('Error creating workspace:', error);
             throw new common_1.ConflictException('Failed to create workspace');
         }
     }
