@@ -1,217 +1,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ({
-
-/***/ "./apps/notification-service/src/dtos/activity.dto.ts":
-/*!************************************************************!*\
-  !*** ./apps/notification-service/src/dtos/activity.dto.ts ***!
-  \************************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ActivityDto = void 0;
-const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
-class ActivityDto {
-    userId;
-    activity;
-    timestamp;
-}
-exports.ActivityDto = ActivityDto;
-__decorate([
-    (0, class_validator_1.IsNotEmpty)({ message: 'User ID is required' }),
-    __metadata("design:type", String)
-], ActivityDto.prototype, "userId", void 0);
-__decorate([
-    (0, class_validator_1.IsNotEmpty)({ message: 'Activity is required' }),
-    __metadata("design:type", String)
-], ActivityDto.prototype, "activity", void 0);
-__decorate([
-    (0, class_validator_1.IsNotEmpty)({ message: 'Timestamp is required' }),
-    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
-], ActivityDto.prototype, "timestamp", void 0);
-
-
-/***/ }),
-
-/***/ "./apps/notification-service/src/dtos/email.dto.ts":
-/*!*********************************************************!*\
-  !*** ./apps/notification-service/src/dtos/email.dto.ts ***!
-  \*********************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.EmailDto = void 0;
-const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
-class EmailDto {
-    email;
-}
-exports.EmailDto = EmailDto;
-__decorate([
-    (0, class_validator_1.IsEmail)({}, { message: 'Please provide a valid email address' }),
-    (0, class_validator_1.IsNotEmpty)({ message: 'Email is required' }),
-    __metadata("design:type", String)
-], EmailDto.prototype, "email", void 0);
-
-
-/***/ }),
-
-/***/ "./apps/notification-service/src/dtos/welcomeEmail.dto.ts":
-/*!****************************************************************!*\
-  !*** ./apps/notification-service/src/dtos/welcomeEmail.dto.ts ***!
-  \****************************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.WelcomeEmailDto = void 0;
-const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
-class WelcomeEmailDto {
-    email;
-    fullName;
-}
-exports.WelcomeEmailDto = WelcomeEmailDto;
-__decorate([
-    (0, class_validator_1.IsEmail)({}, { message: 'Please provide a valid email address' }),
-    (0, class_validator_1.IsNotEmpty)({ message: 'Email is required' }),
-    __metadata("design:type", String)
-], WelcomeEmailDto.prototype, "email", void 0);
-__decorate([
-    (0, class_validator_1.IsString)({ message: 'Full name must be a string' }),
-    (0, class_validator_1.IsNotEmpty)({ message: 'Full name is required' }),
-    __metadata("design:type", String)
-], WelcomeEmailDto.prototype, "fullName", void 0);
-
-
-/***/ }),
-
-/***/ "./apps/notification-service/src/entities/logging.entity.ts":
-/*!******************************************************************!*\
-  !*** ./apps/notification-service/src/entities/logging.entity.ts ***!
-  \******************************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Logging = void 0;
-const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
-let Logging = class Logging {
-    activityId;
-    userId;
-    activity;
-    timestamp;
-};
-exports.Logging = Logging;
-__decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid', { name: 'activityid' }),
-    __metadata("design:type", String)
-], Logging.prototype, "activityId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'userid' }),
-    __metadata("design:type", String)
-], Logging.prototype, "userId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'activity' }),
-    __metadata("design:type", String)
-], Logging.prototype, "activity", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'timestamp' }),
-    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
-], Logging.prototype, "timestamp", void 0);
-exports.Logging = Logging = __decorate([
-    (0, typeorm_1.Entity)('logging')
-], Logging);
-
-
-/***/ }),
-
-/***/ "./apps/notification-service/src/filters/validation-exception.filter.ts":
-/*!******************************************************************************!*\
-  !*** ./apps/notification-service/src/filters/validation-exception.filter.ts ***!
-  \******************************************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ValidationExceptionFilter = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-let ValidationExceptionFilter = class ValidationExceptionFilter {
-    catch(exception, host) {
-        const response = exception.getResponse();
-        if (typeof response === 'object' &&
-            response['message'] &&
-            Array.isArray(response['message'])) {
-            const validationErrors = response['message'];
-            return {
-                success: false,
-                statusCode: 400,
-                message: validationErrors,
-            };
-        }
-        return {
-            success: false,
-            statusCode: 400,
-            message: response['message'] || 'Bad Request',
-        };
-    }
-};
-exports.ValidationExceptionFilter = ValidationExceptionFilter;
-exports.ValidationExceptionFilter = ValidationExceptionFilter = __decorate([
-    (0, common_1.Catch)(common_1.BadRequestException)
-], ValidationExceptionFilter);
-
-
-/***/ }),
-
-/***/ "./apps/notification-service/src/main.ts":
-/*!***********************************************!*\
-  !*** ./apps/notification-service/src/main.ts ***!
-  \***********************************************/
+/******/ 	var __webpack_modules__ = ([
+/* 0 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -249,13 +39,13 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
-const notification_service_module_1 = __webpack_require__(/*! ./notification-service.module */ "./apps/notification-service/src/notification-service.module.ts");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const dotenv = __importStar(__webpack_require__(/*! dotenv */ "dotenv"));
-const path = __importStar(__webpack_require__(/*! path */ "path"));
-const validation_exception_filter_1 = __webpack_require__(/*! ./filters/validation-exception.filter */ "./apps/notification-service/src/filters/validation-exception.filter.ts");
+const core_1 = __webpack_require__(1);
+const notification_service_module_1 = __webpack_require__(2);
+const microservices_1 = __webpack_require__(8);
+const common_1 = __webpack_require__(3);
+const dotenv = __importStar(__webpack_require__(16));
+const path = __importStar(__webpack_require__(17));
+const validation_exception_filter_1 = __webpack_require__(18);
 const envPath = path.resolve(process.cwd(), 'apps', 'notification-service', '.env');
 dotenv.config({ path: envPath });
 async function bootstrap() {
@@ -278,11 +68,86 @@ bootstrap();
 
 
 /***/ }),
+/* 1 */
+/***/ ((module) => {
 
-/***/ "./apps/notification-service/src/notification-service.controller.ts":
-/*!**************************************************************************!*\
-  !*** ./apps/notification-service/src/notification-service.controller.ts ***!
-  \**************************************************************************/
+module.exports = require("@nestjs/core");
+
+/***/ }),
+/* 2 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.NotificationServiceModule = void 0;
+const common_1 = __webpack_require__(3);
+const notification_service_controller_1 = __webpack_require__(4);
+const notification_service_service_1 = __webpack_require__(5);
+const config_1 = __webpack_require__(7);
+const microservices_1 = __webpack_require__(8);
+const logging_entity_1 = __webpack_require__(10);
+const typeorm_1 = __webpack_require__(11);
+let NotificationServiceModule = class NotificationServiceModule {
+};
+exports.NotificationServiceModule = NotificationServiceModule;
+exports.NotificationServiceModule = NotificationServiceModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            config_1.ConfigModule.forRoot({
+                isGlobal: true,
+            }),
+            typeorm_1.TypeOrmModule.forRootAsync({
+                imports: [config_1.ConfigModule],
+                inject: [config_1.ConfigService],
+                useFactory: (configService) => {
+                    return {
+                        type: 'postgres',
+                        host: configService.get('DB_HOST'),
+                        port: configService.get('DB_PORT'),
+                        username: configService.get('DB_USERNAME'),
+                        password: configService.get('DB_PASSWORD'),
+                        database: configService.get('DB_DATABASE'),
+                        entities: [logging_entity_1.Logging],
+                        synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
+                        ssl: {
+                            rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
+                                'true',
+                        },
+                    };
+                },
+            }),
+            typeorm_1.TypeOrmModule.forFeature([logging_entity_1.Logging]),
+            microservices_1.ClientsModule.register([
+                {
+                    name: 'auth-service',
+                    transport: microservices_1.Transport.TCP,
+                    options: {
+                        host: '127.0.0.1',
+                        port: 3001,
+                    },
+                },
+            ]),
+        ],
+        controllers: [notification_service_controller_1.NotificationServiceController],
+        providers: [notification_service_service_1.NotificationServiceService],
+    })
+], NotificationServiceModule);
+
+
+/***/ }),
+/* 3 */
+/***/ ((module) => {
+
+module.exports = require("@nestjs/common");
+
+/***/ }),
+/* 4 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -298,12 +163,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.NotificationServiceController = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const notification_service_service_1 = __webpack_require__(/*! ./notification-service.service */ "./apps/notification-service/src/notification-service.service.ts");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const email_dto_1 = __webpack_require__(/*! ./dtos/email.dto */ "./apps/notification-service/src/dtos/email.dto.ts");
-const welcomeEmail_dto_1 = __webpack_require__(/*! ./dtos/welcomeEmail.dto */ "./apps/notification-service/src/dtos/welcomeEmail.dto.ts");
-const activity_dto_1 = __webpack_require__(/*! ./dtos/activity.dto */ "./apps/notification-service/src/dtos/activity.dto.ts");
+const common_1 = __webpack_require__(3);
+const notification_service_service_1 = __webpack_require__(5);
+const microservices_1 = __webpack_require__(8);
+const email_dto_1 = __webpack_require__(12);
+const welcomeEmail_dto_1 = __webpack_require__(14);
+const activity_dto_1 = __webpack_require__(15);
 let NotificationServiceController = class NotificationServiceController {
     notificationServiceService;
     constructor(notificationServiceService) {
@@ -354,82 +219,7 @@ exports.NotificationServiceController = NotificationServiceController = __decora
 
 
 /***/ }),
-
-/***/ "./apps/notification-service/src/notification-service.module.ts":
-/*!**********************************************************************!*\
-  !*** ./apps/notification-service/src/notification-service.module.ts ***!
-  \**********************************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.NotificationServiceModule = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const notification_service_controller_1 = __webpack_require__(/*! ./notification-service.controller */ "./apps/notification-service/src/notification-service.controller.ts");
-const notification_service_service_1 = __webpack_require__(/*! ./notification-service.service */ "./apps/notification-service/src/notification-service.service.ts");
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const logging_entity_1 = __webpack_require__(/*! ./entities/logging.entity */ "./apps/notification-service/src/entities/logging.entity.ts");
-const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
-let NotificationServiceModule = class NotificationServiceModule {
-};
-exports.NotificationServiceModule = NotificationServiceModule;
-exports.NotificationServiceModule = NotificationServiceModule = __decorate([
-    (0, common_1.Module)({
-        imports: [
-            config_1.ConfigModule.forRoot({
-                isGlobal: true,
-            }),
-            typeorm_1.TypeOrmModule.forRootAsync({
-                imports: [config_1.ConfigModule],
-                inject: [config_1.ConfigService],
-                useFactory: (configService) => {
-                    return {
-                        type: 'postgres',
-                        host: configService.get('DB_HOST'),
-                        port: configService.get('DB_PORT'),
-                        username: configService.get('DB_USERNAME'),
-                        password: configService.get('DB_PASSWORD'),
-                        database: configService.get('DB_DATABASE'),
-                        entities: [logging_entity_1.Logging],
-                        synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
-                        ssl: {
-                            rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
-                                'true',
-                        },
-                    };
-                },
-            }),
-            typeorm_1.TypeOrmModule.forFeature([logging_entity_1.Logging]),
-            microservices_1.ClientsModule.register([
-                {
-                    name: 'auth-service',
-                    transport: microservices_1.Transport.TCP,
-                    options: {
-                        host: '127.0.0.1',
-                        port: 3001,
-                    },
-                },
-            ]),
-        ],
-        controllers: [notification_service_controller_1.NotificationServiceController],
-        providers: [notification_service_service_1.NotificationServiceService],
-    })
-], NotificationServiceModule);
-
-
-/***/ }),
-
-/***/ "./apps/notification-service/src/notification-service.service.ts":
-/*!***********************************************************************!*\
-  !*** ./apps/notification-service/src/notification-service.service.ts ***!
-  \***********************************************************************/
+/* 5 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -481,13 +271,13 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.NotificationServiceService = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const nodemailer = __importStar(__webpack_require__(/*! nodemailer */ "nodemailer"));
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
-const logging_entity_1 = __webpack_require__(/*! ./entities/logging.entity */ "./apps/notification-service/src/entities/logging.entity.ts");
-const typeorm_2 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const common_1 = __webpack_require__(3);
+const nodemailer = __importStar(__webpack_require__(6));
+const config_1 = __webpack_require__(7);
+const microservices_1 = __webpack_require__(8);
+const typeorm_1 = __webpack_require__(9);
+const logging_entity_1 = __webpack_require__(10);
+const typeorm_2 = __webpack_require__(11);
 let NotificationServiceService = class NotificationServiceService {
     configService;
     authClient;
@@ -680,108 +470,241 @@ exports.NotificationServiceService = NotificationServiceService = __decorate([
 
 
 /***/ }),
-
-/***/ "@nestjs/common":
-/*!*********************************!*\
-  !*** external "@nestjs/common" ***!
-  \*********************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/common");
-
-/***/ }),
-
-/***/ "@nestjs/config":
-/*!*********************************!*\
-  !*** external "@nestjs/config" ***!
-  \*********************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/config");
-
-/***/ }),
-
-/***/ "@nestjs/core":
-/*!*******************************!*\
-  !*** external "@nestjs/core" ***!
-  \*******************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/core");
-
-/***/ }),
-
-/***/ "@nestjs/microservices":
-/*!****************************************!*\
-  !*** external "@nestjs/microservices" ***!
-  \****************************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/microservices");
-
-/***/ }),
-
-/***/ "@nestjs/typeorm":
-/*!**********************************!*\
-  !*** external "@nestjs/typeorm" ***!
-  \**********************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/typeorm");
-
-/***/ }),
-
-/***/ "class-validator":
-/*!**********************************!*\
-  !*** external "class-validator" ***!
-  \**********************************/
-/***/ ((module) => {
-
-module.exports = require("class-validator");
-
-/***/ }),
-
-/***/ "dotenv":
-/*!*************************!*\
-  !*** external "dotenv" ***!
-  \*************************/
-/***/ ((module) => {
-
-module.exports = require("dotenv");
-
-/***/ }),
-
-/***/ "nodemailer":
-/*!*****************************!*\
-  !*** external "nodemailer" ***!
-  \*****************************/
+/* 6 */
 /***/ ((module) => {
 
 module.exports = require("nodemailer");
 
 /***/ }),
+/* 7 */
+/***/ ((module) => {
 
-/***/ "path":
-/*!***********************!*\
-  !*** external "path" ***!
-  \***********************/
+module.exports = require("@nestjs/config");
+
+/***/ }),
+/* 8 */
+/***/ ((module) => {
+
+module.exports = require("@nestjs/microservices");
+
+/***/ }),
+/* 9 */
+/***/ ((module) => {
+
+module.exports = require("typeorm");
+
+/***/ }),
+/* 10 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Logging = void 0;
+const typeorm_1 = __webpack_require__(9);
+let Logging = class Logging {
+    activityId;
+    userId;
+    activity;
+    timestamp;
+};
+exports.Logging = Logging;
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid', { name: 'activityid' }),
+    __metadata("design:type", String)
+], Logging.prototype, "activityId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'userid' }),
+    __metadata("design:type", String)
+], Logging.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'activity' }),
+    __metadata("design:type", String)
+], Logging.prototype, "activity", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'timestamp' }),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], Logging.prototype, "timestamp", void 0);
+exports.Logging = Logging = __decorate([
+    (0, typeorm_1.Entity)('logging')
+], Logging);
+
+
+/***/ }),
+/* 11 */
+/***/ ((module) => {
+
+module.exports = require("@nestjs/typeorm");
+
+/***/ }),
+/* 12 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.EmailDto = void 0;
+const class_validator_1 = __webpack_require__(13);
+class EmailDto {
+    email;
+}
+exports.EmailDto = EmailDto;
+__decorate([
+    (0, class_validator_1.IsEmail)({}, { message: 'Please provide a valid email address' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'Email is required' }),
+    __metadata("design:type", String)
+], EmailDto.prototype, "email", void 0);
+
+
+/***/ }),
+/* 13 */
+/***/ ((module) => {
+
+module.exports = require("class-validator");
+
+/***/ }),
+/* 14 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.WelcomeEmailDto = void 0;
+const class_validator_1 = __webpack_require__(13);
+class WelcomeEmailDto {
+    email;
+    fullName;
+}
+exports.WelcomeEmailDto = WelcomeEmailDto;
+__decorate([
+    (0, class_validator_1.IsEmail)({}, { message: 'Please provide a valid email address' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'Email is required' }),
+    __metadata("design:type", String)
+], WelcomeEmailDto.prototype, "email", void 0);
+__decorate([
+    (0, class_validator_1.IsString)({ message: 'Full name must be a string' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'Full name is required' }),
+    __metadata("design:type", String)
+], WelcomeEmailDto.prototype, "fullName", void 0);
+
+
+/***/ }),
+/* 15 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ActivityDto = void 0;
+const class_validator_1 = __webpack_require__(13);
+class ActivityDto {
+    userId;
+    activity;
+    timestamp;
+}
+exports.ActivityDto = ActivityDto;
+__decorate([
+    (0, class_validator_1.IsNotEmpty)({ message: 'User ID is required' }),
+    __metadata("design:type", String)
+], ActivityDto.prototype, "userId", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)({ message: 'Activity is required' }),
+    __metadata("design:type", String)
+], ActivityDto.prototype, "activity", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)({ message: 'Timestamp is required' }),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], ActivityDto.prototype, "timestamp", void 0);
+
+
+/***/ }),
+/* 16 */
+/***/ ((module) => {
+
+module.exports = require("dotenv");
+
+/***/ }),
+/* 17 */
 /***/ ((module) => {
 
 module.exports = require("path");
 
 /***/ }),
+/* 18 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
-/***/ "typeorm":
-/*!**************************!*\
-  !*** external "typeorm" ***!
-  \**************************/
-/***/ ((module) => {
 
-module.exports = require("typeorm");
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ValidationExceptionFilter = void 0;
+const common_1 = __webpack_require__(3);
+let ValidationExceptionFilter = class ValidationExceptionFilter {
+    catch(exception, host) {
+        const response = exception.getResponse();
+        if (typeof response === 'object' &&
+            response['message'] &&
+            Array.isArray(response['message'])) {
+            const validationErrors = response['message'];
+            return {
+                success: false,
+                statusCode: 400,
+                message: validationErrors,
+            };
+        }
+        return {
+            success: false,
+            statusCode: 400,
+            message: response['message'] || 'Bad Request',
+        };
+    }
+};
+exports.ValidationExceptionFilter = ValidationExceptionFilter;
+exports.ValidationExceptionFilter = ValidationExceptionFilter = __decorate([
+    (0, common_1.Catch)(common_1.BadRequestException)
+], ValidationExceptionFilter);
+
 
 /***/ })
-
-/******/ 	});
+/******/ 	]);
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
@@ -812,7 +735,7 @@ module.exports = require("typeorm");
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __webpack_require__("./apps/notification-service/src/main.ts");
+/******/ 	var __webpack_exports__ = __webpack_require__(0);
 /******/ 	
 /******/ })()
 ;
