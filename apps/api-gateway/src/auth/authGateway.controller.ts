@@ -128,4 +128,18 @@ export class AuthGatewayController {
       return res.status(HttpStatus.UNAUTHORIZED).json(result);
     }
   }
+
+  @Post('update-profile')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(@Body() updateData: any, @Res() res: Response) {
+    const result = await lastValueFrom(
+      this.authClient.send({ cmd: 'update-profile' }, updateData),
+    );
+    if (result.success) {
+      return res.status(HttpStatus.OK).json(result);
+    } else {
+      console.log("result at gateway:", result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+  }
 }

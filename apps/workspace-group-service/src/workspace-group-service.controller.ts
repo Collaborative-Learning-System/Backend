@@ -23,7 +23,6 @@ export class WorkspaceGroupServiceController {
       return await this.workspaceGroupServiceService.joinWorkspace(data.userId, data.joinWorkspaceDto);
     } catch (error) {
       console.error('Error in joinWorkspace controller:', error);
-      // Re-throw the error to be handled by the API gateway
       throw error;
     }
   }
@@ -34,7 +33,6 @@ export class WorkspaceGroupServiceController {
       return await this.workspaceGroupServiceService.leaveWorkspace(data.userId, data.leaveWorkspaceDto);
     } catch (error) {
       console.error('Error in leaveWorkspace controller:', error);
-      // Re-throw the error to be handled by the API gateway
       throw error;
     }
   }
@@ -103,7 +101,6 @@ export class WorkspaceGroupServiceController {
       throw error;
     }
   }
-
 
 
 // Socket.IO Chat 

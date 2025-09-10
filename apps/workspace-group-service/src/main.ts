@@ -1,6 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { WorkspaceGroupServiceModule } from './workspace-group-service.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// for .env loads
+const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
+dotenv.config({ path: envPath });
+
 
 async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(

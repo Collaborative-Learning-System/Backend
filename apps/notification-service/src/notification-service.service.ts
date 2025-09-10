@@ -4,13 +4,22 @@ import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
 import { WelcomeEmailDto } from './dtos/welcomeEmail.dto';
 import { ClientProxy } from '@nestjs/microservices';
+import { Repository } from 'typeorm';
+import { Logging } from './entities/logging.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class NotificationServiceService implements OnModuleInit {
   private transporter: nodemailer.Transporter;
   private from: string | undefined;
 
-  constructor(private configService: ConfigService, @Inject('auth-service') private readonly authClient: ClientProxy) {}
+  constructor(
+    private configService: ConfigService,
+    @Inject('auth-service')
+    private readonly authClient: ClientProxy,
+    @InjectRepository(Logging)
+    private readonly loggingRepository: Repository<Logging>
+  ) { }
 
   onModuleInit() {
     const host = this.configService.get<string>('EMAIL_HOST');
@@ -172,5 +181,27 @@ export class NotificationServiceService implements OnModuleInit {
       console.log(error);
       return { success: false, message: error.message };
     }
+  }
+
+  async logActivity(activityDto) {
+    const { userId, activity, timestamp } = activityDto;
+
+    if (!userId || !activity || !timestamp) {
+      return { success: false, statusCode: 400, message: 'Missing required fields' };
+    }
+
+    const logEntry = this.loggingRepository.create({
+      userId,
+      activity,
+      timestamp: new Date(timestamp),
+    });
+
+    await this.loggingRepository.save(logEntry);
+    return { success: true, statusCode: 201, message: 'Activity logged successfully' };
+  }
+
+  async getLogsByUserId(userId: string) {
+    const logs = await this.loggingRepository.find({ where: { userId } });
+    return { success: true, statusCode: 201, data: logs };
   }
 }

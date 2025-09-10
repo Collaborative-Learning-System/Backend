@@ -6,6 +6,7 @@ import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { MessagePattern } from '@nestjs/microservices';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { TokensDto } from './dtos/tokens.dto';
+import { UpdateProfileDto } from './dtos/updateProfileDto.dto';
 
 @Controller('auth')
 export class AuthServiceController {
@@ -60,6 +61,16 @@ export class AuthServiceController {
   @MessagePattern({ cmd: 'find-user-by-email' })
   async findUserByEmail(email: string) {
     const result = await this.authServiceService.findUserByEmail(email);
+    return result;
+  }
+
+  // POST: Update Profile
+  @MessagePattern({ cmd: 'update-profile' })
+  async updateProfile(updateData : UpdateProfileDto) {
+    const result = await this.authServiceService.updateProfile(
+      updateData
+    );
+    console.log("Update profile result:", result);
     return result;
   }
 }
