@@ -35,7 +35,6 @@ let AuthServiceController = class AuthServiceController {
     }
     async signup(signupData) {
         const result = await this.authServiceService.signup(signupData);
-        console.log('result at auth service controller:', result);
         return result;
     }
     async login(loginData) {
@@ -54,9 +53,8 @@ let AuthServiceController = class AuthServiceController {
         const result = await this.authServiceService.getUserData(userId);
         return result;
     }
-    async refresh(token) {
-        const result = await this.authServiceService.refresh(token.refreshToken);
-        console.log("result at controller", result);
+    async refresh(refreshToken) {
+        const result = await this.authServiceService.refresh(refreshToken);
         return result;
     }
     async findUserByEmail(email) {
@@ -65,7 +63,10 @@ let AuthServiceController = class AuthServiceController {
     }
     async updateProfile(updateData) {
         const result = await this.authServiceService.updateProfile(updateData);
-        console.log("Update profile result:", result);
+        return result;
+    }
+    async deleteUser(userId) {
+        const result = await this.authServiceService.deleteUser(userId);
         return result;
     }
 };
@@ -103,7 +104,7 @@ __decorate([
 __decorate([
     (0, microservices_1.MessagePattern)({ cmd: 'refresh-token' }),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AuthServiceController.prototype, "refresh", null);
 __decorate([
@@ -118,6 +119,12 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_e = typeof updateProfileDto_dto_1.UpdateProfileDto !== "undefined" && updateProfileDto_dto_1.UpdateProfileDto) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], AuthServiceController.prototype, "updateProfile", null);
+__decorate([
+    (0, microservices_1.MessagePattern)({ cmd: 'delete-account' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AuthServiceController.prototype, "deleteUser", null);
 exports.AuthServiceController = AuthServiceController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [typeof (_a = typeof auth_service_service_1.AuthServiceService !== "undefined" && auth_service_service_1.AuthServiceService) === "function" ? _a : Object])
@@ -326,7 +333,6 @@ let AuthServiceService = class AuthServiceService {
         const user = await this.refreshTokenRepository.findOne({
             where: { token: refreshToken },
         });
-        console.log('results', user);
         if (!user?.token) {
             return {
                 success: false,
@@ -366,11 +372,20 @@ let AuthServiceService = class AuthServiceService {
     }
     async logout(userId) {
         try {
-            await this.refreshTokenRepository.delete({ id: userId });
-            return {
-                success: true,
-                statusCode: 200,
-                message: 'User logged out successfully',
+            const user = await this.refreshTokenRepository.findOne({
+                where: { id: userId },
+            });
+            if (user) {
+                await this.refreshTokenRepository.remove(user);
+                return {
+                    success: true,
+                    statusCode: 200,
+                    message: 'User logged out successfully',
+                };
+            }
+            return { success: false,
+                statusCode: 404,
+                message: 'User not found',
             };
         }
         catch (error) {
@@ -383,13 +398,13 @@ let AuthServiceService = class AuthServiceService {
     }
     async resetPassword(resetPasswordDto) {
         const user = await this.userRepository.findOne({
-            where: { email: resetPasswordDto.email },
+            where: { userId: resetPasswordDto.userId },
         });
         if (!user) {
             return {
                 success: false,
                 statusCode: 404,
-                message: 'User not found with the provided email',
+                message: 'User not found',
             };
         }
         const hashedPassword = await bcrypt.hash(resetPasswordDto.newPassword, 10);
@@ -414,7 +429,13 @@ let AuthServiceService = class AuthServiceService {
             success: true,
             statusCode: 200,
             message: 'User found',
-            data: { userId: user.userId, fullName: user.fullName, email: user.email, role: user.role, bio: user.bio },
+            data: {
+                userId: user.userId,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role,
+                bio: user.bio,
+            },
         };
     }
     async findUserByEmail(email) {
@@ -433,35 +454,10 @@ let AuthServiceService = class AuthServiceService {
             data: user,
         };
     }
-    async validateTokens(tokens) {
-        const { accessToken, refreshToken } = tokens;
-        try {
-            const decoded = this.jwtService.verify(accessToken);
-            return {
-                success: true,
-                statusCode: 200,
-                message: 'Access Token is valid',
-                data: decoded,
-            };
-        }
-        catch (error) {
-            try {
-                const result = await this.refresh(refreshToken);
-                return result;
-            }
-            catch (refreshError) {
-                return {
-                    success: false,
-                    statusCode: 401,
-                    message: 'Invalid or expired tokens',
-                    error: refreshError.message,
-                };
-            }
-        }
-    }
     async updateProfile(updateData) {
-        console.log(updateData);
-        const user = await this.userRepository.findOne({ where: { userId: updateData.userId } });
+        const user = await this.userRepository.findOne({
+            where: { userId: updateData.userId },
+        });
         if (!user) {
             return {
                 success: false,
@@ -469,7 +465,9 @@ let AuthServiceService = class AuthServiceService {
                 message: 'User not found',
             };
         }
-        const IsEmailExist = await this.userRepository.findOne({ where: { email: updateData.email } });
+        const IsEmailExist = await this.userRepository.findOne({
+            where: { email: updateData.email },
+        });
         if (IsEmailExist && IsEmailExist.email !== user.email) {
             return {
                 success: false,
@@ -485,6 +483,22 @@ let AuthServiceService = class AuthServiceService {
             success: true,
             statusCode: 200,
             message: 'Profile updated successfully',
+        };
+    }
+    async deleteUser(userId) {
+        const user = await this.userRepository.findOne({ where: { userId } });
+        if (!user) {
+            return {
+                success: false,
+                statusCode: 404,
+                message: 'User not found',
+            };
+        }
+        await this.userRepository.remove(user);
+        return {
+            success: true,
+            statusCode: 200,
+            message: 'Account Removed successfully',
         };
     }
 };
@@ -556,14 +570,14 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ResetPasswordDto = void 0;
 const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
 class ResetPasswordDto {
-    email;
+    userId;
     newPassword;
 }
 exports.ResetPasswordDto = ResetPasswordDto;
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], ResetPasswordDto.prototype, "email", void 0);
+], ResetPasswordDto.prototype, "userId", void 0);
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.MinLength)(8, {

@@ -41,16 +41,12 @@ export class NotificationServiceService implements OnModuleInit {
   }
 
   async sendResetPasswordEmail(emailDto: EmailDto) {
-
     const result = await this.authClient.send({ cmd: 'find-user-by-email' }, emailDto.email).toPromise();
     if (!result.success) {
       return result;
     }
-    console.log(result);
-
-    const link = this.configService.get<string>('LINK');
+    const link = this.configService.get<string>('LINK') + `/${result.data.userId}`;
     const html = this.resetPasswordTemplate(link);
-    console.log("email",emailDto.email)
     return this.sendMail(emailDto.email, 'Reset Password', undefined, html);
   }
 
@@ -167,7 +163,6 @@ export class NotificationServiceService implements OnModuleInit {
 
 
   async sendMail(to: string, subject: string, text?: string, html?: string) {
-    console.log(to, subject, text, html);
     try {
       await this.transporter.sendMail({
         from: this.from,
@@ -178,7 +173,6 @@ export class NotificationServiceService implements OnModuleInit {
       });
       return { success: true, message: 'Email Sent Successfully' };
     } catch (error: any) {
-      console.log(error);
       return { success: false, message: error.message };
     }
   }
