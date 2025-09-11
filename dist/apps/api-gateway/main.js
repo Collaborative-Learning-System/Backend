@@ -65,6 +65,7 @@ const notificationGateway_controller_1 = __webpack_require__(/*! ./notification/
 const workspaceGateway_controller_1 = __webpack_require__(/*! ./workspace/workspaceGateway.controller */ "./apps/api-gateway/src/workspace/workspaceGateway.controller.ts");
 const chat_gateway_1 = __webpack_require__(/*! ./chat/chat.gateway */ "./apps/api-gateway/src/chat/chat.gateway.ts");
 const chat_controller_1 = __webpack_require__(/*! ./chat/chat.controller */ "./apps/api-gateway/src/chat/chat.controller.ts");
+const userGateway_controller_1 = __webpack_require__(/*! ./user/userGateway.controller */ "./apps/api-gateway/src/user/userGateway.controller.ts");
 let ApiGatewayModule = class ApiGatewayModule {
 };
 exports.ApiGatewayModule = ApiGatewayModule;
@@ -99,10 +100,18 @@ exports.ApiGatewayModule = ApiGatewayModule = __decorate([
                         host: '127.0.0.1',
                         port: 3003,
                     },
+                },
+                {
+                    name: 'user-service',
+                    transport: microservices_1.Transport.TCP,
+                    options: {
+                        host: '127.0.0.1',
+                        port: 3004,
+                    },
                 }
             ]),
         ],
-        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController, workspaceGateway_controller_1.WorkspaceGatewayController, chat_controller_1.ChatController],
+        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController, workspaceGateway_controller_1.WorkspaceGatewayController, chat_controller_1.ChatController, userGateway_controller_1.UserGatewayController],
         providers: [api_gateway_service_1.ApiGatewayService, jwt_auth_guard_1.JwtAuthGuard, ws_jwt_auth_guard_1.WsJwtAuthGuard, chat_gateway_1.ChatGateway],
         exports: [jwt_auth_guard_1.JwtAuthGuard],
     })
@@ -770,12 +779,10 @@ let JwtAuthGuard = class JwtAuthGuard {
             throw new common_1.UnauthorizedException('No token found');
         try {
             const decoded = this.jwtService.verify(accessToken);
-            console.log("access token is valid");
             req.user = decoded;
             return true;
         }
         catch (error) {
-            console.log("access token error", error);
             throw new common_1.UnauthorizedException({
                 statusCode: 401,
                 message: 'Invalid or expired token',
@@ -938,6 +945,87 @@ exports.NotificationGatewayController = NotificationGatewayController = __decora
     __param(0, (0, common_1.Inject)('notification-service')),
     __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
 ], NotificationGatewayController);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/user/userGateway.controller.ts":
+/*!*************************************************************!*\
+  !*** ./apps/api-gateway/src/user/userGateway.controller.ts ***!
+  \*************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserGatewayController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+let UserGatewayController = class UserGatewayController {
+    userClient;
+    constructor(userClient) {
+        this.userClient = userClient;
+    }
+    async getUserWorkspaceData(userId, res) {
+        const result = await (0, rxjs_1.lastValueFrom)(this.userClient.send({ cmd: 'get-workspace-data' }, userId));
+        if (!result.success) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
+                success: false,
+                message: result.message || 'Failed to fetch workspace data',
+            });
+        }
+        return res.status(common_1.HttpStatus.OK).json({
+            result,
+        });
+    }
+    async getUserGroupData(userId, res) {
+        const result = await (0, rxjs_1.lastValueFrom)(this.userClient.send({ cmd: 'get-group-data' }, userId));
+        if (!result.success) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
+                success: false,
+                message: result.message || 'Failed to fetch group data',
+            });
+        }
+        return res.status(common_1.HttpStatus.OK).json({
+            result,
+        });
+    }
+};
+exports.UserGatewayController = UserGatewayController;
+__decorate([
+    (0, common_1.Get)('get-workspace-data/:userId'),
+    __param(0, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], UserGatewayController.prototype, "getUserWorkspaceData", null);
+__decorate([
+    (0, common_1.Get)('get-group-data/:userId'),
+    __param(0, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], UserGatewayController.prototype, "getUserGroupData", null);
+exports.UserGatewayController = UserGatewayController = __decorate([
+    (0, common_1.Controller)('user'),
+    __param(0, (0, common_1.Inject)('user-service')),
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
+], UserGatewayController);
 
 
 /***/ }),

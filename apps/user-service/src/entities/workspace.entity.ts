@@ -10,6 +10,4 @@ export class Workspace {
 
   @Column({ type: 'text', nullable: true })
   description: string;
-
-  
 }

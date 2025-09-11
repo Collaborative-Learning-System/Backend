@@ -233,32 +233,35 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WorkspaceMember = void 0;
 const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+const workspace_entity_1 = __webpack_require__(/*! ./workspace.entity */ "./apps/workspace-group-service/src/entities/workspace.entity.ts");
 let WorkspaceMember = class WorkspaceMember {
-    id;
     userid;
     workspaceid;
     role;
+    workspace;
 };
 exports.WorkspaceMember = WorkspaceMember;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
-    __metadata("design:type", String)
-], WorkspaceMember.prototype, "id", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
+    (0, typeorm_1.PrimaryColumn)({ type: 'uuid' }),
     __metadata("design:type", String)
 ], WorkspaceMember.prototype, "userid", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
+    (0, typeorm_1.PrimaryColumn)({ type: 'uuid' }),
     __metadata("design:type", String)
 ], WorkspaceMember.prototype, "workspaceid", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 20, default: 'member' }),
     __metadata("design:type", String)
 ], WorkspaceMember.prototype, "role", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => workspace_entity_1.Workspace, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'workspaceid' }),
+    __metadata("design:type", typeof (_a = typeof workspace_entity_1.Workspace !== "undefined" && workspace_entity_1.Workspace) === "function" ? _a : Object)
+], WorkspaceMember.prototype, "workspace", void 0);
 exports.WorkspaceMember = WorkspaceMember = __decorate([
     (0, typeorm_1.Entity)('workspace_user')
 ], WorkspaceMember);

@@ -18,11 +18,9 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       const decoded = this.jwtService.verify(accessToken);
-      console.log("access token is valid");
       req.user = decoded;
       return true;
     } catch (error) {
-      console.log("access token error", error);
       throw new UnauthorizedException({
         statusCode: 401,
         message: 'Invalid or expired token',

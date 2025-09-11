@@ -10,6 +10,7 @@ import { NotificationGatewayController } from './notification/notificationGatewa
 import { WorkspaceGatewayController } from './workspace/workspaceGateway.controller';
 import { ChatGateway } from './chat/chat.gateway';
 import { ChatController } from './chat/chat.controller';
+import { UserGatewayController } from './user/userGateway.controller';
 
 @Module({
   imports: [
@@ -41,10 +42,18 @@ import { ChatController } from './chat/chat.controller';
           host: '127.0.0.1',
           port: 3003,
         },
+      },
+      {
+        name: 'user-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3004,
+        },
       }
     ]),
   ],
-  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController, WorkspaceGatewayController, ChatController],
+  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController, WorkspaceGatewayController, ChatController, UserGatewayController],
   providers: [ApiGatewayService, JwtAuthGuard, WsJwtAuthGuard, ChatGateway],
   exports: [JwtAuthGuard],
 })
