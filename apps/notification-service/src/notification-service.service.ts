@@ -4,9 +4,6 @@ import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
 import { WelcomeEmailDto } from './dtos/welcomeEmail.dto';
 import { ClientProxy } from '@nestjs/microservices';
-import { Repository } from 'typeorm';
-import { Logging } from './entities/logging.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class NotificationServiceService implements OnModuleInit {
@@ -17,9 +14,7 @@ export class NotificationServiceService implements OnModuleInit {
     private configService: ConfigService,
     @Inject('auth-service')
     private readonly authClient: ClientProxy,
-    @InjectRepository(Logging)
-    private readonly loggingRepository: Repository<Logging>
-  ) { }
+  ) {}
 
   onModuleInit() {
     const host = this.configService.get<string>('EMAIL_HOST');
@@ -41,18 +36,26 @@ export class NotificationServiceService implements OnModuleInit {
   }
 
   async sendResetPasswordEmail(emailDto: EmailDto) {
-    const result = await this.authClient.send({ cmd: 'find-user-by-email' }, emailDto.email).toPromise();
+    const result = await this.authClient
+      .send({ cmd: 'find-user-by-email' }, emailDto.email)
+      .toPromise();
     if (!result.success) {
       return result;
     }
-    const link = this.configService.get<string>('LINK') + `/${result.data.userId}`;
+    const link =
+      this.configService.get<string>('LINK') + `/${result.data.userId}`;
     const html = this.resetPasswordTemplate(link);
     return this.sendMail(emailDto.email, 'Reset Password', undefined, html);
   }
 
   async sendWelcomeEmail(welcomeDto: WelcomeEmailDto) {
     const html = this.welcomeEmailTemplate(welcomeDto.fullName);
-    return this.sendMail(welcomeDto.email, 'Welcome to EduCollab', undefined, html);
+    return this.sendMail(
+      welcomeDto.email,
+      'Welcome to EduCollab',
+      undefined,
+      html,
+    );
   }
 
   resetPasswordTemplate = (link: string | undefined) => `
@@ -161,7 +164,6 @@ export class NotificationServiceService implements OnModuleInit {
 </body>
 </html>`;
 
-
   async sendMail(to: string, subject: string, text?: string, html?: string) {
     try {
       await this.transporter.sendMail({
@@ -175,27 +177,5 @@ export class NotificationServiceService implements OnModuleInit {
     } catch (error: any) {
       return { success: false, message: error.message };
     }
-  }
-
-  async logActivity(activityDto) {
-    const { userId, activity, timestamp } = activityDto;
-
-    if (!userId || !activity || !timestamp) {
-      return { success: false, statusCode: 400, message: 'Missing required fields' };
-    }
-
-    const logEntry = this.loggingRepository.create({
-      userId,
-      activity,
-      timestamp: new Date(timestamp),
-    });
-
-    await this.loggingRepository.save(logEntry);
-    return { success: true, statusCode: 201, message: 'Activity logged successfully' };
-  }
-
-  async getLogsByUserId(userId: string) {
-    const logs = await this.loggingRepository.find({ where: { userId } });
-    return { success: true, statusCode: 201, data: logs };
   }
 }

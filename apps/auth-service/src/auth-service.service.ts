@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { SignupDto } from './dtos/signup.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { TokensDto } from './dtos/tokens.dto';
 import { RefreshTokenDto } from './dtos/refresh-token.dto';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class AuthServiceService {
@@ -20,6 +21,8 @@ export class AuthServiceService {
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     private jwtService: JwtService,
+    @Inject('user-service')
+    private readonly userClient: ClientProxy,
   ) {}
 
   async signup(signupData: SignupDto) {
@@ -44,6 +47,7 @@ export class AuthServiceService {
       password: hashedPassword,
       role: UserRole.USER,
     });
+
     return {
       success: true,
       statusCode: 201,
@@ -74,6 +78,9 @@ export class AuthServiceService {
     }
     // Generate tokens
     const tokens = await this.generateUserTokens(user.userId);
+    // await this.userClient
+    //   .send({ cmd: 'save-user-settings' }, user?.userId)
+    //   .toPromise();
 
     return {
       success: true,
@@ -149,11 +156,8 @@ export class AuthServiceService {
           statusCode: 200,
           message: 'User logged out successfully',
         };
-      } 
-      return {success: false,
-        statusCode: 404,
-        message: 'User not found',
-      };
+      }
+      return { success: false, statusCode: 404, message: 'User not found' };
     } catch (error) {
       return {
         success: false,

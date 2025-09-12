@@ -2,48 +2,6 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./apps/notification-service/src/dtos/activity.dto.ts":
-/*!************************************************************!*\
-  !*** ./apps/notification-service/src/dtos/activity.dto.ts ***!
-  \************************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ActivityDto = void 0;
-const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
-class ActivityDto {
-    userId;
-    activity;
-    timestamp;
-}
-exports.ActivityDto = ActivityDto;
-__decorate([
-    (0, class_validator_1.IsNotEmpty)({ message: 'User ID is required' }),
-    __metadata("design:type", String)
-], ActivityDto.prototype, "userId", void 0);
-__decorate([
-    (0, class_validator_1.IsNotEmpty)({ message: 'Activity is required' }),
-    __metadata("design:type", String)
-], ActivityDto.prototype, "activity", void 0);
-__decorate([
-    (0, class_validator_1.IsNotEmpty)({ message: 'Timestamp is required' }),
-    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
-], ActivityDto.prototype, "timestamp", void 0);
-
-
-/***/ }),
-
 /***/ "./apps/notification-service/src/dtos/email.dto.ts":
 /*!*********************************************************!*\
   !*** ./apps/notification-service/src/dtos/email.dto.ts ***!
@@ -110,56 +68,6 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)({ message: 'Full name is required' }),
     __metadata("design:type", String)
 ], WelcomeEmailDto.prototype, "fullName", void 0);
-
-
-/***/ }),
-
-/***/ "./apps/notification-service/src/entities/logging.entity.ts":
-/*!******************************************************************!*\
-  !*** ./apps/notification-service/src/entities/logging.entity.ts ***!
-  \******************************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Logging = void 0;
-const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
-let Logging = class Logging {
-    activityId;
-    userId;
-    activity;
-    timestamp;
-};
-exports.Logging = Logging;
-__decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid', { name: 'activityid' }),
-    __metadata("design:type", String)
-], Logging.prototype, "activityId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'userid' }),
-    __metadata("design:type", String)
-], Logging.prototype, "userId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'activity' }),
-    __metadata("design:type", String)
-], Logging.prototype, "activity", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'timestamp' }),
-    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
-], Logging.prototype, "timestamp", void 0);
-exports.Logging = Logging = __decorate([
-    (0, typeorm_1.Entity)('logging')
-], Logging);
 
 
 /***/ }),
@@ -295,7 +203,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a, _b, _c, _d;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.NotificationServiceController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -303,7 +211,6 @@ const notification_service_service_1 = __webpack_require__(/*! ./notification-se
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const email_dto_1 = __webpack_require__(/*! ./dtos/email.dto */ "./apps/notification-service/src/dtos/email.dto.ts");
 const welcomeEmail_dto_1 = __webpack_require__(/*! ./dtos/welcomeEmail.dto */ "./apps/notification-service/src/dtos/welcomeEmail.dto.ts");
-const activity_dto_1 = __webpack_require__(/*! ./dtos/activity.dto */ "./apps/notification-service/src/dtos/activity.dto.ts");
 let NotificationServiceController = class NotificationServiceController {
     notificationServiceService;
     constructor(notificationServiceService) {
@@ -314,12 +221,6 @@ let NotificationServiceController = class NotificationServiceController {
     }
     async sendWelcomeEmail(welcomeDto) {
         return this.notificationServiceService.sendWelcomeEmail(welcomeDto);
-    }
-    async logActivity(activityDto) {
-        return this.notificationServiceService.logActivity(activityDto);
-    }
-    async getLogsByUserId(userId) {
-        return this.notificationServiceService.getLogsByUserId(userId);
     }
 };
 exports.NotificationServiceController = NotificationServiceController;
@@ -335,18 +236,6 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_c = typeof welcomeEmail_dto_1.WelcomeEmailDto !== "undefined" && welcomeEmail_dto_1.WelcomeEmailDto) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], NotificationServiceController.prototype, "sendWelcomeEmail", null);
-__decorate([
-    (0, microservices_1.MessagePattern)({ cmd: 'log-activity' }),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_d = typeof activity_dto_1.ActivityDto !== "undefined" && activity_dto_1.ActivityDto) === "function" ? _d : Object]),
-    __metadata("design:returntype", Promise)
-], NotificationServiceController.prototype, "logActivity", null);
-__decorate([
-    (0, microservices_1.MessagePattern)({ cmd: 'get-logs-by-user' }),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], NotificationServiceController.prototype, "getLogsByUserId", null);
 exports.NotificationServiceController = NotificationServiceController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof notification_service_service_1.NotificationServiceService !== "undefined" && notification_service_service_1.NotificationServiceService) === "function" ? _a : Object])
@@ -375,7 +264,6 @@ const notification_service_controller_1 = __webpack_require__(/*! ./notification
 const notification_service_service_1 = __webpack_require__(/*! ./notification-service.service */ "./apps/notification-service/src/notification-service.service.ts");
 const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const logging_entity_1 = __webpack_require__(/*! ./entities/logging.entity */ "./apps/notification-service/src/entities/logging.entity.ts");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 let NotificationServiceModule = class NotificationServiceModule {
 };
@@ -397,7 +285,7 @@ exports.NotificationServiceModule = NotificationServiceModule = __decorate([
                         username: configService.get('DB_USERNAME'),
                         password: configService.get('DB_PASSWORD'),
                         database: configService.get('DB_DATABASE'),
-                        entities: [logging_entity_1.Logging],
+                        entities: [],
                         synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
                         ssl: {
                             rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
@@ -406,7 +294,7 @@ exports.NotificationServiceModule = NotificationServiceModule = __decorate([
                     };
                 },
             }),
-            typeorm_1.TypeOrmModule.forFeature([logging_entity_1.Logging]),
+            typeorm_1.TypeOrmModule.forFeature([]),
             microservices_1.ClientsModule.register([
                 {
                     name: 'auth-service',
@@ -478,26 +366,21 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.NotificationServiceService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const nodemailer = __importStar(__webpack_require__(/*! nodemailer */ "nodemailer"));
 const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
-const logging_entity_1 = __webpack_require__(/*! ./entities/logging.entity */ "./apps/notification-service/src/entities/logging.entity.ts");
-const typeorm_2 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 let NotificationServiceService = class NotificationServiceService {
     configService;
     authClient;
-    loggingRepository;
     transporter;
     from;
-    constructor(configService, authClient, loggingRepository) {
+    constructor(configService, authClient) {
         this.configService = configService;
         this.authClient = authClient;
-        this.loggingRepository = loggingRepository;
     }
     onModuleInit() {
         const host = this.configService.get('EMAIL_HOST');
@@ -517,7 +400,9 @@ let NotificationServiceService = class NotificationServiceService {
         });
     }
     async sendResetPasswordEmail(emailDto) {
-        const result = await this.authClient.send({ cmd: 'find-user-by-email' }, emailDto.email).toPromise();
+        const result = await this.authClient
+            .send({ cmd: 'find-user-by-email' }, emailDto.email)
+            .toPromise();
         if (!result.success) {
             return result;
         }
@@ -648,30 +533,12 @@ let NotificationServiceService = class NotificationServiceService {
             return { success: false, message: error.message };
         }
     }
-    async logActivity(activityDto) {
-        const { userId, activity, timestamp } = activityDto;
-        if (!userId || !activity || !timestamp) {
-            return { success: false, statusCode: 400, message: 'Missing required fields' };
-        }
-        const logEntry = this.loggingRepository.create({
-            userId,
-            activity,
-            timestamp: new Date(timestamp),
-        });
-        await this.loggingRepository.save(logEntry);
-        return { success: true, statusCode: 201, message: 'Activity logged successfully' };
-    }
-    async getLogsByUserId(userId) {
-        const logs = await this.loggingRepository.find({ where: { userId } });
-        return { success: true, statusCode: 201, data: logs };
-    }
 };
 exports.NotificationServiceService = NotificationServiceService;
 exports.NotificationServiceService = NotificationServiceService = __decorate([
     (0, common_1.Injectable)(),
     __param(1, (0, common_1.Inject)('auth-service')),
-    __param(2, (0, typeorm_2.InjectRepository)(logging_entity_1.Logging)),
-    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object, typeof (_b = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _b : Object, typeof (_c = typeof typeorm_1.Repository !== "undefined" && typeorm_1.Repository) === "function" ? _c : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object, typeof (_b = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _b : Object])
 ], NotificationServiceService);
 
 
@@ -764,16 +631,6 @@ module.exports = require("nodemailer");
 /***/ ((module) => {
 
 module.exports = require("path");
-
-/***/ }),
-
-/***/ "typeorm":
-/*!**************************!*\
-  !*** external "typeorm" ***!
-  \**************************/
-/***/ ((module) => {
-
-module.exports = require("typeorm");
 
 /***/ })
 

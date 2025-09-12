@@ -156,6 +156,7 @@ const user_entity_1 = __webpack_require__(/*! ./entities/user.entity */ "./apps/
 const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
 const refresh_token_entity_1 = __webpack_require__(/*! ./entities/refresh-token.entity */ "./apps/auth-service/src/entities/refresh-token.entity.ts");
 const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 let AuthServiceModule = class AuthServiceModule {
 };
 exports.AuthServiceModule = AuthServiceModule;
@@ -197,6 +198,16 @@ exports.AuthServiceModule = AuthServiceModule = __decorate([
                     },
                 }),
             }),
+            microservices_1.ClientsModule.register([
+                {
+                    name: 'user-service',
+                    transport: microservices_1.Transport.TCP,
+                    options: {
+                        host: '127.0.0.1',
+                        port: 3004,
+                    },
+                },
+            ]),
         ],
         controllers: [auth_service_controller_1.AuthServiceController],
         providers: [auth_service_service_1.AuthServiceService],
@@ -258,7 +269,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthServiceService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -269,14 +280,17 @@ const bcrypt = __importStar(__webpack_require__(/*! bcrypt */ "bcrypt"));
 const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
 const refresh_token_entity_1 = __webpack_require__(/*! ./entities/refresh-token.entity */ "./apps/auth-service/src/entities/refresh-token.entity.ts");
 const uuid_1 = __webpack_require__(/*! uuid */ "uuid");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 let AuthServiceService = class AuthServiceService {
     userRepository;
     refreshTokenRepository;
     jwtService;
-    constructor(userRepository, refreshTokenRepository, jwtService) {
+    userClient;
+    constructor(userRepository, refreshTokenRepository, jwtService, userClient) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.jwtService = jwtService;
+        this.userClient = userClient;
     }
     async signup(signupData) {
         const { fullName, email, password } = signupData;
@@ -383,10 +397,7 @@ let AuthServiceService = class AuthServiceService {
                     message: 'User logged out successfully',
                 };
             }
-            return { success: false,
-                statusCode: 404,
-                message: 'User not found',
-            };
+            return { success: false, statusCode: 404, message: 'User not found' };
         }
         catch (error) {
             return {
@@ -507,7 +518,8 @@ exports.AuthServiceService = AuthServiceService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
     __param(1, (0, typeorm_1.InjectRepository)(refresh_token_entity_1.RefreshToken)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _c : Object])
+    __param(3, (0, common_1.Inject)('user-service')),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _c : Object, typeof (_d = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _d : Object])
 ], AuthServiceService);
 
 

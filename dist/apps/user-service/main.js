@@ -2,6 +2,48 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./apps/user-service/src/dtos/activity.dto.ts":
+/*!****************************************************!*\
+  !*** ./apps/user-service/src/dtos/activity.dto.ts ***!
+  \****************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ActivityDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+class ActivityDto {
+    userId;
+    activity;
+    timestamp;
+}
+exports.ActivityDto = ActivityDto;
+__decorate([
+    (0, class_validator_1.IsNotEmpty)({ message: 'User ID is required' }),
+    __metadata("design:type", String)
+], ActivityDto.prototype, "userId", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)({ message: 'Activity is required' }),
+    __metadata("design:type", String)
+], ActivityDto.prototype, "activity", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)({ message: 'Timestamp is required' }),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], ActivityDto.prototype, "timestamp", void 0);
+
+
+/***/ }),
+
 /***/ "./apps/user-service/src/entities/group.entity.ts":
 /*!********************************************************!*\
   !*** ./apps/user-service/src/entities/group.entity.ts ***!
@@ -107,6 +149,106 @@ __decorate([
 exports.GroupMember = GroupMember = __decorate([
     (0, typeorm_1.Entity)('group_member')
 ], GroupMember);
+
+
+/***/ }),
+
+/***/ "./apps/user-service/src/entities/logging.entity.ts":
+/*!**********************************************************!*\
+  !*** ./apps/user-service/src/entities/logging.entity.ts ***!
+  \**********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Logging = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+let Logging = class Logging {
+    activityId;
+    userId;
+    activity;
+    timestamp;
+};
+exports.Logging = Logging;
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid', { name: 'activityid' }),
+    __metadata("design:type", String)
+], Logging.prototype, "activityId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'userid' }),
+    __metadata("design:type", String)
+], Logging.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'activity' }),
+    __metadata("design:type", String)
+], Logging.prototype, "activity", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'timestamp' }),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], Logging.prototype, "timestamp", void 0);
+exports.Logging = Logging = __decorate([
+    (0, typeorm_1.Entity)('logging')
+], Logging);
+
+
+/***/ }),
+
+/***/ "./apps/user-service/src/entities/user_settings.entity.ts":
+/*!****************************************************************!*\
+  !*** ./apps/user-service/src/entities/user_settings.entity.ts ***!
+  \****************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserSettings = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+let UserSettings = class UserSettings {
+    id;
+    userId;
+    trackMe;
+    sendEmails;
+};
+exports.UserSettings = UserSettings;
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    __metadata("design:type", String)
+], UserSettings.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'userid', type: 'uuid' }),
+    __metadata("design:type", String)
+], UserSettings.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'track_me', type: 'boolean', default: true }),
+    __metadata("design:type", Boolean)
+], UserSettings.prototype, "trackMe", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'send_emails', type: 'boolean', default: true }),
+    __metadata("design:type", Boolean)
+], UserSettings.prototype, "sendEmails", void 0);
+exports.UserSettings = UserSettings = __decorate([
+    (0, typeorm_1.Entity)('user_settings'),
+    (0, typeorm_1.Unique)(['userId'])
+], UserSettings);
 
 
 /***/ }),
@@ -288,12 +430,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UserServiceController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const user_service_service_1 = __webpack_require__(/*! ./user-service.service */ "./apps/user-service/src/user-service.service.ts");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const activity_dto_1 = __webpack_require__(/*! ./dtos/activity.dto */ "./apps/user-service/src/dtos/activity.dto.ts");
 let UserServiceController = class UserServiceController {
     userServiceService;
     constructor(userServiceService) {
@@ -306,6 +449,24 @@ let UserServiceController = class UserServiceController {
     getGroupData(groupId) {
         const result = this.userServiceService.getGroupData(groupId);
         return result;
+    }
+    async logActivity(activityDto) {
+        return this.userServiceService.logActivity(activityDto);
+    }
+    async getLogsByUserId(userId) {
+        return this.userServiceService.getLogsByUserId(userId);
+    }
+    async getUserSettings(userId) {
+        const result = this.userServiceService.getUserSettings(userId);
+        console.log(result);
+        return result;
+    }
+    async saveUserSettings(userId) {
+        const result = this.userServiceService.saveUserSettings(userId);
+        return result;
+    }
+    async toggleActivityTracking(data) {
+        return this.userServiceService.toggleActivityTracking(data.userId, data.trackUser);
     }
 };
 exports.UserServiceController = UserServiceController;
@@ -321,6 +482,36 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], UserServiceController.prototype, "getGroupData", null);
+__decorate([
+    (0, microservices_1.MessagePattern)({ cmd: 'log-activity' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_b = typeof activity_dto_1.ActivityDto !== "undefined" && activity_dto_1.ActivityDto) === "function" ? _b : Object]),
+    __metadata("design:returntype", Promise)
+], UserServiceController.prototype, "logActivity", null);
+__decorate([
+    (0, microservices_1.MessagePattern)({ cmd: 'get-logs-by-user' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UserServiceController.prototype, "getLogsByUserId", null);
+__decorate([
+    (0, microservices_1.MessagePattern)({ cmd: 'get-user-settings' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UserServiceController.prototype, "getUserSettings", null);
+__decorate([
+    (0, microservices_1.MessagePattern)({ cmd: 'save-user-settings' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UserServiceController.prototype, "saveUserSettings", null);
+__decorate([
+    (0, microservices_1.MessagePattern)({ cmd: 'toggle-activity-tracking' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserServiceController.prototype, "toggleActivityTracking", null);
 exports.UserServiceController = UserServiceController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof user_service_service_1.UserServiceService !== "undefined" && user_service_service_1.UserServiceService) === "function" ? _a : Object])
@@ -353,6 +544,8 @@ const group_member_entity_1 = __webpack_require__(/*! ./entities/group_member.en
 const group_entity_1 = __webpack_require__(/*! ./entities/group.entity */ "./apps/user-service/src/entities/group.entity.ts");
 const workspace_entity_1 = __webpack_require__(/*! ./entities/workspace.entity */ "./apps/user-service/src/entities/workspace.entity.ts");
 const workspace_user_entity_1 = __webpack_require__(/*! ./entities/workspace_user.entity */ "./apps/user-service/src/entities/workspace_user.entity.ts");
+const logging_entity_1 = __webpack_require__(/*! ./entities/logging.entity */ "./apps/user-service/src/entities/logging.entity.ts");
+const user_settings_entity_1 = __webpack_require__(/*! ./entities/user_settings.entity */ "./apps/user-service/src/entities/user_settings.entity.ts");
 let UserServiceModule = class UserServiceModule {
 };
 exports.UserServiceModule = UserServiceModule;
@@ -373,7 +566,7 @@ exports.UserServiceModule = UserServiceModule = __decorate([
                         username: configService.get('DB_USERNAME'),
                         password: configService.get('DB_PASSWORD'),
                         database: configService.get('DB_DATABASE'),
-                        entities: [group_member_entity_1.GroupMember, group_entity_1.Group, workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember],
+                        entities: [group_member_entity_1.GroupMember, group_entity_1.Group, workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember, logging_entity_1.Logging, user_settings_entity_1.UserSettings],
                         synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
                         ssl: {
                             rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
@@ -382,7 +575,7 @@ exports.UserServiceModule = UserServiceModule = __decorate([
                     };
                 },
             }),
-            typeorm_1.TypeOrmModule.forFeature([group_member_entity_1.GroupMember, group_entity_1.Group, workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember]),
+            typeorm_1.TypeOrmModule.forFeature([group_member_entity_1.GroupMember, group_entity_1.Group, workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember, logging_entity_1.Logging, user_settings_entity_1.UserSettings]),
         ],
         controllers: [user_service_controller_1.UserServiceController],
         providers: [user_service_service_1.UserServiceService],
@@ -411,7 +604,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d;
+var _a, _b, _c, _d, _e, _f;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UserServiceService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -421,21 +614,27 @@ const group_member_entity_1 = __webpack_require__(/*! ./entities/group_member.en
 const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
 const workspace_user_entity_1 = __webpack_require__(/*! ./entities/workspace_user.entity */ "./apps/user-service/src/entities/workspace_user.entity.ts");
 const workspace_entity_1 = __webpack_require__(/*! ./entities/workspace.entity */ "./apps/user-service/src/entities/workspace.entity.ts");
+const logging_entity_1 = __webpack_require__(/*! ./entities/logging.entity */ "./apps/user-service/src/entities/logging.entity.ts");
+const user_settings_entity_1 = __webpack_require__(/*! ./entities/user_settings.entity */ "./apps/user-service/src/entities/user_settings.entity.ts");
 let UserServiceService = class UserServiceService {
     groupMemberRepository;
     workspaceMemberRepository;
     groupRepository;
     workspaceRepository;
-    constructor(groupMemberRepository, workspaceMemberRepository, groupRepository, workspaceRepository) {
+    loggingRepository;
+    userSettingsRepository;
+    constructor(groupMemberRepository, workspaceMemberRepository, groupRepository, workspaceRepository, loggingRepository, userSettingsRepository) {
         this.groupMemberRepository = groupMemberRepository;
         this.workspaceMemberRepository = workspaceMemberRepository;
         this.groupRepository = groupRepository;
         this.workspaceRepository = workspaceRepository;
+        this.loggingRepository = loggingRepository;
+        this.userSettingsRepository = userSettingsRepository;
     }
     async getWorkspaceData(userId) {
         const memberships = await this.workspaceMemberRepository.find({
             where: { userid: userId },
-            relations: ['workspace']
+            relations: ['workspace'],
         });
         return {
             success: true,
@@ -447,32 +646,106 @@ let UserServiceService = class UserServiceService {
                     name: m.workspace.workspacename,
                     description: m.workspace.description,
                     memberCount: await this.countMembers(m.workspace.workspaceid),
-                    role: m.role
-                })))
-            }
+                    role: m.role,
+                }))),
+            },
         };
     }
     async countMembers(workspaceId) {
         return await this.workspaceMemberRepository.count({
-            where: { workspaceid: workspaceId }
+            where: { workspaceid: workspaceId },
         });
     }
     async getGroupData(userId) {
         const memberships = await this.groupMemberRepository.find({
             where: { userid: userId },
-            relations: ['group']
+            relations: ['group'],
         });
         return {
             success: true,
             message: 'Group data fetched successfully',
             data: {
                 count: memberships.length,
-                groups: memberships.map(m => ({
+                groups: memberships.map((m) => ({
                     id: m.group.groupid,
                     name: m.group.groupname,
-                }))
-            }
+                })),
+            },
         };
+    }
+    async logActivity(activityDto) {
+        const { userId, activity, timestamp } = activityDto;
+        if (!userId || !activity || !timestamp) {
+            return {
+                success: false,
+                statusCode: 400,
+                message: 'Missing required fields',
+            };
+        }
+        const logEntry = this.loggingRepository.create({
+            userId,
+            activity,
+            timestamp: new Date(timestamp),
+        });
+        await this.loggingRepository.save(logEntry);
+        return {
+            success: true,
+            statusCode: 201,
+            message: 'Activity logged successfully',
+        };
+    }
+    async getLogsByUserId(userId) {
+        const logs = await this.loggingRepository.find({ where: { userId } });
+        return { success: true, statusCode: 201, data: logs };
+    }
+    async getUserSettings(userId) {
+        const userSettings = await this.userSettingsRepository.findOne({
+            where: { userId },
+        });
+        return {
+            success: true,
+            statusCode: 200,
+            data: {
+                trackUser: userSettings?.trackMe,
+                sendEmailNotifications: userSettings?.sendEmails,
+            },
+        };
+    }
+    async saveUserSettings(userId) {
+        const user = await this.userSettingsRepository.findOne({ where: { userId } });
+        if (user) {
+            return { success: true, statusCode: 200, message: 'User settings already exist' };
+        }
+        await this.userSettingsRepository.save({
+            userId: userId,
+            trackMe: true,
+            sendEmails: true,
+        });
+        return {
+            success: true,
+            statusCode: 200,
+        };
+    }
+    async toggleActivityTracking(userId, trackUser) {
+        const userSettings = await this.userSettingsRepository.findOne({
+            where: { userId },
+        });
+        if (userSettings) {
+            userSettings.trackMe = trackUser;
+            await this.userSettingsRepository.save(userSettings);
+            return {
+                success: true,
+                statusCode: 200,
+                message: 'User settings changed successfully',
+            };
+        }
+        else {
+            return {
+                success: false,
+                statusCode: 404,
+                message: 'User settings changed failed',
+            };
+        }
     }
 };
 exports.UserServiceService = UserServiceService;
@@ -482,7 +755,9 @@ exports.UserServiceService = UserServiceService = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(workspace_user_entity_1.WorkspaceMember)),
     __param(2, (0, typeorm_1.InjectRepository)(group_entity_1.Group)),
     __param(3, (0, typeorm_1.InjectRepository)(workspace_entity_1.Workspace)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object, typeof (_d = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _d : Object])
+    __param(4, (0, typeorm_1.InjectRepository)(logging_entity_1.Logging)),
+    __param(5, (0, typeorm_1.InjectRepository)(user_settings_entity_1.UserSettings)),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object, typeof (_d = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _d : Object, typeof (_e = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _e : Object, typeof (_f = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _f : Object])
 ], UserServiceService);
 
 
@@ -535,6 +810,16 @@ module.exports = require("@nestjs/microservices");
 /***/ ((module) => {
 
 module.exports = require("@nestjs/typeorm");
+
+/***/ }),
+
+/***/ "class-validator":
+/*!**********************************!*\
+  !*** external "class-validator" ***!
+  \**********************************/
+/***/ ((module) => {
+
+module.exports = require("class-validator");
 
 /***/ }),
 

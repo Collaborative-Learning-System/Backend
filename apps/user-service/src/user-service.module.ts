@@ -7,6 +7,8 @@ import { GroupMember } from './entities/group_member.entity';
 import { Group } from './entities/group.entity';
 import { Workspace } from './entities/workspace.entity';
 import { WorkspaceMember } from './entities/workspace_user.entity';
+import { Logging } from './entities/logging.entity';
+import { UserSettings } from './entities/user_settings.entity';
 
 @Module({
   imports: [
@@ -25,7 +27,7 @@ import { WorkspaceMember } from './entities/workspace_user.entity';
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_DATABASE'),
-          entities: [GroupMember, Group, Workspace, WorkspaceMember],
+          entities: [GroupMember, Group, Workspace, WorkspaceMember, Logging, UserSettings],
           synchronize: configService.get<string>('DB_SYNCHRONIZE') === 'true',
           ssl: {
             rejectUnauthorized:
@@ -36,7 +38,7 @@ import { WorkspaceMember } from './entities/workspace_user.entity';
       },
     }),
 
-    TypeOrmModule.forFeature([GroupMember, Group, Workspace, WorkspaceMember]),
+    TypeOrmModule.forFeature([GroupMember, Group, Workspace, WorkspaceMember, Logging, UserSettings]),
   ],
   controllers: [UserServiceController],
   providers: [UserServiceService],

@@ -886,26 +886,6 @@ let NotificationGatewayController = class NotificationGatewayController {
         }
         return res.status(common_1.HttpStatus.OK).json(result);
     }
-    async logActivity(body, res) {
-        if (!body.userId || !body.activity || !body.timestamp) {
-            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
-                success: false,
-                message: 'User ID, activity, and timestamp are required',
-            });
-        }
-        const result = await (0, rxjs_1.lastValueFrom)(this.notificationClient.send({ cmd: 'log-activity' }, body));
-        if (!result.success) {
-            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
-        }
-        return res.status(common_1.HttpStatus.OK).json(result);
-    }
-    async getLogsByUserId(userId, res) {
-        const result = await (0, rxjs_1.lastValueFrom)(this.notificationClient.send({ cmd: 'get-logs-by-user' }, userId));
-        if (!result.success) {
-            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
-        }
-        return res.status(common_1.HttpStatus.OK).json(result);
-    }
 };
 exports.NotificationGatewayController = NotificationGatewayController;
 __decorate([
@@ -924,22 +904,6 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], NotificationGatewayController.prototype, "sendWelcomeEmail", null);
-__decorate([
-    (0, common_1.Post)('log-activity'),
-    __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Res)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
-    __metadata("design:returntype", Promise)
-], NotificationGatewayController.prototype, "logActivity", null);
-__decorate([
-    (0, common_1.Get)('get-logs-by-user/:userId'),
-    __param(0, (0, common_1.Param)('userId')),
-    __param(1, (0, common_1.Res)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", Promise)
-], NotificationGatewayController.prototype, "getLogsByUserId", null);
 exports.NotificationGatewayController = NotificationGatewayController = __decorate([
     (0, common_1.Controller)('notification'),
     __param(0, (0, common_1.Inject)('notification-service')),
@@ -1003,6 +967,42 @@ let UserGatewayController = class UserGatewayController {
             result,
         });
     }
+    async logActivity(body, res) {
+        if (!body.userId || !body.activity || !body.timestamp) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
+                success: false,
+                message: 'User ID, activity, and timestamp are required',
+            });
+        }
+        const result = await (0, rxjs_1.lastValueFrom)(this.userClient.send({ cmd: 'log-activity' }, body));
+        if (!result.success) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+        return res.status(common_1.HttpStatus.OK).json(result);
+    }
+    async getLogsByUserId(userId, res) {
+        const result = await (0, rxjs_1.lastValueFrom)(this.userClient.send({ cmd: 'get-logs-by-user' }, userId));
+        if (!result.success) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+        return res.status(common_1.HttpStatus.OK).json(result);
+    }
+    async getUserSettings(userId, res) {
+        console.log("userId", userId);
+        const result = await (0, rxjs_1.lastValueFrom)(this.userClient.send({ cmd: 'get-user-settings' }, userId));
+        if (!result.success) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+        return res.status(common_1.HttpStatus.OK).json(result);
+    }
+    async toggleActivityTracking(userId, res, body) {
+        console.log(body.trackUser);
+        const result = await (0, rxjs_1.lastValueFrom)(this.userClient.send({ cmd: 'toggle-activity-tracking' }, { userId, trackUser: body.trackUser }));
+        if (!result.success) {
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+        return res.status(common_1.HttpStatus.OK).json(result);
+    }
 };
 exports.UserGatewayController = UserGatewayController;
 __decorate([
@@ -1021,6 +1021,39 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], UserGatewayController.prototype, "getUserGroupData", null);
+__decorate([
+    (0, common_1.Post)('log-activity'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], UserGatewayController.prototype, "logActivity", null);
+__decorate([
+    (0, common_1.Get)('get-logs-by-user/:userId'),
+    __param(0, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], UserGatewayController.prototype, "getLogsByUserId", null);
+__decorate([
+    (0, common_1.Get)('get-user-settings/:userId'),
+    __param(0, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], UserGatewayController.prototype, "getUserSettings", null);
+__decorate([
+    (0, common_1.Post)('toggle-activity-tracking/:userId'),
+    __param(0, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Res)()),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], UserGatewayController.prototype, "toggleActivityTracking", null);
 exports.UserGatewayController = UserGatewayController = __decorate([
     (0, common_1.Controller)('user'),
     __param(0, (0, common_1.Inject)('user-service')),
