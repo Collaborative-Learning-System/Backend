@@ -1,4 +1,6 @@
-import { IsString, IsNotEmpty, IsOptional, IsUUID, IsInt, Min ,Max, IsEnum } from "class-validator";
+import { IsString, IsNotEmpty, IsOptional, IsUUID, IsInt, Min ,Max, IsEnum, IsArray, ValidateNested } from "class-validator";
+import { Type } from "class-transformer";
+import { CreateQuestionDto } from "./question.dto";
 
 export class CreateQuizDto {
   @IsUUID()
@@ -20,10 +22,7 @@ export class CreateQuizDto {
   @Max(480, { message: 'Time limit cannot exceed 8 hours' })
   timeLimit?: number;
   
-  @IsInt()
-  @IsOptional()
-  fullMarks?: number;
-
+  
   @IsEnum(['EASY', 'MEDIUM', 'HARD'])
   @IsOptional()
   difficulty?: 'EASY' | 'MEDIUM' | 'HARD';
@@ -31,4 +30,10 @@ export class CreateQuizDto {
   @IsString()
   @IsOptional()
   instructions?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateQuestionDto)
+  @IsOptional()
+  questions?: CreateQuestionDto[];
 }

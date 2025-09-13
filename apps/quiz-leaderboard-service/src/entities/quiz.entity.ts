@@ -4,10 +4,10 @@ import { Question } from './question.entity';
 @Entity('quiz')
 
 export class Quiz {
-    @PrimaryGeneratedColumn('uuid')
+    @PrimaryGeneratedColumn('uuid', { name: 'quizid' })
     quizId: string;
 
-    @Column({ type: 'uuid', nullable: false })
+    @Column({ type: 'uuid', nullable: false, name: 'groupid' })
     groupId: string;
 
     @Column({ type: 'varchar', length: 100, nullable: false })
@@ -16,11 +16,11 @@ export class Quiz {
     @Column({ type: 'text', nullable: true })
     description?: string;
 
-    @Column({ type: 'int', nullable: true })
-    timeLimit?: number; // in minutes/seconds
+    @Column({ type: 'int', nullable: true, name: 'timelimit' })
+    timeLimit?: number; 
 
-    @Column({ type: 'int' , default: 0 })
-    fullMarks: number;
+    // @Column({ type: 'int', default: 0, name: 'fullmarks' })
+    // fullMarks: number;
 
     @Column({
       type: 'varchar',

@@ -6,6 +6,8 @@ import {ConfigService, ConfigModule} from '@nestjs/config';
 import { Quiz } from './entities/quiz.entity';
 import { Question } from './entities/question.entity';
 import { QuestionOption } from './entities/question-option.entity';
+import { QuizAttempt } from './entities/quizattempt.entity';
+import { AttemptAnswer } from './entities/attemptAnswer.entity';
 
 @Module({
   imports: [
@@ -23,8 +25,8 @@ import { QuestionOption } from './entities/question-option.entity';
                   username: configService.get<string>('DB_USERNAME'),
                   password: configService.get<string>('DB_PASSWORD'),
                   database: configService.get<string>('DB_DATABASE'),
-                  entities: [Quiz, Question, QuestionOption],
-                  synchronize: false, // Explicitly disable to prevent schema issues
+                  entities: [Quiz, Question, QuestionOption, QuizAttempt, AttemptAnswer],
+                  synchronize: false, // Disable to prevent schema conflicts 
                   ssl: {
                     rejectUnauthorized:
                       configService.get<string>('DB_SSL_REJECT_UNAUTHORIZED') ===
@@ -34,7 +36,7 @@ import { QuestionOption } from './entities/question-option.entity';
               },
             }),
 
-        TypeOrmModule.forFeature([Quiz, Question, QuestionOption]),
+        TypeOrmModule.forFeature([Quiz, Question, QuestionOption, QuizAttempt, AttemptAnswer]),
   ],
   controllers: [QuizLeaderboardServiceController],
   providers: [QuizLeaderboardServiceService],
