@@ -4,13 +4,14 @@ import { ApiGatewayService } from './api-gateway.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AuthGatewayController } from './auth/authGateway.controller';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { WsJwtAuthGuard } from './ws-jwt-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { WsJwtAuthGuard } from './guards/ws-jwt-auth.guard';
 import { NotificationGatewayController } from './notification/notificationGateway.controller';
 import { WorkspaceGatewayController } from './workspace/workspaceGateway.controller';
 import { ChatGateway } from './chat/chat.gateway';
 import { ChatController } from './chat/chat.controller';
 import { UserGatewayController } from './user/userGateway.controller';
+import { DocEditGatewayController } from './doc-editing/doc-editGateway.controller';
 
 @Module({
   imports: [
@@ -50,10 +51,26 @@ import { UserGatewayController } from './user/userGateway.controller';
           host: '127.0.0.1',
           port: 3004,
         },
-      }
+      },
+      {
+        name: 'doc-editing-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3005,
+        },
+      },
     ]),
   ],
-  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController, WorkspaceGatewayController, ChatController, UserGatewayController],
+  controllers: [
+    ApiGatewayController,
+    AuthGatewayController,
+    NotificationGatewayController,
+    WorkspaceGatewayController,
+    ChatController,
+    UserGatewayController,
+    DocEditGatewayController,
+  ],
   providers: [ApiGatewayService, JwtAuthGuard, WsJwtAuthGuard, ChatGateway],
   exports: [JwtAuthGuard],
 })

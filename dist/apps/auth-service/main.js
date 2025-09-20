@@ -193,9 +193,6 @@ exports.AuthServiceModule = AuthServiceModule = __decorate([
                 useFactory: async (configService) => ({
                     global: true,
                     secret: configService.get('JWT_SECRET'),
-                    signOptions: {
-                        expiresIn: configService.get('JWT_EXPIRES_IN') || '24h',
-                    },
                 }),
             }),
             microservices_1.ClientsModule.register([
