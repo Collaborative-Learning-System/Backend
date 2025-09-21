@@ -145,10 +145,6 @@ export class StartQuizAttemptDto {
 export class SaveUserAnswerDto {
   @IsUUID()
   @IsNotEmpty()
-  userId: string;
-
-  @IsUUID()
-  @IsNotEmpty()
   attemptId: string;
 
   @IsUUID()

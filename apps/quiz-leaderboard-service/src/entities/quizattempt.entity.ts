@@ -1,28 +1,28 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from "typeorm";
-import { AttemptAnswer } from "./attemptAnswer.entity";
+import { AttemptAnswer } from "./attemptanswer.entity";
 
-@Entity('quizAttempt')
+@Entity('quizattempt') 
 export class QuizAttempt {
     
-    @PrimaryGeneratedColumn('uuid')
+    @PrimaryGeneratedColumn('uuid', { name: 'attemptid' }) 
     attemptId: string;
 
-    @Column('uuid')
+    @Column('uuid', { name: 'quizid' })
     quizId: string;
 
-    @Column('uuid')
+    @Column('uuid', { name: 'userid' })
     userId: string;
 
-    @Column('decimal', { precision: 5, scale: 2, default: 0 })
+    @Column('decimal', { precision: 5, scale: 2, default: 0, name: 'score' })
     score: number;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ name: 'attemptat' })
     attemptAt: Date;
 
-    @Column('boolean', { default: false })
+    @Column('boolean', { default: false, name: 'iscompleted' })
     isCompleted: boolean;
 
-    // Relationship to AttemptAnswers
+    
     @OneToMany(() => AttemptAnswer, attemptAnswer => attemptAnswer.attempt)
     answers: AttemptAnswer[];
 }

@@ -2,9 +2,6 @@ import { IsUUID, IsString, IsBoolean, IsOptional } from 'class-validator';
 
 export class CreateAttemptAnswerDto {
     @IsUUID()
-    userId: string;
-
-    @IsUUID()
     attemptId: string;
 
     @IsUUID()
@@ -17,10 +14,6 @@ export class CreateAttemptAnswerDto {
     @IsOptional()
     @IsString()
     userAnswer?: string;
-
-    @IsOptional()
-    @IsBoolean()
-    isCorrect?: boolean;
 }
 
 export class UpdateAttemptAnswerDto {

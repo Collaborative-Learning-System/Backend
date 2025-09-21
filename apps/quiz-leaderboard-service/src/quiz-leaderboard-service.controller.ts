@@ -181,26 +181,26 @@ export class QuizLeaderboardServiceController {
     }
   }
 
-  @MessagePattern('get_quiz_attempt')
-  async getQuizAttempt(data: { attemptId: string }) {
-    try {
-      console.log('Getting quiz attempt:', data.attemptId);
-      const result = await this.quizLeaderboardServiceService.getQuizAttempt(data.attemptId);
-      console.log('Quiz attempt found:', result);
-      return {
-        success: true,
-        data: result,
-        message: 'Quiz attempt retrieved successfully'
-      };
-    } catch (error) {
-      console.error('Get quiz attempt error:', error);
-      return {
-        success: false,
-        data: null,
-        message: 'Error retrieving quiz attempt: ' + (error?.message || error)
-      };
-    }
-  }
+//   @MessagePattern('get_quiz_attempt')
+//   async getQuizAttempt(data: { attemptId: string }) {
+//     try {
+//       console.log('Getting quiz attempt:', data.attemptId);
+//       const result = await this.quizLeaderboardServiceService.getQuizAttempt(data.attemptId);
+//       console.log('Quiz attempt found:', result);
+//       return {
+//         success: true,
+//         data: result,
+//         message: 'Quiz attempt retrieved successfully'
+//       };
+//     } catch (error) {
+//       console.error('Get quiz attempt error:', error);
+//       return {
+//         success: false,
+//         data: null,
+//         message: 'Error retrieving quiz attempt: ' + (error?.message || error)
+//       };
+//     }
+//   }
 
   @MessagePattern('get_user_quiz_attempts')
   async getUserQuizAttempts(data: { userId: string; quizId: string }) {
@@ -223,26 +223,6 @@ export class QuizLeaderboardServiceController {
     }
   }
 
-  @MessagePattern('get_quiz_leaderboard')
-  async getQuizLeaderboard(data: { quizId: string }) {
-    try {
-      console.log('Getting quiz leaderboard:', data.quizId);
-      const result = await this.quizLeaderboardServiceService.getQuizLeaderboard(data.quizId);
-      console.log('Quiz leaderboard found:', result);
-      return {
-        success: true,
-        data: result,
-        message: 'Quiz leaderboard retrieved successfully'
-      };
-    } catch (error) {
-      console.error('Get quiz leaderboard error:', error);
-      return {
-        success: false,
-        data: null,
-        message: 'Error retrieving quiz leaderboard: ' + (error?.message || error)
-      };
-    }
-  }
-  
- }
 
+
+}

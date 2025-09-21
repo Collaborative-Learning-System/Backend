@@ -1107,18 +1107,12 @@ __decorate([
     __metadata("design:type", String)
 ], StartQuizAttemptDto.prototype, "userId", void 0);
 class SaveUserAnswerDto {
-    userId;
     attemptId;
     questionId;
     selectedOptionId;
     userAnswer;
 }
 exports.SaveUserAnswerDto = SaveUserAnswerDto;
-__decorate([
-    (0, class_validator_1.IsUUID)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], SaveUserAnswerDto.prototype, "userId", void 0);
 __decorate([
     (0, class_validator_1.IsUUID)(),
     (0, class_validator_1.IsNotEmpty)(),
@@ -1210,7 +1204,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e;
+var _a, _b, _c, _d, _e, _f, _g;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.QuizGatewayController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -1347,6 +1341,70 @@ let QuizGatewayController = class QuizGatewayController {
             });
         }
     }
+    async saveUserAnswer(saveUserAnswerDto, req, res) {
+        try {
+            console.log('Saving user answer:', saveUserAnswerDto);
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send('save_user_answer', saveUserAnswerDto));
+            console.log('Response from quiz service:', result);
+            if (!result?.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        catch (error) {
+            console.error('Save user answer error:', error);
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Error saving answer: ' + (error?.message || error),
+                data: null,
+                errorDetails: error,
+            });
+        }
+    }
+    async completeQuizAttempt(completeQuizAttemptDto, req, res) {
+        try {
+            console.log('Completing quiz attempt:', completeQuizAttemptDto);
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send('complete_quiz_attempt', completeQuizAttemptDto));
+            console.log('Response from quiz service:', result);
+            if (!result?.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        catch (error) {
+            console.error('Complete quiz attempt error:', error);
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Error completing quiz attempt: ' + (error?.message || error),
+                data: null,
+                errorDetails: error,
+            });
+        }
+    }
+    async getUserQuizAttempts(userId, quizId, req, res) {
+        try {
+            console.log('Getting user quiz attempts for userId:', userId, 'quizId:', quizId);
+            const getUserQuizAttemptsDto = {
+                userId,
+                quizId,
+            };
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send('get_user_quiz_attempts', getUserQuizAttemptsDto));
+            console.log('Response from quiz service:', result);
+            if (!result?.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        catch (error) {
+            console.error('Get user quiz attempts error:', error);
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Error fetching user quiz attempts: ' + (error?.message || error),
+                data: null,
+                errorDetails: error,
+            });
+        }
+    }
 };
 exports.QuizGatewayController = QuizGatewayController;
 __decorate([
@@ -1403,6 +1461,34 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_e = typeof quiz_gateway_dto_1.StartQuizAttemptDto !== "undefined" && quiz_gateway_dto_1.StartQuizAttemptDto) === "function" ? _e : Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], QuizGatewayController.prototype, "startQuizAttempt", null);
+__decorate([
+    (0, common_1.Post)('attempt/save-answer'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_f = typeof quiz_gateway_dto_1.SaveUserAnswerDto !== "undefined" && quiz_gateway_dto_1.SaveUserAnswerDto) === "function" ? _f : Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], QuizGatewayController.prototype, "saveUserAnswer", null);
+__decorate([
+    (0, common_1.Put)('attempt/complete'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_g = typeof quiz_gateway_dto_1.CompleteQuizAttemptDto !== "undefined" && quiz_gateway_dto_1.CompleteQuizAttemptDto) === "function" ? _g : Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], QuizGatewayController.prototype, "completeQuizAttempt", null);
+__decorate([
+    (0, common_1.Get)('attempts/user/:userId/quiz/:quizId'),
+    __param(0, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Param)('quizId')),
+    __param(2, (0, common_1.Request)()),
+    __param(3, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], QuizGatewayController.prototype, "getUserQuizAttempts", null);
 exports.QuizGatewayController = QuizGatewayController = __decorate([
     (0, common_1.Controller)('quiz'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

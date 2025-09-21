@@ -22,18 +22,12 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AttemptAnswerResponseDto = exports.UpdateAttemptAnswerDto = exports.CreateAttemptAnswerDto = void 0;
 const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
 class CreateAttemptAnswerDto {
-    userId;
     attemptId;
     questionId;
     selectedOptionId;
     userAnswer;
-    isCorrect;
 }
 exports.CreateAttemptAnswerDto = CreateAttemptAnswerDto;
-__decorate([
-    (0, class_validator_1.IsUUID)(),
-    __metadata("design:type", String)
-], CreateAttemptAnswerDto.prototype, "userId", void 0);
 __decorate([
     (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
@@ -52,11 +46,6 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateAttemptAnswerDto.prototype, "userAnswer", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsBoolean)(),
-    __metadata("design:type", Boolean)
-], CreateAttemptAnswerDto.prototype, "isCorrect", void 0);
 class UpdateAttemptAnswerDto {
     selectedOptionId;
     userAnswer;
@@ -344,9 +333,9 @@ __decorate([
 
 /***/ }),
 
-/***/ "./apps/quiz-leaderboard-service/src/entities/attemptAnswer.entity.ts":
+/***/ "./apps/quiz-leaderboard-service/src/entities/attemptanswer.entity.ts":
 /*!****************************************************************************!*\
-  !*** ./apps/quiz-leaderboard-service/src/entities/attemptAnswer.entity.ts ***!
+  !*** ./apps/quiz-leaderboard-service/src/entities/attemptanswer.entity.ts ***!
   \****************************************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -405,7 +394,7 @@ __decorate([
     __metadata("design:type", typeof (_a = typeof quizattempt_entity_1.QuizAttempt !== "undefined" && quizattempt_entity_1.QuizAttempt) === "function" ? _a : Object)
 ], AttemptAnswer.prototype, "attempt", void 0);
 exports.AttemptAnswer = AttemptAnswer = __decorate([
-    (0, typeorm_1.Entity)('attemptAnswer')
+    (0, typeorm_1.Entity)('attemptanswer')
 ], AttemptAnswer);
 
 
@@ -642,7 +631,7 @@ var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.QuizAttempt = void 0;
 const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
-const attemptAnswer_entity_1 = __webpack_require__(/*! ./attemptAnswer.entity */ "./apps/quiz-leaderboard-service/src/entities/attemptAnswer.entity.ts");
+const attemptanswer_entity_1 = __webpack_require__(/*! ./attemptanswer.entity */ "./apps/quiz-leaderboard-service/src/entities/attemptanswer.entity.ts");
 let QuizAttempt = class QuizAttempt {
     attemptId;
     quizId;
@@ -654,35 +643,35 @@ let QuizAttempt = class QuizAttempt {
 };
 exports.QuizAttempt = QuizAttempt;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid', { name: 'attemptid' }),
     __metadata("design:type", String)
 ], QuizAttempt.prototype, "attemptId", void 0);
 __decorate([
-    (0, typeorm_1.Column)('uuid'),
+    (0, typeorm_1.Column)('uuid', { name: 'quizid' }),
     __metadata("design:type", String)
 ], QuizAttempt.prototype, "quizId", void 0);
 __decorate([
-    (0, typeorm_1.Column)('uuid'),
+    (0, typeorm_1.Column)('uuid', { name: 'userid' }),
     __metadata("design:type", String)
 ], QuizAttempt.prototype, "userId", void 0);
 __decorate([
-    (0, typeorm_1.Column)('decimal', { precision: 5, scale: 2, default: 0 }),
+    (0, typeorm_1.Column)('decimal', { precision: 5, scale: 2, default: 0, name: 'score' }),
     __metadata("design:type", Number)
 ], QuizAttempt.prototype, "score", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.CreateDateColumn)({ name: 'attemptat' }),
     __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
 ], QuizAttempt.prototype, "attemptAt", void 0);
 __decorate([
-    (0, typeorm_1.Column)('boolean', { default: false }),
+    (0, typeorm_1.Column)('boolean', { default: false, name: 'iscompleted' }),
     __metadata("design:type", Boolean)
 ], QuizAttempt.prototype, "isCompleted", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => attemptAnswer_entity_1.AttemptAnswer, attemptAnswer => attemptAnswer.attempt),
+    (0, typeorm_1.OneToMany)(() => attemptanswer_entity_1.AttemptAnswer, attemptAnswer => attemptAnswer.attempt),
     __metadata("design:type", Array)
 ], QuizAttempt.prototype, "answers", void 0);
 exports.QuizAttempt = QuizAttempt = __decorate([
-    (0, typeorm_1.Entity)('quizAttempt')
+    (0, typeorm_1.Entity)('quizattempt')
 ], QuizAttempt);
 
 
@@ -942,26 +931,6 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             };
         }
     }
-    async getQuizAttempt(data) {
-        try {
-            console.log('Getting quiz attempt:', data.attemptId);
-            const result = await this.quizLeaderboardServiceService.getQuizAttempt(data.attemptId);
-            console.log('Quiz attempt found:', result);
-            return {
-                success: true,
-                data: result,
-                message: 'Quiz attempt retrieved successfully'
-            };
-        }
-        catch (error) {
-            console.error('Get quiz attempt error:', error);
-            return {
-                success: false,
-                data: null,
-                message: 'Error retrieving quiz attempt: ' + (error?.message || error)
-            };
-        }
-    }
     async getUserQuizAttempts(data) {
         try {
             console.log('Getting user quiz attempts:', data);
@@ -979,26 +948,6 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
                 success: false,
                 data: null,
                 message: 'Error retrieving user quiz attempts: ' + (error?.message || error)
-            };
-        }
-    }
-    async getQuizLeaderboard(data) {
-        try {
-            console.log('Getting quiz leaderboard:', data.quizId);
-            const result = await this.quizLeaderboardServiceService.getQuizLeaderboard(data.quizId);
-            console.log('Quiz leaderboard found:', result);
-            return {
-                success: true,
-                data: result,
-                message: 'Quiz leaderboard retrieved successfully'
-            };
-        }
-        catch (error) {
-            console.error('Get quiz leaderboard error:', error);
-            return {
-                success: false,
-                data: null,
-                message: 'Error retrieving quiz leaderboard: ' + (error?.message || error)
             };
         }
     }
@@ -1053,23 +1002,11 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], QuizLeaderboardServiceController.prototype, "completeQuizAttempt", null);
 __decorate([
-    (0, microservices_1.MessagePattern)('get_quiz_attempt'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], QuizLeaderboardServiceController.prototype, "getQuizAttempt", null);
-__decorate([
     (0, microservices_1.MessagePattern)('get_user_quiz_attempts'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], QuizLeaderboardServiceController.prototype, "getUserQuizAttempts", null);
-__decorate([
-    (0, microservices_1.MessagePattern)('get_quiz_leaderboard'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], QuizLeaderboardServiceController.prototype, "getQuizLeaderboard", null);
 exports.QuizLeaderboardServiceController = QuizLeaderboardServiceController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof quiz_leaderboard_service_service_1.QuizLeaderboardServiceService !== "undefined" && quiz_leaderboard_service_service_1.QuizLeaderboardServiceService) === "function" ? _a : Object])
@@ -1102,7 +1039,7 @@ const quiz_entity_1 = __webpack_require__(/*! ./entities/quiz.entity */ "./apps/
 const question_entity_1 = __webpack_require__(/*! ./entities/question.entity */ "./apps/quiz-leaderboard-service/src/entities/question.entity.ts");
 const question_option_entity_1 = __webpack_require__(/*! ./entities/question-option.entity */ "./apps/quiz-leaderboard-service/src/entities/question-option.entity.ts");
 const quizattempt_entity_1 = __webpack_require__(/*! ./entities/quizattempt.entity */ "./apps/quiz-leaderboard-service/src/entities/quizattempt.entity.ts");
-const attemptAnswer_entity_1 = __webpack_require__(/*! ./entities/attemptAnswer.entity */ "./apps/quiz-leaderboard-service/src/entities/attemptAnswer.entity.ts");
+const attemptanswer_entity_1 = __webpack_require__(/*! ./entities/attemptanswer.entity */ "./apps/quiz-leaderboard-service/src/entities/attemptanswer.entity.ts");
 let QuizLeaderboardServiceModule = class QuizLeaderboardServiceModule {
 };
 exports.QuizLeaderboardServiceModule = QuizLeaderboardServiceModule;
@@ -1123,8 +1060,8 @@ exports.QuizLeaderboardServiceModule = QuizLeaderboardServiceModule = __decorate
                         username: configService.get('DB_USERNAME'),
                         password: configService.get('DB_PASSWORD'),
                         database: configService.get('DB_DATABASE'),
-                        entities: [quiz_entity_1.Quiz, question_entity_1.Question, question_option_entity_1.QuestionOption, quizattempt_entity_1.QuizAttempt, attemptAnswer_entity_1.AttemptAnswer],
-                        synchronize: false,
+                        entities: [quiz_entity_1.Quiz, question_entity_1.Question, question_option_entity_1.QuestionOption, quizattempt_entity_1.QuizAttempt, attemptanswer_entity_1.AttemptAnswer],
+                        synchronize: true,
                         ssl: {
                             rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
                                 'true',
@@ -1132,7 +1069,7 @@ exports.QuizLeaderboardServiceModule = QuizLeaderboardServiceModule = __decorate
                     };
                 },
             }),
-            typeorm_1.TypeOrmModule.forFeature([quiz_entity_1.Quiz, question_entity_1.Question, question_option_entity_1.QuestionOption, quizattempt_entity_1.QuizAttempt, attemptAnswer_entity_1.AttemptAnswer]),
+            typeorm_1.TypeOrmModule.forFeature([quiz_entity_1.Quiz, question_entity_1.Question, question_option_entity_1.QuestionOption, quizattempt_entity_1.QuizAttempt, attemptanswer_entity_1.AttemptAnswer]),
         ],
         controllers: [quiz_leaderboard_service_controller_1.QuizLeaderboardServiceController],
         providers: [quiz_leaderboard_service_service_1.QuizLeaderboardServiceService],
@@ -1171,7 +1108,7 @@ const quiz_entity_1 = __webpack_require__(/*! ./entities/quiz.entity */ "./apps/
 const question_entity_1 = __webpack_require__(/*! ./entities/question.entity */ "./apps/quiz-leaderboard-service/src/entities/question.entity.ts");
 const question_option_entity_1 = __webpack_require__(/*! ./entities/question-option.entity */ "./apps/quiz-leaderboard-service/src/entities/question-option.entity.ts");
 const quizattempt_entity_1 = __webpack_require__(/*! ./entities/quizattempt.entity */ "./apps/quiz-leaderboard-service/src/entities/quizattempt.entity.ts");
-const attemptAnswer_entity_1 = __webpack_require__(/*! ./entities/attemptAnswer.entity */ "./apps/quiz-leaderboard-service/src/entities/attemptAnswer.entity.ts");
+const attemptanswer_entity_1 = __webpack_require__(/*! ./entities/attemptanswer.entity */ "./apps/quiz-leaderboard-service/src/entities/attemptanswer.entity.ts");
 let QuizLeaderboardServiceService = class QuizLeaderboardServiceService {
     quizRepository;
     questionRepository;
@@ -1355,6 +1292,152 @@ let QuizLeaderboardServiceService = class QuizLeaderboardServiceService {
             throw error;
         }
     }
+    async saveUserAnswer(createAttemptAnswerDto) {
+        try {
+            const question = await this.questionRepository.findOne({
+                where: { questionId: createAttemptAnswerDto.questionId },
+                relations: ['questionOptions'],
+            });
+            if (!question) {
+                throw new Error('Question not found');
+            }
+            let isCorrect = null;
+            if (question.questionType === 'MCQ' && createAttemptAnswerDto.selectedOptionId) {
+                const selectedOption = question.questionOptions.find(option => option.optionId === createAttemptAnswerDto.selectedOptionId);
+                isCorrect = selectedOption ? selectedOption.isCorrect : false;
+            }
+            else if (question.questionType === 'TRUE_FALSE' && createAttemptAnswerDto.selectedOptionId) {
+                const selectedOption = question.questionOptions.find(option => option.optionId === createAttemptAnswerDto.selectedOptionId);
+                isCorrect = selectedOption ? selectedOption.isCorrect : false;
+            }
+            else if (question.questionType === 'SHORT_ANSWER' && createAttemptAnswerDto.userAnswer) {
+                const userAnswer = createAttemptAnswerDto.userAnswer.trim().toLowerCase();
+                const correctAnswer = question.correctAnswer?.trim().toLowerCase();
+                isCorrect = userAnswer === correctAnswer;
+            }
+            const existingAnswer = await this.attemptAnswerRepository.findOne({
+                where: {
+                    attemptId: createAttemptAnswerDto.attemptId,
+                    questionId: createAttemptAnswerDto.questionId
+                }
+            });
+            if (existingAnswer) {
+                existingAnswer.selectedOptionId = createAttemptAnswerDto.selectedOptionId || null;
+                existingAnswer.userAnswer = createAttemptAnswerDto.userAnswer || null;
+                existingAnswer.isCorrect = isCorrect;
+                const updatedAnswer = await this.attemptAnswerRepository.save(existingAnswer);
+                return updatedAnswer;
+            }
+            else {
+                const attemptAnswer = this.attemptAnswerRepository.create({
+                    attemptId: createAttemptAnswerDto.attemptId,
+                    questionId: createAttemptAnswerDto.questionId,
+                    selectedOptionId: createAttemptAnswerDto.selectedOptionId || null,
+                    userAnswer: createAttemptAnswerDto.userAnswer || null,
+                    isCorrect: isCorrect,
+                });
+                const savedAnswer = await this.attemptAnswerRepository.save(attemptAnswer);
+                return savedAnswer;
+            }
+        }
+        catch (error) {
+            console.error('Error saving user answer:', error);
+            throw error;
+        }
+    }
+    async completeQuizAttempt(attemptId, userId) {
+        try {
+            const quizAttempt = await this.quizAttemptRepository.findOne({
+                where: { attemptId, userId },
+                relations: ['answers']
+            });
+            if (!quizAttempt) {
+                throw new Error('Quiz attempt not found');
+            }
+            if (quizAttempt.isCompleted) {
+                throw new Error('Quiz attempt is already completed');
+            }
+            const questions = await this.questionRepository.find({
+                where: { quizId: quizAttempt.quizId }
+            });
+            const totalPossiblePoints = questions.reduce((sum, question) => sum + question.points, 0);
+            let userPoints = 0;
+            const answers = await this.attemptAnswerRepository.find({
+                where: { attemptId },
+                relations: []
+            });
+            const questionPointsMap = new Map();
+            questions.forEach(question => {
+                questionPointsMap.set(question.questionId, question.points);
+            });
+            answers.forEach(answer => {
+                if (answer.isCorrect) {
+                    const questionPoints = questionPointsMap.get(answer.questionId) || 0;
+                    userPoints += questionPoints;
+                }
+            });
+            const percentageScore = totalPossiblePoints > 0 ? (userPoints / totalPossiblePoints) * 100 : 0;
+            quizAttempt.score = Math.round(percentageScore * 100) / 100;
+            quizAttempt.isCompleted = true;
+            const updatedAttempt = await this.quizAttemptRepository.save(quizAttempt);
+            return updatedAttempt;
+        }
+        catch (error) {
+            console.error('Error completing quiz attempt:', error);
+            throw error;
+        }
+    }
+    async getUserQuizAttempts(userId, quizId) {
+        try {
+            const attempts = await this.quizAttemptRepository.find({
+                where: {
+                    userId,
+                    quizId,
+                    isCompleted: true
+                },
+                order: { attemptAt: 'DESC' }
+            });
+            if (attempts.length === 0) {
+                return {
+                    attempts: [],
+                    bestScore: 0,
+                    averageScore: 0,
+                    totalAttempts: 0,
+                };
+            }
+            const questions = await this.questionRepository.find({
+                where: { quizId }
+            });
+            const totalQuestions = questions.length;
+            const formattedAttempts = attempts.map(attempt => {
+                const timeTaken = 0;
+                return {
+                    id: attempt.attemptId,
+                    quizId: attempt.quizId,
+                    userId: attempt.userId,
+                    score: Math.round(attempt.score),
+                    totalQuestions: totalQuestions,
+                    percentage: attempt.score,
+                    startedAt: attempt.attemptAt.toISOString(),
+                    completedAt: attempt.attemptAt.toISOString(),
+                    status: attempt.isCompleted ? 'COMPLETED' : 'IN_PROGRESS'
+                };
+            });
+            const scores = attempts.map(attempt => parseFloat(attempt.score.toString())).filter(score => !isNaN(score));
+            const bestScore = scores.length > 0 ? Math.max(...scores) : 0;
+            const averageScore = scores.length > 0 ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
+            return {
+                attempts: formattedAttempts,
+                bestScore: Math.round(bestScore * 100) / 100,
+                averageScore: Math.round(averageScore * 100) / 100,
+                totalAttempts: attempts.length,
+            };
+        }
+        catch (error) {
+            console.error('Error fetching user quiz attempts:', error);
+            throw error;
+        }
+    }
 };
 exports.QuizLeaderboardServiceService = QuizLeaderboardServiceService;
 exports.QuizLeaderboardServiceService = QuizLeaderboardServiceService = __decorate([
@@ -1363,7 +1446,7 @@ exports.QuizLeaderboardServiceService = QuizLeaderboardServiceService = __decora
     __param(1, (0, typeorm_1.InjectRepository)(question_entity_1.Question)),
     __param(2, (0, typeorm_1.InjectRepository)(question_option_entity_1.QuestionOption)),
     __param(3, (0, typeorm_1.InjectRepository)(quizattempt_entity_1.QuizAttempt)),
-    __param(4, (0, typeorm_1.InjectRepository)(attemptAnswer_entity_1.AttemptAnswer)),
+    __param(4, (0, typeorm_1.InjectRepository)(attemptanswer_entity_1.AttemptAnswer)),
     __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object, typeof (_d = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _d : Object, typeof (_e = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _e : Object, typeof (_f = typeof typeorm_2.DataSource !== "undefined" && typeorm_2.DataSource) === "function" ? _f : Object])
 ], QuizLeaderboardServiceService);
 

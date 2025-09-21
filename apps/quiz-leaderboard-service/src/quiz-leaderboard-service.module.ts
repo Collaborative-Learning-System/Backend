@@ -7,7 +7,7 @@ import { Quiz } from './entities/quiz.entity';
 import { Question } from './entities/question.entity';
 import { QuestionOption } from './entities/question-option.entity';
 import { QuizAttempt } from './entities/quizattempt.entity';
-import { AttemptAnswer } from './entities/attemptAnswer.entity';
+import { AttemptAnswer } from './entities/attemptanswer.entity';
 
 @Module({
   imports: [
@@ -26,7 +26,7 @@ import { AttemptAnswer } from './entities/attemptAnswer.entity';
                   password: configService.get<string>('DB_PASSWORD'),
                   database: configService.get<string>('DB_DATABASE'),
                   entities: [Quiz, Question, QuestionOption, QuizAttempt, AttemptAnswer],
-                  synchronize: false, // Disable to prevent schema conflicts 
+                  synchronize: true, // Enable for development to auto-create tables
                   ssl: {
                     rejectUnauthorized:
                       configService.get<string>('DB_SSL_REJECT_UNAUTHORIZED') ===

@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
 import { QuizAttempt } from "./quizattempt.entity";
 
-@Entity('attemptAnswer')
+@Entity('attemptanswer')
 export class AttemptAnswer {
     
     @PrimaryGeneratedColumn('uuid')
