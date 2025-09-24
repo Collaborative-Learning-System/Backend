@@ -5,7 +5,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DocumentModule } from './modules/documents/document.module';
 import { Documents } from './modules/documents/entities/documents.entity';
-import { CollaboratorsModule } from './modules/collaborators/collaborators.module';
+import { DocumentSnapshots } from './modules/documents/entities/document-snapshots.entity';
+import { Collaborators } from './modules/documents/entities/collaborators.entity';
+import { User } from './modules/documents/entities/user.entity';
 
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { CollaboratorsModule } from './modules/collaborators/collaborators.modul
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_DATABASE'),
-          entities: [Documents],
+          entities: [Documents, Collaborators, User, DocumentSnapshots],
           synchronize: configService.get<string>('DB_SYNCHRONIZE') === 'true',
           ssl: {
             rejectUnauthorized:
@@ -34,9 +36,13 @@ import { CollaboratorsModule } from './modules/collaborators/collaborators.modul
       },
     }),
 
-    TypeOrmModule.forFeature([Documents]),
+    TypeOrmModule.forFeature([
+      Documents,
+      Collaborators,
+      User,
+      DocumentSnapshots,
+    ]),
     DocumentModule,
-    CollaboratorsModule
   ],
   controllers: [RealtimeDocEditServiceController],
   providers: [RealtimeDocEditServiceService],

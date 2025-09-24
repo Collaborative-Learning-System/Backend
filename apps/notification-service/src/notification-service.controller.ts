@@ -3,6 +3,7 @@ import { NotificationServiceService } from './notification-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { EmailDto } from './dtos/email.dto';
 import { WelcomeEmailDto } from './dtos/welcomeEmail.dto';
+import { ShareDocDto } from './dtos/shareDoc.dto';
 
 @Controller()
 export class NotificationServiceController {
@@ -22,4 +23,8 @@ export class NotificationServiceController {
     return this.notificationServiceService.sendWelcomeEmail(welcomeDto);
   }
 
+  @MessagePattern({ cmd: 'share-document' })
+  async sendShareDocumentEmail(shareDocDto: ShareDocDto) {
+    return this.notificationServiceService.sendShareDocumentEmail(shareDocDto);
+  }
 }

@@ -17,17 +17,18 @@ dotenv.config({ path: envPath });
 async function bootstrap() {
   const app = await NestFactory.create(RealtimeDocEditServiceModule);
 
-  app.enableCors({
-    origin: '*',
-  });
+   app.enableCors({
+     origin: [
+       'http://localhost:5173',
+       'http://localhost:3000',
+       'http://127.0.0.1:5500',
+       'http://localhost:8080',
+     ],
+     credentials: true,
+     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     allowedHeaders: ['Content-Type', 'Authorization'],
+   });
 
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.TCP,
-    options: {
-      host: '127.0.0.1',
-      port: 3005,
-    },
-  });
   await app.startAllMicroservices();
 
   await app.listen(4000);

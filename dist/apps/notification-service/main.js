@@ -34,6 +34,42 @@ __decorate([
 
 /***/ }),
 
+/***/ "./apps/notification-service/src/dtos/shareDoc.dto.ts":
+/*!************************************************************!*\
+  !*** ./apps/notification-service/src/dtos/shareDoc.dto.ts ***!
+  \************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ShareDocDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+class ShareDocDto {
+    documentId;
+    emailList;
+}
+exports.ShareDocDto = ShareDocDto;
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], ShareDocDto.prototype, "documentId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], ShareDocDto.prototype, "emailList", void 0);
+
+
+/***/ }),
+
 /***/ "./apps/notification-service/src/dtos/welcomeEmail.dto.ts":
 /*!****************************************************************!*\
   !*** ./apps/notification-service/src/dtos/welcomeEmail.dto.ts ***!
@@ -171,7 +207,7 @@ async function bootstrap() {
         transport: microservices_1.Transport.TCP,
         options: {
             host: '127.0.0.1',
-            port: 3002,
+            port: 4005,
         },
     });
     app.useGlobalPipes(new common_1.ValidationPipe({
@@ -203,7 +239,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a, _b, _c;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.NotificationServiceController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -211,6 +247,7 @@ const notification_service_service_1 = __webpack_require__(/*! ./notification-se
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const email_dto_1 = __webpack_require__(/*! ./dtos/email.dto */ "./apps/notification-service/src/dtos/email.dto.ts");
 const welcomeEmail_dto_1 = __webpack_require__(/*! ./dtos/welcomeEmail.dto */ "./apps/notification-service/src/dtos/welcomeEmail.dto.ts");
+const shareDoc_dto_1 = __webpack_require__(/*! ./dtos/shareDoc.dto */ "./apps/notification-service/src/dtos/shareDoc.dto.ts");
 let NotificationServiceController = class NotificationServiceController {
     notificationServiceService;
     constructor(notificationServiceService) {
@@ -221,6 +258,9 @@ let NotificationServiceController = class NotificationServiceController {
     }
     async sendWelcomeEmail(welcomeDto) {
         return this.notificationServiceService.sendWelcomeEmail(welcomeDto);
+    }
+    async sendShareDocumentEmail(shareDocDto) {
+        return this.notificationServiceService.sendShareDocumentEmail(shareDocDto);
     }
 };
 exports.NotificationServiceController = NotificationServiceController;
@@ -236,6 +276,12 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_c = typeof welcomeEmail_dto_1.WelcomeEmailDto !== "undefined" && welcomeEmail_dto_1.WelcomeEmailDto) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], NotificationServiceController.prototype, "sendWelcomeEmail", null);
+__decorate([
+    (0, microservices_1.MessagePattern)({ cmd: 'share-document' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_d = typeof shareDoc_dto_1.ShareDocDto !== "undefined" && shareDoc_dto_1.ShareDocDto) === "function" ? _d : Object]),
+    __metadata("design:returntype", Promise)
+], NotificationServiceController.prototype, "sendShareDocumentEmail", null);
 exports.NotificationServiceController = NotificationServiceController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof notification_service_service_1.NotificationServiceService !== "undefined" && notification_service_service_1.NotificationServiceService) === "function" ? _a : Object])
@@ -410,6 +456,18 @@ let NotificationServiceService = class NotificationServiceService {
         const html = this.resetPasswordTemplate(link);
         return this.sendMail(emailDto.email, 'Reset Password', undefined, html);
     }
+    async sendShareDocumentEmail(shareDocDto) {
+        const { documentId, emailList } = shareDocDto;
+        const link = this.configService.get('DOCUMENT_LINK') + `/${documentId}`;
+        await Promise.all(emailList.emails.map(async (email) => {
+            const html = this.shareDocumentTemplate('Untitled Document', link, 'Harsha');
+            return this.sendMail(email, 'Document Shared', undefined, html);
+        }));
+        return {
+            success: true,
+            message: 'Share Document Emails Sent Successfully',
+        };
+    }
     async sendWelcomeEmail(welcomeDto) {
         const html = this.welcomeEmailTemplate(welcomeDto.fullName);
         return this.sendMail(welcomeDto.email, 'Welcome to EduCollab', undefined, html);
@@ -512,6 +570,67 @@ let NotificationServiceService = class NotificationServiceService {
               &copy; ${new Date().getFullYear()} EduCollab. All rights reserved.
             </td>
           </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+    shareDocumentTemplate = (docTitle, link, senderName) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Document Shared - EduCollab</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f7; font-family:Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f4f4f7">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff; border-radius:6px; overflow:hidden; margin:40px auto; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+
+          <!-- Header Section -->
+          <tr>
+            <td bgcolor="#083c70" style="padding:30px; text-align:left;">
+              <h2 style="margin:0; font-size:20px; font-weight:bold; color:#ffffff;">
+                Document Shared With You
+              </h2>
+            </td>
+          </tr>
+
+          <!-- Body Section -->
+          <tr>
+            <td style="padding:30px; color:#333333; font-size:15px; line-height:1.6;">
+              <p style="margin:0 0 15px 0;">Hi!</p>
+              <p style="margin:0 0 20px 0;">
+                <strong>${senderName}</strong> has shared a document with you on EduCollab: 
+                <em>${docTitle}</em>.
+              </p>
+
+              <!-- CTA Button -->
+              <p style="text-align:center; margin:30px 0;">
+                <a href="${link}" 
+                   style="display:inline-block; padding:14px 28px; background-color:#083c70; color:#ffffff; text-decoration:none; border-radius:4px; font-weight:bold; font-size:15px;">
+                  Open Document
+                </a>
+              </p>
+
+              <p style="margin:0 0 10px 0;">
+                If you cannot click the button, copy and paste the following URL into your browser:
+                <br />
+                <a href="${link}" style="color:#083c70;">${link}</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer Section -->
+          <tr>
+            <td bgcolor="#fafafa" style="padding:20px; text-align:center; font-size:12px; color:#999999;">
+              &copy; ${new Date().getFullYear()} EduCollab. All rights reserved.
+            </td>
+          </tr>
+
         </table>
       </td>
     </tr>
