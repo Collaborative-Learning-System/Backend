@@ -15,11 +15,6 @@ const envPath = path.resolve(
 );
 dotenv.config({ path: envPath });
 
-console.log('Loading .env from:', envPath);
-console.log('EMAIL_HOST:', process.env.EMAIL_HOST);
-console.log('EMAIL_PORT:', process.env.EMAIL_PORT);
-console.log('EMAIL_USER:', process.env.EMAIL_USER);
-
 async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     NotificationServiceModule,
@@ -31,14 +26,6 @@ async function bootstrap() {
       },
     },
   );
-  
-  // // Enable validation globally
-  // app.useGlobalPipes(new ValidationPipe({
-  //   whitelist: true,
-  //   forbidNonWhitelisted: true,
-  //   transform: true,
-  // }));
-
     // for class validator
     app.useGlobalPipes(
       new ValidationPipe({

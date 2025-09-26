@@ -647,33 +647,20 @@ exports.WorkspaceGroupServiceModule = WorkspaceGroupServiceModule = __decorate([
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
                 useFactory: (configService) => {
-                    const usePostgres = configService.get('USE_POSTGRES') === 'true';
-                    if (usePostgres) {
-                        const config = {
-                            type: 'postgres',
-                            host: configService.get('DB_HOST'),
-                            port: configService.get('DB_PORT'),
-                            username: configService.get('DB_USERNAME'),
-                            password: configService.get('DB_PASSWORD'),
-                            database: configService.get('DB_DATABASE'),
-                            entities: [workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember, group_entity_1.Group, group_member_entity_1.GroupMember, chat_message_entity_1.ChatMessage],
-                            synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
-                        };
-                        if (configService.get('DB_SSL_ENABLED') === 'true') {
-                            config.ssl = {
-                                rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') === 'true',
-                            };
-                        }
-                        return config;
-                    }
-                    else {
-                        return {
-                            type: 'sqlite',
-                            database: 'workspace_dev.db',
-                            entities: [workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember, group_entity_1.Group, group_member_entity_1.GroupMember, chat_message_entity_1.ChatMessage],
-                            synchronize: true,
-                        };
-                    }
+                    return {
+                        type: 'postgres',
+                        host: configService.get('DB_HOST'),
+                        port: configService.get('DB_PORT'),
+                        username: configService.get('DB_USERNAME'),
+                        password: configService.get('DB_PASSWORD'),
+                        database: configService.get('DB_DATABASE'),
+                        entities: [workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember, group_entity_1.Group, group_member_entity_1.GroupMember, chat_message_entity_1.ChatMessage],
+                        synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
+                        ssl: {
+                            rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
+                                'true',
+                        },
+                    };
                 },
             }),
             typeorm_1.TypeOrmModule.forFeature([workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember, group_entity_1.Group, group_member_entity_1.GroupMember, chat_message_entity_1.ChatMessage]),
@@ -730,25 +717,19 @@ let WorkspaceGroupServiceService = class WorkspaceGroupServiceService {
         this.chatMessageRepository = chatMessageRepository;
     }
     async createWorkspace(userId, createWorkspaceDto) {
-        console.log('Service method - userId:', userId);
-        console.log('Service method - createWorkspaceDto:', createWorkspaceDto);
         const finalUserId = userId || 'test-user-id-12345';
-        console.log('Final userId to use:', finalUserId);
         try {
             const workspace = this.workspaceRepository.create({
                 workspacename: createWorkspaceDto.workspacename,
                 description: createWorkspaceDto.description,
             });
             const savedWorkspace = await this.workspaceRepository.save(workspace);
-            console.log('Saved Workspace:', savedWorkspace);
             const adminMember = this.workspaceMemberRepository.create({
                 workspaceid: savedWorkspace.workspaceid,
-                userid: finalUserId,
+                userid: userId,
                 role: 'admin',
             });
-            console.log('Creating admin member:', adminMember);
-            const savedMember = await this.workspaceMemberRepository.save(adminMember);
-            console.log('Saved admin member:', savedMember);
+            await this.workspaceMemberRepository.save(adminMember);
             return {
                 id: savedWorkspace.workspaceid,
                 name: savedWorkspace.workspacename,
@@ -758,7 +739,6 @@ let WorkspaceGroupServiceService = class WorkspaceGroupServiceService {
             };
         }
         catch (error) {
-            console.error('Error creating workspace:', error);
             throw new common_1.ConflictException('Failed to create workspace');
         }
     }

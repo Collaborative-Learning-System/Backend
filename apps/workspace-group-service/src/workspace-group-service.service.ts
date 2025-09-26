@@ -41,34 +41,25 @@ export class WorkspaceGroupServiceService {
 
 
 
-  async createWorkspace(userId: string, createWorkspaceDto: CreateWorkspaceDto): Promise<WorkspaceResponseDto> {
-    console.log('Service method - userId:', userId);
-    console.log('Service method - createWorkspaceDto:', createWorkspaceDto);
-    
+  async createWorkspace(userId: string, createWorkspaceDto: CreateWorkspaceDto): Promise<WorkspaceResponseDto> {    
     // Temporary fix: use a test userId if the passed userId is undefined/null
     const finalUserId = userId || 'test-user-id-12345';
-    console.log('Final userId to use:', finalUserId);
     
     try {
-      // Create workspace
       const workspace = this.workspaceRepository.create({
         workspacename: createWorkspaceDto.workspacename,
         description: createWorkspaceDto.description,
       });
 
       const savedWorkspace = await this.workspaceRepository.save(workspace);
-      console.log('Saved Workspace:', savedWorkspace);
 
-      // Add creator as admin member
       const adminMember = this.workspaceMemberRepository.create({
         workspaceid: savedWorkspace.workspaceid,
-        userid: finalUserId,
+        userid: userId,
         role: 'admin',
       });
-      
-      console.log('Creating admin member:', adminMember);
-      const savedMember = await this.workspaceMemberRepository.save(adminMember);
-      console.log('Saved admin member:', savedMember);
+
+      await this.workspaceMemberRepository.save(adminMember);
 
       return {
         id: savedWorkspace.workspaceid,
@@ -78,7 +69,6 @@ export class WorkspaceGroupServiceService {
         role: 'admin',
       };
     } catch (error) {
-      console.error('Error creating workspace:', error);
       throw new ConflictException('Failed to create workspace');
     }
   }
@@ -522,11 +512,6 @@ export class WorkspaceGroupServiceService {
   }
 
 
-
-
-
-
-  // ---------------------------------------------------------------------
   // Chat functionality methods
   async sendChatMessage(userId: string, sendChatMessageDto: SendChatMessageDto): Promise<ChatMessageResponseDto> {
     const { groupId, text } = sendChatMessageDto;
