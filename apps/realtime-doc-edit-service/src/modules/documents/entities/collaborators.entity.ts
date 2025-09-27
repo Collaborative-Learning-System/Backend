@@ -19,17 +19,17 @@ export class Collaborators {
   @Column({ type: 'enum', enum: UserRole, default: UserRole.EDITOR })
   role: UserRole;
 
-  @Column({name: 'joinedat',type: 'timestamp'})
+  @Column({ name: 'joinedat', type: 'timestamp' })
   joinedAt: Date;
 
-  @Column({name: 'isactive', type: 'boolean', default: true})
+  @Column({ name: 'isactive', type: 'boolean', default: true })
   isActive: boolean;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userid' })
   user: User;
 
-  @ManyToOne(() => Documents)
+  @ManyToOne(() => Documents, (doc) => doc.collaborators)
   @JoinColumn({ name: 'docid' })
   document: Documents;
 }

@@ -1,19 +1,27 @@
-import { Column, Entity, PrimaryGeneratedColumn, Timestamp } from "typeorm";
+import { Column, Entity, JoinColumn, OneToMany, PrimaryGeneratedColumn, Timestamp } from "typeorm";
+import { Collaborators } from "./collaborators.entity";
 
 @Entity('documents')
 export class Documents {
-    @PrimaryGeneratedColumn('uuid', { name: 'docid' })
-    docId: string;
+  @PrimaryGeneratedColumn('uuid', { name: 'docid' })
+  docId: string;
 
-    @Column({ name: 'title', nullable: false, default: 'Untitled Document' })
-    title: string;
+  @Column({ name: 'groupid', type: 'uuid' })
+  groupId: string;
 
-    @Column({ name: 'ownerid', nullable: false })
-    ownerId: string;
+  @Column({ name: 'title', nullable: false, default: 'Untitled Document' })
+  title: string;
 
-    @Column({ name: 'createdat', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    createdAt: Date;
+  @Column({ name: 'ownerid', nullable: false })
+  ownerId: string;
 
-    @Column({ name: 'lasteditedat', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
-    lastEditedAt: Date;
+  @Column({
+    name: 'createdat',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  createdAt: Date;
+
+  @OneToMany(() => Collaborators, (collab) => collab.document)
+  collaborators: Collaborators[];
 }

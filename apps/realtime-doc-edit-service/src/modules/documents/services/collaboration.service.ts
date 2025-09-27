@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DocumentSnapshots } from '../entities/document-snapshots.entity';
 import { User } from '../entities/user.entity';
-import { Collaborators } from '../entities/collaborators.entity';
+import { Collaborators, UserRole } from '../entities/collaborators.entity';
 
 @Injectable()
 export class CollaborationService {
@@ -19,42 +19,13 @@ export class CollaborationService {
     private readonly collaboratorRepo: Repository<Collaborators>,
   ) {}
 
-  async loadDocument(docId: string): Promise<Y.Doc> {
-    const cached = await this.redisService.getBuffer(`doc:${docId}`);
-    const ydoc = new Y.Doc();
 
-    if (cached) {
-      Y.applyUpdate(ydoc, cached);
-    } else {
-      // Fallback: load snapshot from DB
-      const doc = await this.docRepo.findOne({ where: { id: docId } });
-      if (doc?.snapshot) {
-        Y.applyUpdate(ydoc, doc.snapshot);
-      }
-    }
-    return ydoc;
-  }
-
-  async saveDocument(docId: string, ydoc: Y.Doc): Promise<void> {
-    const update = Y.encodeStateAsUpdate(ydoc);
-
-    // Save in Redis (fast)
-    await this.redisService.setBuffer(`doc:${docId}`, Buffer.from(update));
-
-    // Also persist snapshot in DB periodically
-    await this.docRepo.update(docId, {
-      snapshot: Buffer.from(update),
-      createdAt: new Date(),
-    });
-  }
 
   async getCollaborators(docId: string) {
-    console.log('test clb');
     const result = await this.collaboratorRepo.find({
       where: { docId: docId },
       relations: ['user'],
     });
-    console.log(result);
     return {
       success: true,
       message: 'Collaborators fetched successfully',
@@ -65,6 +36,21 @@ export class CollaborationService {
           role: m.user.role,
         })),
       },
+    };
+  }
+
+  async addCollaborator(docId: string, userId: string) {
+    const newCollaborator = await this.collaboratorRepo.create({
+      userId: userId,
+      docId: docId,
+      role: UserRole.EDITOR,
+      joinedAt: new Date(),
+      isActive: true,
+    });
+    await this.collaboratorRepo.save(newCollaborator);
+    return {
+      success: true,
+      message: 'Collaborator added successfully',
     };
   }
 }
