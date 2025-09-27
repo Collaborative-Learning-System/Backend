@@ -50,34 +50,4 @@ export class NotificationGatewayController {
     return res.status(HttpStatus.OK).json(result);
   }
 
-  @Post('log-activity')
-  async logActivity(
-    @Body() body: { userId: string; activity: string; timestamp: string },
-    @Res() res: Response,
-  ) {
-    if (!body.userId || !body.activity || !body.timestamp) {
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        success: false,
-        message: 'User ID, activity, and timestamp are required',
-      });
-    }
-    const result = await lastValueFrom(
-      this.notificationClient.send({ cmd: 'log-activity' }, body),
-    );
-    if (!result.success) {
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
-    }
-    return res.status(HttpStatus.OK).json(result);
-  }
-
-  @Get('get-logs-by-user/:userId')
-  async getLogsByUserId(@Param('userId') userId: string, @Res() res: Response) {
-    const result = await lastValueFrom(
-      this.notificationClient.send({ cmd: 'get-logs-by-user' }, userId),
-    );
-    if (!result.success) {
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
-    }
-    return res.status(HttpStatus.OK).json(result);
-  }
 }

@@ -2,10 +2,8 @@ import { Body, Controller } from '@nestjs/common';
 import { AuthServiceService } from './auth-service.service';
 import { SignupDto } from './dtos/signup.dto';
 import { LoginDto } from './dtos/login.dto';
-import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { MessagePattern } from '@nestjs/microservices';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
-import { TokensDto } from './dtos/tokens.dto';
 import { UpdateProfileDto } from './dtos/updateProfileDto.dto';
 
 @Controller('auth')
@@ -16,7 +14,6 @@ export class AuthServiceController {
   @MessagePattern({ cmd: 'signup' })
   async signup(signupData: SignupDto) {
     const result = await this.authServiceService.signup(signupData);
-    console.log('result at auth service controller:', result);
     return result;
   }
 
@@ -51,9 +48,8 @@ export class AuthServiceController {
 
   // POST : Refresh Token
   @MessagePattern({ cmd: 'refresh-token' })
-  async refresh(token: { refreshToken: string }) {
-    const result = await this.authServiceService.refresh(token.refreshToken);
-    console.log("result at controller", result);
+  async refresh(refreshToken: string) {
+    const result = await this.authServiceService.refresh(refreshToken);
     return result;
   }
 
@@ -70,7 +66,13 @@ export class AuthServiceController {
     const result = await this.authServiceService.updateProfile(
       updateData
     );
-    console.log("Update profile result:", result);
+    return result;
+  }
+
+  // DELETE: Delete User
+  @MessagePattern({ cmd: 'delete-account' })
+  async deleteUser(userId: string) {
+    const result = await this.authServiceService.deleteUser(userId);
     return result;
   }
 }
