@@ -4,6 +4,7 @@ import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
 import { WelcomeEmailDto } from './dtos/welcomeEmail.dto';
 import { ClientProxy } from '@nestjs/microservices';
+import { ShareDocDto } from './dtos/shareDoc.dto';
 
 @Injectable()
 export class NotificationServiceService implements OnModuleInit {
@@ -46,6 +47,27 @@ export class NotificationServiceService implements OnModuleInit {
       this.configService.get<string>('LINK') + `/${result.data.userId}`;
     const html = this.resetPasswordTemplate(link);
     return this.sendMail(emailDto.email, 'Reset Password', undefined, html);
+  }
+
+  async sendShareDocumentEmail(shareDocDto: ShareDocDto) {
+    const { documentId, emailList } = shareDocDto;
+    const link =
+      this.configService.get<string>('DOCUMENT_LINK') + `/${documentId}`;
+    await Promise.all(
+      emailList.emails.map(async (email) => {
+        const html = this.shareDocumentTemplate(
+          'Untitled Document',
+          link,
+          'Harsha',
+        );
+        return this.sendMail(email, 'Document Shared', undefined, html);
+      }),
+    );
+
+    return {
+      success: true,
+      message: 'Share Document Emails Sent Successfully',
+    };
   }
 
   async sendWelcomeEmail(welcomeDto: WelcomeEmailDto) {
@@ -157,6 +179,72 @@ export class NotificationServiceService implements OnModuleInit {
               &copy; ${new Date().getFullYear()} EduCollab. All rights reserved.
             </td>
           </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  shareDocumentTemplate = (
+    docTitle: 'Untitled Document' | undefined,
+    link: string | undefined,
+    senderName: 'Harsha' | undefined,
+  ) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Document Shared - EduCollab</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f7; font-family:Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f4f4f7">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff; border-radius:6px; overflow:hidden; margin:40px auto; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+
+          <!-- Header Section -->
+          <tr>
+            <td bgcolor="#083c70" style="padding:30px; text-align:left;">
+              <h2 style="margin:0; font-size:20px; font-weight:bold; color:#ffffff;">
+                Document Shared With You
+              </h2>
+            </td>
+          </tr>
+
+          <!-- Body Section -->
+          <tr>
+            <td style="padding:30px; color:#333333; font-size:15px; line-height:1.6;">
+              <p style="margin:0 0 15px 0;">Hi!</p>
+              <p style="margin:0 0 20px 0;">
+                <strong>${senderName}</strong> has shared a document with you on EduCollab: 
+                <em>${docTitle}</em>.
+              </p>
+
+              <!-- CTA Button -->
+              <p style="text-align:center; margin:30px 0;">
+                <a href="${link}" 
+                   style="display:inline-block; padding:14px 28px; background-color:#083c70; color:#ffffff; text-decoration:none; border-radius:4px; font-weight:bold; font-size:15px;">
+                  Open Document
+                </a>
+              </p>
+
+              <p style="margin:0 0 10px 0;">
+                If you cannot click the button, copy and paste the following URL into your browser:
+                <br />
+                <a href="${link}" style="color:#083c70;">${link}</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer Section -->
+          <tr>
+            <td bgcolor="#fafafa" style="padding:20px; text-align:center; font-size:12px; color:#999999;">
+              &copy; ${new Date().getFullYear()} EduCollab. All rights reserved.
+            </td>
+          </tr>
+
         </table>
       </td>
     </tr>
