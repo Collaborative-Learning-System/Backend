@@ -9,6 +9,7 @@ import { WsJwtAuthGuard } from './ws-jwt-auth.guard';
 import { NotificationGatewayController } from './notification/notificationGateway.controller';
 import { WorkspaceGatewayController } from './workspace/workspaceGateway.controller';
 import { QuizGatewayController } from './quiz/quizGateway.controller';
+import { EduAssistantGatewayController } from './edu-assistant/eduAssistantGateway.controller';
 import { ChatGateway } from './chat/chat.gateway';
 import { ChatController } from './chat/chat.controller';
 
@@ -50,11 +51,19 @@ import { ChatController } from './chat/chat.controller';
           host: '127.0.0.1',
           port: 3006,
         },
+      },
+      {
+        name: 'edu-assistant-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3007,
+        },
       }
 
     ]),
   ],
-  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController, WorkspaceGatewayController, QuizGatewayController, ChatController],
+  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController, WorkspaceGatewayController, QuizGatewayController, EduAssistantGatewayController, ChatController],
   providers: [ApiGatewayService, JwtAuthGuard, WsJwtAuthGuard, ChatGateway],
   exports: [JwtAuthGuard],
 })

@@ -159,7 +159,7 @@ export class QuizGatewayController {
     } catch (error) {
       console.error('Get quizzes by group error:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
+        success: false, 
         message: 'Error fetching quizzes: ' + (error?.message || error),
         data: null,
         errorDetails: error,

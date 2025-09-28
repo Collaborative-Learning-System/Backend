@@ -64,6 +64,7 @@ const ws_jwt_auth_guard_1 = __webpack_require__(/*! ./ws-jwt-auth.guard */ "./ap
 const notificationGateway_controller_1 = __webpack_require__(/*! ./notification/notificationGateway.controller */ "./apps/api-gateway/src/notification/notificationGateway.controller.ts");
 const workspaceGateway_controller_1 = __webpack_require__(/*! ./workspace/workspaceGateway.controller */ "./apps/api-gateway/src/workspace/workspaceGateway.controller.ts");
 const quizGateway_controller_1 = __webpack_require__(/*! ./quiz/quizGateway.controller */ "./apps/api-gateway/src/quiz/quizGateway.controller.ts");
+const eduAssistantGateway_controller_1 = __webpack_require__(/*! ./edu-assistant/eduAssistantGateway.controller */ "./apps/api-gateway/src/edu-assistant/eduAssistantGateway.controller.ts");
 const chat_gateway_1 = __webpack_require__(/*! ./chat/chat.gateway */ "./apps/api-gateway/src/chat/chat.gateway.ts");
 const chat_controller_1 = __webpack_require__(/*! ./chat/chat.controller */ "./apps/api-gateway/src/chat/chat.controller.ts");
 let ApiGatewayModule = class ApiGatewayModule {
@@ -108,10 +109,18 @@ exports.ApiGatewayModule = ApiGatewayModule = __decorate([
                         host: '127.0.0.1',
                         port: 3006,
                     },
+                },
+                {
+                    name: 'edu-assistant-service',
+                    transport: microservices_1.Transport.TCP,
+                    options: {
+                        host: '127.0.0.1',
+                        port: 3007,
+                    },
                 }
             ]),
         ],
-        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController, workspaceGateway_controller_1.WorkspaceGatewayController, quizGateway_controller_1.QuizGatewayController, chat_controller_1.ChatController],
+        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController, workspaceGateway_controller_1.WorkspaceGatewayController, quizGateway_controller_1.QuizGatewayController, eduAssistantGateway_controller_1.EduAssistantGatewayController, chat_controller_1.ChatController],
         providers: [api_gateway_service_1.ApiGatewayService, jwt_auth_guard_1.JwtAuthGuard, ws_jwt_auth_guard_1.WsJwtAuthGuard, chat_gateway_1.ChatGateway],
         exports: [jwt_auth_guard_1.JwtAuthGuard],
     })
@@ -721,6 +730,136 @@ exports.ChatGateway = ChatGateway = __decorate([
     __param(0, (0, common_1.Inject)('workspace-group-service')),
     __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object, typeof (_b = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _b : Object])
 ], ChatGateway);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/edu-assistant/eduAssistantGateway.controller.ts":
+/*!******************************************************************************!*\
+  !*** ./apps/api-gateway/src/edu-assistant/eduAssistantGateway.controller.ts ***!
+  \******************************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.EduAssistantGatewayController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../jwt-auth.guard */ "./apps/api-gateway/src/jwt-auth.guard.ts");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+let EduAssistantGatewayController = class EduAssistantGatewayController {
+    eduAssistantClient;
+    constructor(eduAssistantClient) {
+        this.eduAssistantClient = eduAssistantClient;
+    }
+    async generateStudyPlan(generateStudyPlanData, res) {
+        try {
+            const result = await (0, rxjs_1.lastValueFrom)(this.eduAssistantClient.send({ cmd: 'generate-study-plan' }, generateStudyPlanData));
+            if (!result.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.CREATED).json(result);
+        }
+        catch (error) {
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Failed to generate study plan',
+                error: error.message,
+            });
+        }
+    }
+    async getStudyPlansByUserId(userId, res) {
+        try {
+            const result = await (0, rxjs_1.lastValueFrom)(this.eduAssistantClient.send({ cmd: 'get-study-plans-by-user' }, { userId }));
+            if (!result.success) {
+                return res.status(common_1.HttpStatus.NOT_FOUND).json(result);
+            }
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        catch (error) {
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Failed to retrieve study plans',
+                error: error.message,
+            });
+        }
+    }
+    async getStudyPlan(id, res) {
+        try {
+            const result = await (0, rxjs_1.lastValueFrom)(this.eduAssistantClient.send({ cmd: 'get-study-plan' }, { id }));
+            if (!result.success) {
+                return res.status(common_1.HttpStatus.NOT_FOUND).json(result);
+            }
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        catch (error) {
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Failed to retrieve study plan',
+                error: error.message,
+            });
+        }
+    }
+    getHello(res) {
+        return res.status(common_1.HttpStatus.OK).json({
+            success: true,
+            message: 'Edu Assistant Service Gateway is running!',
+        });
+    }
+};
+exports.EduAssistantGatewayController = EduAssistantGatewayController;
+__decorate([
+    (0, common_1.Post)('generate'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], EduAssistantGatewayController.prototype, "generateStudyPlan", null);
+__decorate([
+    (0, common_1.Get)('user/:userId'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], EduAssistantGatewayController.prototype, "getStudyPlansByUserId", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", Promise)
+], EduAssistantGatewayController.prototype, "getStudyPlan", null);
+__decorate([
+    (0, common_1.Get)(),
+    __param(0, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], EduAssistantGatewayController.prototype, "getHello", null);
+exports.EduAssistantGatewayController = EduAssistantGatewayController = __decorate([
+    (0, common_1.Controller)('api/study-plans'),
+    __param(0, (0, common_1.Inject)('edu-assistant-service')),
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
+], EduAssistantGatewayController);
 
 
 /***/ }),
