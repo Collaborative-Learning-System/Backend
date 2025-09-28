@@ -12,6 +12,7 @@ import { QuizGatewayController } from './quiz/quizGateway.controller';
 import { EduAssistantGatewayController } from './edu-assistant/eduAssistantGateway.controller';
 import { ChatGateway } from './chat/chat.gateway';
 import { ChatController } from './chat/chat.controller';
+import { UserGatewayController } from './user/userGateway.controller';
 
 @Module({
   imports: [
@@ -45,6 +46,14 @@ import { ChatController } from './chat/chat.controller';
         },
       },
       {
+        name: 'user-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3004,
+        },
+      },
+      {
         name: 'quiz-leaderboard-service',
         transport: Transport.TCP,
         options: {
@@ -63,7 +72,7 @@ import { ChatController } from './chat/chat.controller';
 
     ]),
   ],
-  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController, WorkspaceGatewayController, QuizGatewayController, EduAssistantGatewayController, ChatController],
+  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController, WorkspaceGatewayController, QuizGatewayController, EduAssistantGatewayController, ChatController, UserGatewayController],
   providers: [ApiGatewayService, JwtAuthGuard, WsJwtAuthGuard, ChatGateway],
   exports: [JwtAuthGuard],
 })
