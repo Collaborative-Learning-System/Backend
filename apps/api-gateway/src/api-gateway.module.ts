@@ -8,6 +8,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { WsJwtAuthGuard } from './ws-jwt-auth.guard';
 import { NotificationGatewayController } from './notification/notificationGateway.controller';
 import { WorkspaceGatewayController } from './workspace/workspaceGateway.controller';
+import { QuizGatewayController } from './quiz/quizGateway.controller';
 import { ChatGateway } from './chat/chat.gateway';
 import { ChatController } from './chat/chat.controller';
 import { UserGatewayController } from './user/userGateway.controller';
@@ -50,10 +51,19 @@ import { UserGatewayController } from './user/userGateway.controller';
           host: '127.0.0.1',
           port: 3004,
         },
+      },
+      {
+        name: 'quiz-leaderboard-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3006,
+        },
       }
+
     ]),
   ],
-  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController, WorkspaceGatewayController, ChatController, UserGatewayController],
+  controllers: [ApiGatewayController, AuthGatewayController, NotificationGatewayController, WorkspaceGatewayController, QuizGatewayController, ChatController, UserGatewayController],
   providers: [ApiGatewayService, JwtAuthGuard, WsJwtAuthGuard, ChatGateway],
   exports: [JwtAuthGuard],
 })

@@ -233,6 +233,28 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+<<<<<<< HEAD
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.WorkspaceMember = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+let WorkspaceMember = class WorkspaceMember {
+    id;
+    userid;
+    workspaceid;
+    role;
+};
+exports.WorkspaceMember = WorkspaceMember;
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    __metadata("design:type", String)
+], WorkspaceMember.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
+    __metadata("design:type", String)
+], WorkspaceMember.prototype, "userid", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
+=======
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WorkspaceMember = void 0;
@@ -251,17 +273,21 @@ __decorate([
 ], WorkspaceMember.prototype, "userid", void 0);
 __decorate([
     (0, typeorm_1.PrimaryColumn)({ type: 'uuid' }),
+>>>>>>> ebfb56c17ecddfb8619cb97c9ccef13da4addc2e
     __metadata("design:type", String)
 ], WorkspaceMember.prototype, "workspaceid", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 20, default: 'member' }),
     __metadata("design:type", String)
 ], WorkspaceMember.prototype, "role", void 0);
+<<<<<<< HEAD
+=======
 __decorate([
     (0, typeorm_1.ManyToOne)(() => workspace_entity_1.Workspace, { onDelete: 'CASCADE' }),
     (0, typeorm_1.JoinColumn)({ name: 'workspaceid' }),
     __metadata("design:type", typeof (_a = typeof workspace_entity_1.Workspace !== "undefined" && workspace_entity_1.Workspace) === "function" ? _a : Object)
 ], WorkspaceMember.prototype, "workspace", void 0);
+>>>>>>> ebfb56c17ecddfb8619cb97c9ccef13da4addc2e
 exports.WorkspaceMember = WorkspaceMember = __decorate([
     (0, typeorm_1.Entity)('workspace_user')
 ], WorkspaceMember);
@@ -368,7 +394,11 @@ const workspace_group_service_module_1 = __webpack_require__(/*! ./workspace-gro
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const dotenv = __importStar(__webpack_require__(/*! dotenv */ "dotenv"));
 const path = __importStar(__webpack_require__(/*! path */ "path"));
+<<<<<<< HEAD
+const envPath = path.resolve(process.cwd(), 'apps', 'workspace-group-service', '.env');
+=======
 const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
+>>>>>>> ebfb56c17ecddfb8619cb97c9ccef13da4addc2e
 dotenv.config({ path: envPath });
 async function bootstrap() {
     const app = await core_1.NestFactory.createMicroservice(workspace_group_service_module_1.WorkspaceGroupServiceModule, {
@@ -718,9 +748,6 @@ let WorkspaceGroupServiceService = class WorkspaceGroupServiceService {
         this.groupRepository = groupRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.chatMessageRepository = chatMessageRepository;
-    }
-    getHello() {
-        return 'Hello World!';
     }
     async createWorkspace(userId, createWorkspaceDto) {
         const finalUserId = userId || 'test-user-id-12345';

@@ -39,9 +39,7 @@ export class WorkspaceGroupServiceService {
     private chatMessageRepository: Repository<ChatMessage>,
   ) {}
 
-  getHello(): string {
-    return 'Hello World!';
-  }
+
 
   async createWorkspace(userId: string, createWorkspaceDto: CreateWorkspaceDto): Promise<WorkspaceResponseDto> {    
     // Temporary fix: use a test userId if the passed userId is undefined/null

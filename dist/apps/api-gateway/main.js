@@ -63,9 +63,9 @@ const jwt_auth_guard_1 = __webpack_require__(/*! ./jwt-auth.guard */ "./apps/api
 const ws_jwt_auth_guard_1 = __webpack_require__(/*! ./ws-jwt-auth.guard */ "./apps/api-gateway/src/ws-jwt-auth.guard.ts");
 const notificationGateway_controller_1 = __webpack_require__(/*! ./notification/notificationGateway.controller */ "./apps/api-gateway/src/notification/notificationGateway.controller.ts");
 const workspaceGateway_controller_1 = __webpack_require__(/*! ./workspace/workspaceGateway.controller */ "./apps/api-gateway/src/workspace/workspaceGateway.controller.ts");
+const quizGateway_controller_1 = __webpack_require__(/*! ./quiz/quizGateway.controller */ "./apps/api-gateway/src/quiz/quizGateway.controller.ts");
 const chat_gateway_1 = __webpack_require__(/*! ./chat/chat.gateway */ "./apps/api-gateway/src/chat/chat.gateway.ts");
 const chat_controller_1 = __webpack_require__(/*! ./chat/chat.controller */ "./apps/api-gateway/src/chat/chat.controller.ts");
-const userGateway_controller_1 = __webpack_require__(/*! ./user/userGateway.controller */ "./apps/api-gateway/src/user/userGateway.controller.ts");
 let ApiGatewayModule = class ApiGatewayModule {
 };
 exports.ApiGatewayModule = ApiGatewayModule;
@@ -102,16 +102,16 @@ exports.ApiGatewayModule = ApiGatewayModule = __decorate([
                     },
                 },
                 {
-                    name: 'user-service',
+                    name: 'quiz-leaderboard-service',
                     transport: microservices_1.Transport.TCP,
                     options: {
                         host: '127.0.0.1',
-                        port: 3004,
+                        port: 3006,
                     },
                 }
             ]),
         ],
-        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController, workspaceGateway_controller_1.WorkspaceGatewayController, chat_controller_1.ChatController, userGateway_controller_1.UserGatewayController],
+        controllers: [api_gateway_controller_1.ApiGatewayController, authGateway_controller_1.AuthGatewayController, notificationGateway_controller_1.NotificationGatewayController, workspaceGateway_controller_1.WorkspaceGatewayController, quizGateway_controller_1.QuizGatewayController, chat_controller_1.ChatController],
         providers: [api_gateway_service_1.ApiGatewayService, jwt_auth_guard_1.JwtAuthGuard, ws_jwt_auth_guard_1.WsJwtAuthGuard, chat_gateway_1.ChatGateway],
         exports: [jwt_auth_guard_1.JwtAuthGuard],
     })
@@ -774,7 +774,14 @@ let JwtAuthGuard = class JwtAuthGuard {
     }
     canActivate(context) {
         const req = context.switchToHttp().getRequest();
-        const accessToken = req.cookies?.accessToken;
+        let accessToken = req.cookies?.accessToken;
+        const refreshToken = req.cookies?.refreshToken;
+        if (!accessToken) {
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                accessToken = authHeader.substring(7);
+            }
+        }
         if (!accessToken)
             throw new common_1.UnauthorizedException('No token found');
         try {
@@ -913,9 +920,312 @@ exports.NotificationGatewayController = NotificationGatewayController = __decora
 
 /***/ }),
 
-/***/ "./apps/api-gateway/src/user/userGateway.controller.ts":
+/***/ "./apps/api-gateway/src/quiz/dtos/quiz-gateway.dto.ts":
+/*!************************************************************!*\
+  !*** ./apps/api-gateway/src/quiz/dtos/quiz-gateway.dto.ts ***!
+  \************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GetQuizLeaderboardDto = exports.GetUserQuizAttemptsDto = exports.GetQuizAttemptDto = exports.CompleteQuizAttemptDto = exports.SaveUserAnswerDto = exports.StartQuizAttemptDto = exports.GetQuizzesByGroupDto = exports.GetQuizDto = exports.CreateCompleteQuizDto = exports.CompleteQuizDto = exports.CreateQuestionDto = exports.CreateQuestionOptionDto = exports.CreateQuizDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+const class_transformer_1 = __webpack_require__(/*! class-transformer */ "class-transformer");
+class CreateQuizDto {
+    groupId;
+    title;
+    description;
+    timeLimit;
+    fullMarks;
+    difficulty;
+    instructions;
+}
+exports.CreateQuizDto = CreateQuizDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateQuizDto.prototype, "groupId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)({ message: 'Title must be a string' }),
+    __metadata("design:type", String)
+], CreateQuizDto.prototype, "title", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateQuizDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Min)(1, { message: 'Time limit must be at least 1 minute' }),
+    (0, class_validator_1.Max)(480, { message: 'Time limit cannot exceed 8 hours' }),
+    __metadata("design:type", Number)
+], CreateQuizDto.prototype, "timeLimit", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateQuizDto.prototype, "fullMarks", void 0);
+__decorate([
+    (0, class_validator_1.IsEnum)(['EASY', 'MEDIUM', 'HARD']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateQuizDto.prototype, "difficulty", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateQuizDto.prototype, "instructions", void 0);
+class CreateQuestionOptionDto {
+    optionText;
+    isCorrect;
+}
+exports.CreateQuestionOptionDto = CreateQuestionOptionDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateQuestionOptionDto.prototype, "optionText", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateQuestionOptionDto.prototype, "isCorrect", void 0);
+class CreateQuestionDto {
+    question;
+    questionType;
+    points;
+    correctAnswer;
+    options;
+}
+exports.CreateQuestionDto = CreateQuestionDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateQuestionDto.prototype, "question", void 0);
+__decorate([
+    (0, class_validator_1.IsEnum)(['MCQ', 'TRUE_FALSE', 'SHORT_ANSWER']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateQuestionDto.prototype, "questionType", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1, { message: 'Points must be at least 1' }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateQuestionDto.prototype, "points", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateQuestionDto.prototype, "correctAnswer", void 0);
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => CreateQuestionOptionDto),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], CreateQuestionDto.prototype, "options", void 0);
+class CompleteQuizDto {
+    quizId;
+    questions;
+}
+exports.CompleteQuizDto = CompleteQuizDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CompleteQuizDto.prototype, "quizId", void 0);
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => CreateQuestionDto),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", Array)
+], CompleteQuizDto.prototype, "questions", void 0);
+class CreateCompleteQuizDto {
+    groupId;
+    title;
+    description;
+    timeLimit;
+    fullMarks;
+    difficulty;
+    instructions;
+    questions;
+}
+exports.CreateCompleteQuizDto = CreateCompleteQuizDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateCompleteQuizDto.prototype, "groupId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)({ message: 'Title must be a string' }),
+    __metadata("design:type", String)
+], CreateCompleteQuizDto.prototype, "title", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateCompleteQuizDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Min)(1, { message: 'Time limit must be at least 1 minute' }),
+    (0, class_validator_1.Max)(480, { message: 'Time limit cannot exceed 8 hours' }),
+    __metadata("design:type", Number)
+], CreateCompleteQuizDto.prototype, "timeLimit", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateCompleteQuizDto.prototype, "fullMarks", void 0);
+__decorate([
+    (0, class_validator_1.IsEnum)(['EASY', 'MEDIUM', 'HARD']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateCompleteQuizDto.prototype, "difficulty", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateCompleteQuizDto.prototype, "instructions", void 0);
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => CreateQuestionDto),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", Array)
+], CreateCompleteQuizDto.prototype, "questions", void 0);
+class GetQuizDto {
+    quizId;
+}
+exports.GetQuizDto = GetQuizDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], GetQuizDto.prototype, "quizId", void 0);
+class GetQuizzesByGroupDto {
+    groupId;
+}
+exports.GetQuizzesByGroupDto = GetQuizzesByGroupDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], GetQuizzesByGroupDto.prototype, "groupId", void 0);
+class StartQuizAttemptDto {
+    quizId;
+    userId;
+}
+exports.StartQuizAttemptDto = StartQuizAttemptDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], StartQuizAttemptDto.prototype, "quizId", void 0);
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], StartQuizAttemptDto.prototype, "userId", void 0);
+class SaveUserAnswerDto {
+    attemptId;
+    questionId;
+    selectedOptionId;
+    userAnswer;
+}
+exports.SaveUserAnswerDto = SaveUserAnswerDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], SaveUserAnswerDto.prototype, "attemptId", void 0);
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], SaveUserAnswerDto.prototype, "questionId", void 0);
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], SaveUserAnswerDto.prototype, "selectedOptionId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], SaveUserAnswerDto.prototype, "userAnswer", void 0);
+class CompleteQuizAttemptDto {
+    userId;
+    attemptId;
+}
+exports.CompleteQuizAttemptDto = CompleteQuizAttemptDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CompleteQuizAttemptDto.prototype, "userId", void 0);
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CompleteQuizAttemptDto.prototype, "attemptId", void 0);
+class GetQuizAttemptDto {
+    attemptId;
+}
+exports.GetQuizAttemptDto = GetQuizAttemptDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], GetQuizAttemptDto.prototype, "attemptId", void 0);
+class GetUserQuizAttemptsDto {
+    userId;
+    quizId;
+}
+exports.GetUserQuizAttemptsDto = GetUserQuizAttemptsDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], GetUserQuizAttemptsDto.prototype, "userId", void 0);
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], GetUserQuizAttemptsDto.prototype, "quizId", void 0);
+class GetQuizLeaderboardDto {
+    quizId;
+}
+exports.GetQuizLeaderboardDto = GetQuizLeaderboardDto;
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], GetQuizLeaderboardDto.prototype, "quizId", void 0);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/quiz/quizGateway.controller.ts":
 /*!*************************************************************!*\
-  !*** ./apps/api-gateway/src/user/userGateway.controller.ts ***!
+  !*** ./apps/api-gateway/src/quiz/quizGateway.controller.ts ***!
   \*************************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -932,133 +1242,297 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a;
+var _a, _b, _c, _d, _e, _f, _g;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserGatewayController = void 0;
+exports.QuizGatewayController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../jwt-auth.guard */ "./apps/api-gateway/src/jwt-auth.guard.ts");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
-let UserGatewayController = class UserGatewayController {
-    userClient;
-    constructor(userClient) {
-        this.userClient = userClient;
+const quiz_gateway_dto_1 = __webpack_require__(/*! ./dtos/quiz-gateway.dto */ "./apps/api-gateway/src/quiz/dtos/quiz-gateway.dto.ts");
+let QuizGatewayController = class QuizGatewayController {
+    quizClient;
+    constructor(quizClient) {
+        this.quizClient = quizClient;
     }
-    async getUserWorkspaceData(userId, res) {
-        const result = await (0, rxjs_1.lastValueFrom)(this.userClient.send({ cmd: 'get-workspace-data' }, userId));
-        if (!result.success) {
-            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
+    async createQuiz(createQuizDto, req, res) {
+        try {
+            console.log('Received quiz data:', createQuizDto);
+            const quizData = {
+                ...createQuizDto,
+            };
+            console.log('Sending to quiz service:', quizData);
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send('create_quiz', quizData));
+            console.log('Response from quiz service:', result);
+            if (!result?.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.CREATED).json(result);
+        }
+        catch (error) {
+            console.error('Quiz creation error:', error);
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
                 success: false,
-                message: result.message || 'Failed to fetch workspace data',
+                message: 'Error creating quiz: ' + (error?.message || error),
+                data: null,
+                errorDetails: error,
             });
         }
-        return res.status(common_1.HttpStatus.OK).json({
-            result,
-        });
     }
-    async getUserGroupData(userId, res) {
-        const result = await (0, rxjs_1.lastValueFrom)(this.userClient.send({ cmd: 'get-group-data' }, userId));
-        if (!result.success) {
-            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
+    async completeQuizWithQuestions(completeQuizDto, req, res) {
+        try {
+            console.log('Received complete quiz data:', completeQuizDto);
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send('complete_quiz_with_questions', completeQuizDto));
+            console.log('Response from quiz service:', result);
+            if (!result?.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        catch (error) {
+            console.error('Quiz completion error:', error);
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
                 success: false,
-                message: result.message || 'Failed to fetch group data',
+                message: 'Error completing quiz: ' + (error?.message || error),
+                data: null,
+                errorDetails: error,
             });
         }
-        return res.status(common_1.HttpStatus.OK).json({
-            result,
-        });
     }
-    async logActivity(body, res) {
-        if (!body.userId || !body.activity || !body.timestamp) {
-            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
+    async createCompleteQuiz(createCompleteQuizDto, req, res) {
+        try {
+            console.log('Received complete quiz creation data:', createCompleteQuizDto);
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send('create_complete_quiz', createCompleteQuizDto));
+            console.log('Response from quiz service:', result);
+            if (!result?.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.CREATED).json(result);
+        }
+        catch (error) {
+            console.error('Complete quiz creation error:', error);
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
                 success: false,
-                message: 'User ID, activity, and timestamp are required',
+                message: 'Error creating complete quiz: ' + (error?.message || error),
+                data: null,
+                errorDetails: error,
             });
         }
-        const result = await (0, rxjs_1.lastValueFrom)(this.userClient.send({ cmd: 'log-activity' }, body));
-        if (!result.success) {
-            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
-        }
-        return res.status(common_1.HttpStatus.OK).json(result);
     }
-    async getLogsByUserId(userId, res) {
-        const result = await (0, rxjs_1.lastValueFrom)(this.userClient.send({ cmd: 'get-logs-by-user' }, userId));
-        if (!result.success) {
-            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+    async getQuizzesByGroup(groupId, req, res) {
+        try {
+            console.log('Received get quizzes by group request for groupId:', groupId);
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send('get_quizzes_by_group', { groupId }));
+            console.log('Response from quiz service:', result);
+            if (!result?.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.OK).json(result);
         }
-        return res.status(common_1.HttpStatus.OK).json(result);
+        catch (error) {
+            console.error('Get quizzes by group error:', error);
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Error fetching quizzes: ' + (error?.message || error),
+                data: null,
+                errorDetails: error,
+            });
+        }
     }
-    async getUserSettings(userId, res) {
-        console.log("userId", userId);
-        const result = await (0, rxjs_1.lastValueFrom)(this.userClient.send({ cmd: 'get-user-settings' }, userId));
-        if (!result.success) {
-            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+    async getQuizById(quizId, req, res) {
+        try {
+            console.log('Getting quiz by ID:', quizId);
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send('get_quiz_by_id', { quizId }));
+            console.log('Response from quiz service:', result);
+            if (!result?.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.OK).json(result);
         }
-        return res.status(common_1.HttpStatus.OK).json(result);
+        catch (error) {
+            console.error('Get quiz by ID error:', error);
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Error fetching quiz: ' + (error?.message || error),
+                data: null,
+                errorDetails: error,
+            });
+        }
     }
-    async toggleActivityTracking(userId, res, body) {
-        console.log(body.trackUser);
-        const result = await (0, rxjs_1.lastValueFrom)(this.userClient.send({ cmd: 'toggle-activity-tracking' }, { userId, trackUser: body.trackUser }));
-        if (!result.success) {
-            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+    async startQuizAttempt(startQuizAttemptDto, req, res) {
+        try {
+            console.log('Starting quiz attempt:', startQuizAttemptDto);
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send('start_quiz_attempt', startQuizAttemptDto));
+            console.log('Response from quiz service:', result);
+            if (!result?.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.CREATED).json(result);
         }
-        return res.status(common_1.HttpStatus.OK).json(result);
+        catch (error) {
+            console.error('Start quiz attempt error:', error);
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Error starting quiz attempt: ' + (error?.message || error),
+                data: null,
+                errorDetails: error,
+            });
+        }
+    }
+    async saveUserAnswer(saveUserAnswerDto, req, res) {
+        try {
+            console.log('Saving user answer:', saveUserAnswerDto);
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send('save_user_answer', saveUserAnswerDto));
+            console.log('Response from quiz service:', result);
+            if (!result?.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        catch (error) {
+            console.error('Save user answer error:', error);
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Error saving answer: ' + (error?.message || error),
+                data: null,
+                errorDetails: error,
+            });
+        }
+    }
+    async completeQuizAttempt(completeQuizAttemptDto, req, res) {
+        try {
+            console.log('Completing quiz attempt:', completeQuizAttemptDto);
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send('complete_quiz_attempt', completeQuizAttemptDto));
+            console.log('Response from quiz service:', result);
+            if (!result?.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        catch (error) {
+            console.error('Complete quiz attempt error:', error);
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Error completing quiz attempt: ' + (error?.message || error),
+                data: null,
+                errorDetails: error,
+            });
+        }
+    }
+    async getUserQuizAttempts(userId, quizId, req, res) {
+        try {
+            console.log('Getting user quiz attempts for userId:', userId, 'quizId:', quizId);
+            const getUserQuizAttemptsDto = {
+                userId,
+                quizId,
+            };
+            const result = await (0, rxjs_1.lastValueFrom)(this.quizClient.send('get_user_quiz_attempts', getUserQuizAttemptsDto));
+            console.log('Response from quiz service:', result);
+            if (!result?.success) {
+                return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+            }
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        catch (error) {
+            console.error('Get user quiz attempts error:', error);
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'Error fetching user quiz attempts: ' + (error?.message || error),
+                data: null,
+                errorDetails: error,
+            });
+        }
     }
 };
-exports.UserGatewayController = UserGatewayController;
+exports.QuizGatewayController = QuizGatewayController;
 __decorate([
-    (0, common_1.Get)('get-workspace-data/:userId'),
-    __param(0, (0, common_1.Param)('userId')),
-    __param(1, (0, common_1.Res)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", Promise)
-], UserGatewayController.prototype, "getUserWorkspaceData", null);
-__decorate([
-    (0, common_1.Get)('get-group-data/:userId'),
-    __param(0, (0, common_1.Param)('userId')),
-    __param(1, (0, common_1.Res)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", Promise)
-], UserGatewayController.prototype, "getUserGroupData", null);
-__decorate([
-    (0, common_1.Post)('log-activity'),
+    (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Res)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [typeof (_b = typeof quiz_gateway_dto_1.CreateQuizDto !== "undefined" && quiz_gateway_dto_1.CreateQuizDto) === "function" ? _b : Object, Object, Object]),
     __metadata("design:returntype", Promise)
-], UserGatewayController.prototype, "logActivity", null);
+], QuizGatewayController.prototype, "createQuiz", null);
 __decorate([
-    (0, common_1.Get)('get-logs-by-user/:userId'),
-    __param(0, (0, common_1.Param)('userId')),
-    __param(1, (0, common_1.Res)()),
+    (0, common_1.Post)('complete'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [typeof (_c = typeof quiz_gateway_dto_1.CompleteQuizDto !== "undefined" && quiz_gateway_dto_1.CompleteQuizDto) === "function" ? _c : Object, Object, Object]),
     __metadata("design:returntype", Promise)
-], UserGatewayController.prototype, "getLogsByUserId", null);
+], QuizGatewayController.prototype, "completeQuizWithQuestions", null);
 __decorate([
-    (0, common_1.Get)('get-user-settings/:userId'),
-    __param(0, (0, common_1.Param)('userId')),
-    __param(1, (0, common_1.Res)()),
+    (0, common_1.Post)('create-complete'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [typeof (_d = typeof quiz_gateway_dto_1.CreateCompleteQuizDto !== "undefined" && quiz_gateway_dto_1.CreateCompleteQuizDto) === "function" ? _d : Object, Object, Object]),
     __metadata("design:returntype", Promise)
-], UserGatewayController.prototype, "getUserSettings", null);
+], QuizGatewayController.prototype, "createCompleteQuiz", null);
 __decorate([
-    (0, common_1.Post)('toggle-activity-tracking/:userId'),
-    __param(0, (0, common_1.Param)('userId')),
-    __param(1, (0, common_1.Res)()),
-    __param(2, (0, common_1.Body)()),
+    (0, common_1.Get)('group/:groupId'),
+    __param(0, (0, common_1.Param)('groupId')),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
-], UserGatewayController.prototype, "toggleActivityTracking", null);
-exports.UserGatewayController = UserGatewayController = __decorate([
-    (0, common_1.Controller)('user'),
-    __param(0, (0, common_1.Inject)('user-service')),
+], QuizGatewayController.prototype, "getQuizzesByGroup", null);
+__decorate([
+    (0, common_1.Get)(':quizId'),
+    __param(0, (0, common_1.Param)('quizId')),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], QuizGatewayController.prototype, "getQuizById", null);
+__decorate([
+    (0, common_1.Post)('attempt/start'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_e = typeof quiz_gateway_dto_1.StartQuizAttemptDto !== "undefined" && quiz_gateway_dto_1.StartQuizAttemptDto) === "function" ? _e : Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], QuizGatewayController.prototype, "startQuizAttempt", null);
+__decorate([
+    (0, common_1.Post)('attempt/save-answer'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_f = typeof quiz_gateway_dto_1.SaveUserAnswerDto !== "undefined" && quiz_gateway_dto_1.SaveUserAnswerDto) === "function" ? _f : Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], QuizGatewayController.prototype, "saveUserAnswer", null);
+__decorate([
+    (0, common_1.Put)('attempt/complete'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_g = typeof quiz_gateway_dto_1.CompleteQuizAttemptDto !== "undefined" && quiz_gateway_dto_1.CompleteQuizAttemptDto) === "function" ? _g : Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], QuizGatewayController.prototype, "completeQuizAttempt", null);
+__decorate([
+    (0, common_1.Get)('attempts/user/:userId/quiz/:quizId'),
+    __param(0, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Param)('quizId')),
+    __param(2, (0, common_1.Request)()),
+    __param(3, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], QuizGatewayController.prototype, "getUserQuizAttempts", null);
+exports.QuizGatewayController = QuizGatewayController = __decorate([
+    (0, common_1.Controller)('quiz'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Inject)('quiz-leaderboard-service')),
     __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
-], UserGatewayController);
+], QuizGatewayController);
 
 
 /***/ }),
@@ -1708,6 +2182,16 @@ module.exports = require("@nestjs/microservices");
 /***/ ((module) => {
 
 module.exports = require("@nestjs/websockets");
+
+/***/ }),
+
+/***/ "class-transformer":
+/*!************************************!*\
+  !*** external "class-transformer" ***!
+  \************************************/
+/***/ ((module) => {
+
+module.exports = require("class-transformer");
 
 /***/ }),
 
