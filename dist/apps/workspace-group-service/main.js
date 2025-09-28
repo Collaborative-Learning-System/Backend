@@ -1,7 +1,328 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ([
-/* 0 */
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./apps/workspace-group-service/src/entities/chat-message.entity.ts":
+/*!**************************************************************************!*\
+  !*** ./apps/workspace-group-service/src/entities/chat-message.entity.ts ***!
+  \**************************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ChatMessage = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+const group_entity_1 = __webpack_require__(/*! ./group.entity */ "./apps/workspace-group-service/src/entities/group.entity.ts");
+let ChatMessage = class ChatMessage {
+    chatid;
+    groupid;
+    userid;
+    text;
+    sentat;
+    group;
+};
+exports.ChatMessage = ChatMessage;
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    __metadata("design:type", String)
+], ChatMessage.prototype, "chatid", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
+    __metadata("design:type", String)
+], ChatMessage.prototype, "groupid", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
+    __metadata("design:type", String)
+], ChatMessage.prototype, "userid", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text' }),
+    __metadata("design:type", String)
+], ChatMessage.prototype, "text", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], ChatMessage.prototype, "sentat", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => group_entity_1.Group),
+    (0, typeorm_1.JoinColumn)({ name: 'groupid' }),
+    __metadata("design:type", typeof (_b = typeof group_entity_1.Group !== "undefined" && group_entity_1.Group) === "function" ? _b : Object)
+], ChatMessage.prototype, "group", void 0);
+exports.ChatMessage = ChatMessage = __decorate([
+    (0, typeorm_1.Entity)('chat_messages')
+], ChatMessage);
+
+
+/***/ }),
+
+/***/ "./apps/workspace-group-service/src/entities/group-member.entity.ts":
+/*!**************************************************************************!*\
+  !*** ./apps/workspace-group-service/src/entities/group-member.entity.ts ***!
+  \**************************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GroupMember = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+const group_entity_1 = __webpack_require__(/*! ./group.entity */ "./apps/workspace-group-service/src/entities/group.entity.ts");
+let GroupMember = class GroupMember {
+    id;
+    groupid;
+    userid;
+    group;
+};
+exports.GroupMember = GroupMember;
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    __metadata("design:type", String)
+], GroupMember.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
+    __metadata("design:type", String)
+], GroupMember.prototype, "groupid", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
+    __metadata("design:type", String)
+], GroupMember.prototype, "userid", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => group_entity_1.Group),
+    (0, typeorm_1.JoinColumn)({ name: 'groupid' }),
+    __metadata("design:type", typeof (_a = typeof group_entity_1.Group !== "undefined" && group_entity_1.Group) === "function" ? _a : Object)
+], GroupMember.prototype, "group", void 0);
+exports.GroupMember = GroupMember = __decorate([
+    (0, typeorm_1.Entity)('group_member')
+], GroupMember);
+
+
+/***/ }),
+
+/***/ "./apps/workspace-group-service/src/entities/group.entity.ts":
+/*!*******************************************************************!*\
+  !*** ./apps/workspace-group-service/src/entities/group.entity.ts ***!
+  \*******************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Group = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+const workspace_entity_1 = __webpack_require__(/*! ./workspace.entity */ "./apps/workspace-group-service/src/entities/workspace.entity.ts");
+let Group = class Group {
+    groupid;
+    workspaceid;
+    groupname;
+    description;
+    workspace;
+};
+exports.Group = Group;
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    __metadata("design:type", String)
+], Group.prototype, "groupid", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
+    __metadata("design:type", String)
+], Group.prototype, "workspaceid", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
+    __metadata("design:type", String)
+], Group.prototype, "groupname", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", String)
+], Group.prototype, "description", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => workspace_entity_1.Workspace),
+    (0, typeorm_1.JoinColumn)({ name: 'workspaceid' }),
+    __metadata("design:type", typeof (_a = typeof workspace_entity_1.Workspace !== "undefined" && workspace_entity_1.Workspace) === "function" ? _a : Object)
+], Group.prototype, "workspace", void 0);
+exports.Group = Group = __decorate([
+    (0, typeorm_1.Entity)('groups')
+], Group);
+
+
+/***/ }),
+
+/***/ "./apps/workspace-group-service/src/entities/workspace.entity.ts":
+/*!***********************************************************************!*\
+  !*** ./apps/workspace-group-service/src/entities/workspace.entity.ts ***!
+  \***********************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Workspace = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+let Workspace = class Workspace {
+    workspaceid;
+    workspacename;
+    description;
+};
+exports.Workspace = Workspace;
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    __metadata("design:type", String)
+], Workspace.prototype, "workspaceid", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
+    __metadata("design:type", String)
+], Workspace.prototype, "workspacename", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", String)
+], Workspace.prototype, "description", void 0);
+exports.Workspace = Workspace = __decorate([
+    (0, typeorm_1.Entity)('workspace')
+], Workspace);
+
+
+/***/ }),
+
+/***/ "./apps/workspace-group-service/src/entities/workspace_user.entity.ts":
+/*!****************************************************************************!*\
+  !*** ./apps/workspace-group-service/src/entities/workspace_user.entity.ts ***!
+  \****************************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.WorkspaceMember = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+let WorkspaceMember = class WorkspaceMember {
+    id;
+    userid;
+    workspaceid;
+    role;
+};
+exports.WorkspaceMember = WorkspaceMember;
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    __metadata("design:type", String)
+], WorkspaceMember.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
+    __metadata("design:type", String)
+], WorkspaceMember.prototype, "userid", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
+    __metadata("design:type", String)
+], WorkspaceMember.prototype, "workspaceid", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 20, default: 'member' }),
+    __metadata("design:type", String)
+], WorkspaceMember.prototype, "role", void 0);
+exports.WorkspaceMember = WorkspaceMember = __decorate([
+    (0, typeorm_1.Entity)('workspace_user')
+], WorkspaceMember);
+
+
+/***/ }),
+
+/***/ "./apps/workspace-group-service/src/filters/workspace-exception.filter.ts":
+/*!********************************************************************************!*\
+  !*** ./apps/workspace-group-service/src/filters/workspace-exception.filter.ts ***!
+  \********************************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.WorkspaceExceptionFilter = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+let WorkspaceExceptionFilter = class WorkspaceExceptionFilter {
+    catch(exception, host) {
+        const response = exception.getResponse();
+        let statusCode;
+        let message;
+        if (exception instanceof common_1.ConflictException) {
+            statusCode = 409;
+            message = typeof response === 'string' ? response : response['message'] || 'Conflict';
+        }
+        else if (exception instanceof common_1.NotFoundException) {
+            statusCode = 404;
+            message = typeof response === 'string' ? response : response['message'] || 'Not Found';
+        }
+        else if (exception instanceof common_1.BadRequestException) {
+            statusCode = 400;
+            message = typeof response === 'string' ? response : response['message'] || 'Bad Request';
+        }
+        else {
+            statusCode = 500;
+            message = 'Internal Server Error';
+        }
+        return {
+            success: false,
+            statusCode,
+            message,
+            timestamp: new Date().toISOString(),
+        };
+    }
+};
+exports.WorkspaceExceptionFilter = WorkspaceExceptionFilter;
+exports.WorkspaceExceptionFilter = WorkspaceExceptionFilter = __decorate([
+    (0, common_1.Catch)(common_1.ConflictException, common_1.NotFoundException, common_1.BadRequestException)
+], WorkspaceExceptionFilter);
+
+
+/***/ }),
+
+/***/ "./apps/workspace-group-service/src/main.ts":
+/*!**************************************************!*\
+  !*** ./apps/workspace-group-service/src/main.ts ***!
+  \**************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -39,11 +360,11 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(1);
-const workspace_group_service_module_1 = __webpack_require__(2);
-const microservices_1 = __webpack_require__(7);
-const dotenv = __importStar(__webpack_require__(16));
-const path = __importStar(__webpack_require__(17));
+const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
+const workspace_group_service_module_1 = __webpack_require__(/*! ./workspace-group-service.module */ "./apps/workspace-group-service/src/workspace-group-service.module.ts");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const dotenv = __importStar(__webpack_require__(/*! dotenv */ "dotenv"));
+const path = __importStar(__webpack_require__(/*! path */ "path"));
 const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
 dotenv.config({ path: envPath });
 async function bootstrap() {
@@ -60,91 +381,11 @@ bootstrap();
 
 
 /***/ }),
-/* 1 */
-/***/ ((module) => {
 
-module.exports = require("@nestjs/core");
-
-/***/ }),
-/* 2 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.WorkspaceGroupServiceModule = void 0;
-const common_1 = __webpack_require__(3);
-const typeorm_1 = __webpack_require__(4);
-const config_1 = __webpack_require__(5);
-const workspace_group_service_controller_1 = __webpack_require__(6);
-const workspace_group_service_service_1 = __webpack_require__(8);
-const workspace_entity_1 = __webpack_require__(10);
-const workspace_user_entity_1 = __webpack_require__(11);
-const group_entity_1 = __webpack_require__(12);
-const group_member_entity_1 = __webpack_require__(13);
-const chat_message_entity_1 = __webpack_require__(14);
-let WorkspaceGroupServiceModule = class WorkspaceGroupServiceModule {
-};
-exports.WorkspaceGroupServiceModule = WorkspaceGroupServiceModule;
-exports.WorkspaceGroupServiceModule = WorkspaceGroupServiceModule = __decorate([
-    (0, common_1.Module)({
-        imports: [
-            config_1.ConfigModule.forRoot({
-                isGlobal: true,
-            }),
-            typeorm_1.TypeOrmModule.forRootAsync({
-                imports: [config_1.ConfigModule],
-                inject: [config_1.ConfigService],
-                useFactory: (configService) => {
-                    return {
-                        type: 'postgres',
-                        host: configService.get('DB_HOST'),
-                        port: configService.get('DB_PORT'),
-                        username: configService.get('DB_USERNAME'),
-                        password: configService.get('DB_PASSWORD'),
-                        database: configService.get('DB_DATABASE'),
-                        entities: [workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember, group_entity_1.Group, group_member_entity_1.GroupMember, chat_message_entity_1.ChatMessage],
-                        synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
-                        ssl: {
-                            rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
-                                'true',
-                        },
-                    };
-                },
-            }),
-            typeorm_1.TypeOrmModule.forFeature([workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember, group_entity_1.Group, group_member_entity_1.GroupMember, chat_message_entity_1.ChatMessage]),
-        ],
-        controllers: [workspace_group_service_controller_1.WorkspaceGroupServiceController],
-        providers: [workspace_group_service_service_1.WorkspaceGroupServiceService],
-    })
-], WorkspaceGroupServiceModule);
-
-
-/***/ }),
-/* 3 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/common");
-
-/***/ }),
-/* 4 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/typeorm");
-
-/***/ }),
-/* 5 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/config");
-
-/***/ }),
-/* 6 */
+/***/ "./apps/workspace-group-service/src/workspace-group-service.controller.ts":
+/*!********************************************************************************!*\
+  !*** ./apps/workspace-group-service/src/workspace-group-service.controller.ts ***!
+  \********************************************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -160,10 +401,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WorkspaceGroupServiceController = void 0;
-const common_1 = __webpack_require__(3);
-const microservices_1 = __webpack_require__(7);
-const workspace_group_service_service_1 = __webpack_require__(8);
-const workspace_exception_filter_1 = __webpack_require__(15);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const workspace_group_service_service_1 = __webpack_require__(/*! ./workspace-group-service.service */ "./apps/workspace-group-service/src/workspace-group-service.service.ts");
+const workspace_exception_filter_1 = __webpack_require__(/*! ./filters/workspace-exception.filter */ "./apps/workspace-group-service/src/filters/workspace-exception.filter.ts");
 let WorkspaceGroupServiceController = class WorkspaceGroupServiceController {
     workspaceGroupServiceService;
     getHello() {
@@ -211,7 +452,6 @@ let WorkspaceGroupServiceController = class WorkspaceGroupServiceController {
     }
     async getWorkspaceDetails(data) {
         try {
-            console.log('Get workspace details request:', data);
             return await this.workspaceGroupServiceService.getWorkspaceById(data.workspaceId, data.userId);
         }
         catch (error) {
@@ -367,13 +607,75 @@ exports.WorkspaceGroupServiceController = WorkspaceGroupServiceController = __de
 
 
 /***/ }),
-/* 7 */
-/***/ ((module) => {
 
-module.exports = require("@nestjs/microservices");
+/***/ "./apps/workspace-group-service/src/workspace-group-service.module.ts":
+/*!****************************************************************************!*\
+  !*** ./apps/workspace-group-service/src/workspace-group-service.module.ts ***!
+  \****************************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.WorkspaceGroupServiceModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const workspace_group_service_controller_1 = __webpack_require__(/*! ./workspace-group-service.controller */ "./apps/workspace-group-service/src/workspace-group-service.controller.ts");
+const workspace_group_service_service_1 = __webpack_require__(/*! ./workspace-group-service.service */ "./apps/workspace-group-service/src/workspace-group-service.service.ts");
+const workspace_entity_1 = __webpack_require__(/*! ./entities/workspace.entity */ "./apps/workspace-group-service/src/entities/workspace.entity.ts");
+const workspace_user_entity_1 = __webpack_require__(/*! ./entities/workspace_user.entity */ "./apps/workspace-group-service/src/entities/workspace_user.entity.ts");
+const group_entity_1 = __webpack_require__(/*! ./entities/group.entity */ "./apps/workspace-group-service/src/entities/group.entity.ts");
+const group_member_entity_1 = __webpack_require__(/*! ./entities/group-member.entity */ "./apps/workspace-group-service/src/entities/group-member.entity.ts");
+const chat_message_entity_1 = __webpack_require__(/*! ./entities/chat-message.entity */ "./apps/workspace-group-service/src/entities/chat-message.entity.ts");
+let WorkspaceGroupServiceModule = class WorkspaceGroupServiceModule {
+};
+exports.WorkspaceGroupServiceModule = WorkspaceGroupServiceModule;
+exports.WorkspaceGroupServiceModule = WorkspaceGroupServiceModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            config_1.ConfigModule.forRoot({
+                isGlobal: true,
+            }),
+            typeorm_1.TypeOrmModule.forRootAsync({
+                imports: [config_1.ConfigModule],
+                inject: [config_1.ConfigService],
+                useFactory: (configService) => {
+                    return {
+                        type: 'postgres',
+                        host: configService.get('DB_HOST'),
+                        port: configService.get('DB_PORT'),
+                        username: configService.get('DB_USERNAME'),
+                        password: configService.get('DB_PASSWORD'),
+                        database: configService.get('DB_DATABASE'),
+                        entities: [workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember, group_entity_1.Group, group_member_entity_1.GroupMember, chat_message_entity_1.ChatMessage],
+                        synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
+                        ssl: {
+                            rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
+                                'true',
+                        },
+                    };
+                },
+            }),
+            typeorm_1.TypeOrmModule.forFeature([workspace_entity_1.Workspace, workspace_user_entity_1.WorkspaceMember, group_entity_1.Group, group_member_entity_1.GroupMember, chat_message_entity_1.ChatMessage]),
+        ],
+        controllers: [workspace_group_service_controller_1.WorkspaceGroupServiceController],
+        providers: [workspace_group_service_service_1.WorkspaceGroupServiceService],
+    })
+], WorkspaceGroupServiceModule);
+
 
 /***/ }),
-/* 8 */
+
+/***/ "./apps/workspace-group-service/src/workspace-group-service.service.ts":
+/*!*****************************************************************************!*\
+  !*** ./apps/workspace-group-service/src/workspace-group-service.service.ts ***!
+  \*****************************************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -392,14 +694,14 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WorkspaceGroupServiceService = void 0;
-const common_1 = __webpack_require__(3);
-const typeorm_1 = __webpack_require__(4);
-const typeorm_2 = __webpack_require__(9);
-const workspace_entity_1 = __webpack_require__(10);
-const workspace_user_entity_1 = __webpack_require__(11);
-const group_entity_1 = __webpack_require__(12);
-const group_member_entity_1 = __webpack_require__(13);
-const chat_message_entity_1 = __webpack_require__(14);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
+const workspace_entity_1 = __webpack_require__(/*! ./entities/workspace.entity */ "./apps/workspace-group-service/src/entities/workspace.entity.ts");
+const workspace_user_entity_1 = __webpack_require__(/*! ./entities/workspace_user.entity */ "./apps/workspace-group-service/src/entities/workspace_user.entity.ts");
+const group_entity_1 = __webpack_require__(/*! ./entities/group.entity */ "./apps/workspace-group-service/src/entities/group.entity.ts");
+const group_member_entity_1 = __webpack_require__(/*! ./entities/group-member.entity */ "./apps/workspace-group-service/src/entities/group-member.entity.ts");
+const chat_message_entity_1 = __webpack_require__(/*! ./entities/chat-message.entity */ "./apps/workspace-group-service/src/entities/chat-message.entity.ts");
 let WorkspaceGroupServiceService = class WorkspaceGroupServiceService {
     workspaceRepository;
     workspaceMemberRepository;
@@ -521,12 +823,9 @@ let WorkspaceGroupServiceService = class WorkspaceGroupServiceService {
         }
     }
     async getUserWorkspaces(userId) {
-        console.log('getUserWorkspaces called with userId:', userId);
         const userMemberships = await this.workspaceMemberRepository.find({
             where: { userid: userId },
         });
-        console.log('Found memberships for user:', userMemberships);
-        console.log('Number of memberships:', userMemberships.length);
         const workspaces = await Promise.all(userMemberships.map(async (membership) => {
             const workspace = await this.workspaceRepository.findOne({
                 where: { workspaceid: membership.workspaceid },
@@ -550,8 +849,6 @@ let WorkspaceGroupServiceService = class WorkspaceGroupServiceService {
             };
         }));
         const validWorkspaces = workspaces.filter(workspace => workspace !== null);
-        console.log('Final workspaces to return:', validWorkspaces);
-        console.log('Total count:', validWorkspaces.length);
         return {
             workspaces: validWorkspaces,
             totalCount: validWorkspaces.length,
@@ -865,318 +1162,88 @@ exports.WorkspaceGroupServiceService = WorkspaceGroupServiceService = __decorate
 
 
 /***/ }),
-/* 9 */
+
+/***/ "@nestjs/common":
+/*!*********************************!*\
+  !*** external "@nestjs/common" ***!
+  \*********************************/
 /***/ ((module) => {
 
-module.exports = require("typeorm");
+module.exports = require("@nestjs/common");
 
 /***/ }),
-/* 10 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
+/***/ "@nestjs/config":
+/*!*********************************!*\
+  !*** external "@nestjs/config" ***!
+  \*********************************/
+/***/ ((module) => {
 
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Workspace = void 0;
-const typeorm_1 = __webpack_require__(9);
-let Workspace = class Workspace {
-    workspaceid;
-    workspacename;
-    description;
-};
-exports.Workspace = Workspace;
-__decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
-    __metadata("design:type", String)
-], Workspace.prototype, "workspaceid", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", String)
-], Workspace.prototype, "workspacename", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
-    __metadata("design:type", String)
-], Workspace.prototype, "description", void 0);
-exports.Workspace = Workspace = __decorate([
-    (0, typeorm_1.Entity)('workspace')
-], Workspace);
-
+module.exports = require("@nestjs/config");
 
 /***/ }),
-/* 11 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
+/***/ "@nestjs/core":
+/*!*******************************!*\
+  !*** external "@nestjs/core" ***!
+  \*******************************/
+/***/ ((module) => {
 
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.WorkspaceMember = void 0;
-const typeorm_1 = __webpack_require__(9);
-let WorkspaceMember = class WorkspaceMember {
-    id;
-    userid;
-    workspaceid;
-    role;
-};
-exports.WorkspaceMember = WorkspaceMember;
-__decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
-    __metadata("design:type", String)
-], WorkspaceMember.prototype, "id", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
-    __metadata("design:type", String)
-], WorkspaceMember.prototype, "userid", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
-    __metadata("design:type", String)
-], WorkspaceMember.prototype, "workspaceid", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 20, default: 'member' }),
-    __metadata("design:type", String)
-], WorkspaceMember.prototype, "role", void 0);
-exports.WorkspaceMember = WorkspaceMember = __decorate([
-    (0, typeorm_1.Entity)('workspace_user')
-], WorkspaceMember);
-
+module.exports = require("@nestjs/core");
 
 /***/ }),
-/* 12 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
+/***/ "@nestjs/microservices":
+/*!****************************************!*\
+  !*** external "@nestjs/microservices" ***!
+  \****************************************/
+/***/ ((module) => {
 
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Group = void 0;
-const typeorm_1 = __webpack_require__(9);
-const workspace_entity_1 = __webpack_require__(10);
-let Group = class Group {
-    groupid;
-    workspaceid;
-    groupname;
-    description;
-    workspace;
-};
-exports.Group = Group;
-__decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
-    __metadata("design:type", String)
-], Group.prototype, "groupid", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
-    __metadata("design:type", String)
-], Group.prototype, "workspaceid", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", String)
-], Group.prototype, "groupname", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
-    __metadata("design:type", String)
-], Group.prototype, "description", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => workspace_entity_1.Workspace),
-    (0, typeorm_1.JoinColumn)({ name: 'workspaceid' }),
-    __metadata("design:type", typeof (_a = typeof workspace_entity_1.Workspace !== "undefined" && workspace_entity_1.Workspace) === "function" ? _a : Object)
-], Group.prototype, "workspace", void 0);
-exports.Group = Group = __decorate([
-    (0, typeorm_1.Entity)('groups')
-], Group);
-
+module.exports = require("@nestjs/microservices");
 
 /***/ }),
-/* 13 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
+/***/ "@nestjs/typeorm":
+/*!**********************************!*\
+  !*** external "@nestjs/typeorm" ***!
+  \**********************************/
+/***/ ((module) => {
 
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.GroupMember = void 0;
-const typeorm_1 = __webpack_require__(9);
-const group_entity_1 = __webpack_require__(12);
-let GroupMember = class GroupMember {
-    id;
-    groupid;
-    userid;
-    group;
-};
-exports.GroupMember = GroupMember;
-__decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
-    __metadata("design:type", String)
-], GroupMember.prototype, "id", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
-    __metadata("design:type", String)
-], GroupMember.prototype, "groupid", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
-    __metadata("design:type", String)
-], GroupMember.prototype, "userid", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => group_entity_1.Group),
-    (0, typeorm_1.JoinColumn)({ name: 'groupid' }),
-    __metadata("design:type", typeof (_a = typeof group_entity_1.Group !== "undefined" && group_entity_1.Group) === "function" ? _a : Object)
-], GroupMember.prototype, "group", void 0);
-exports.GroupMember = GroupMember = __decorate([
-    (0, typeorm_1.Entity)('group_member')
-], GroupMember);
-
+module.exports = require("@nestjs/typeorm");
 
 /***/ }),
-/* 14 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a, _b;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ChatMessage = void 0;
-const typeorm_1 = __webpack_require__(9);
-const group_entity_1 = __webpack_require__(12);
-let ChatMessage = class ChatMessage {
-    chatid;
-    groupid;
-    userid;
-    text;
-    sentat;
-    group;
-};
-exports.ChatMessage = ChatMessage;
-__decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
-    __metadata("design:type", String)
-], ChatMessage.prototype, "chatid", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
-    __metadata("design:type", String)
-], ChatMessage.prototype, "groupid", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: false }),
-    __metadata("design:type", String)
-], ChatMessage.prototype, "userid", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'text' }),
-    __metadata("design:type", String)
-], ChatMessage.prototype, "text", void 0);
-__decorate([
-    (0, typeorm_1.CreateDateColumn)(),
-    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
-], ChatMessage.prototype, "sentat", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => group_entity_1.Group),
-    (0, typeorm_1.JoinColumn)({ name: 'groupid' }),
-    __metadata("design:type", typeof (_b = typeof group_entity_1.Group !== "undefined" && group_entity_1.Group) === "function" ? _b : Object)
-], ChatMessage.prototype, "group", void 0);
-exports.ChatMessage = ChatMessage = __decorate([
-    (0, typeorm_1.Entity)('chat_messages')
-], ChatMessage);
-
-
-/***/ }),
-/* 15 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.WorkspaceExceptionFilter = void 0;
-const common_1 = __webpack_require__(3);
-let WorkspaceExceptionFilter = class WorkspaceExceptionFilter {
-    catch(exception, host) {
-        const response = exception.getResponse();
-        let statusCode;
-        let message;
-        if (exception instanceof common_1.ConflictException) {
-            statusCode = 409;
-            message = typeof response === 'string' ? response : response['message'] || 'Conflict';
-        }
-        else if (exception instanceof common_1.NotFoundException) {
-            statusCode = 404;
-            message = typeof response === 'string' ? response : response['message'] || 'Not Found';
-        }
-        else if (exception instanceof common_1.BadRequestException) {
-            statusCode = 400;
-            message = typeof response === 'string' ? response : response['message'] || 'Bad Request';
-        }
-        else {
-            statusCode = 500;
-            message = 'Internal Server Error';
-        }
-        return {
-            success: false,
-            statusCode,
-            message,
-            timestamp: new Date().toISOString(),
-        };
-    }
-};
-exports.WorkspaceExceptionFilter = WorkspaceExceptionFilter;
-exports.WorkspaceExceptionFilter = WorkspaceExceptionFilter = __decorate([
-    (0, common_1.Catch)(common_1.ConflictException, common_1.NotFoundException, common_1.BadRequestException)
-], WorkspaceExceptionFilter);
-
-
-/***/ }),
-/* 16 */
+/***/ "dotenv":
+/*!*************************!*\
+  !*** external "dotenv" ***!
+  \*************************/
 /***/ ((module) => {
 
 module.exports = require("dotenv");
 
 /***/ }),
-/* 17 */
+
+/***/ "path":
+/*!***********************!*\
+  !*** external "path" ***!
+  \***********************/
 /***/ ((module) => {
 
 module.exports = require("path");
 
+/***/ }),
+
+/***/ "typeorm":
+/*!**************************!*\
+  !*** external "typeorm" ***!
+  \**************************/
+/***/ ((module) => {
+
+module.exports = require("typeorm");
+
 /***/ })
-/******/ 	]);
+
+/******/ 	});
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
@@ -1207,7 +1274,7 @@ module.exports = require("path");
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __webpack_require__(0);
+/******/ 	var __webpack_exports__ = __webpack_require__("./apps/workspace-group-service/src/main.ts");
 /******/ 	
 /******/ })()
 ;

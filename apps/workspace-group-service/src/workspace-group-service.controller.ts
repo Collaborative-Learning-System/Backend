@@ -61,7 +61,6 @@ export class WorkspaceGroupServiceController {
   @MessagePattern('get_workspace_details')
   async getWorkspaceDetails(data: { userId: string; workspaceId: string }) {
     try {
-      console.log('Get workspace details request:', data);
       return await this.workspaceGroupServiceService.getWorkspaceById(data.workspaceId, data.userId);
     } catch (error) {
       console.error('Error in getWorkspaceDetails controller:', error);
