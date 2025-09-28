@@ -60,8 +60,6 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
           host: '127.0.0.1',
           port: 3006,
         },
-      }
-
       },
       {
         name: 'doc-editing-service',
@@ -77,7 +75,8 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
     ApiGatewayController,
     AuthGatewayController,
     NotificationGatewayController,
-    WorkspaceGatewayController, QuizGatewayController,
+    WorkspaceGatewayController,
+    QuizGatewayController,
     ChatController,
     UserGatewayController,
     DocEditGatewayController,
