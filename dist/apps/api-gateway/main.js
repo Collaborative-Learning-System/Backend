@@ -217,16 +217,14 @@ let AuthGatewayController = class AuthGatewayController {
         }
     }
     async resetPassword(res, resetData) {
-        console.log(resetData);
-        const { email, newPassword } = resetData;
-        if (!email || !newPassword) {
+        const { userId, newPassword } = resetData;
+        if (!userId || !newPassword) {
             return res.status(common_1.HttpStatus.BAD_REQUEST).json({
                 success: false,
-                message: 'Email and new password are required',
+                message: 'User ID and new password are required',
             });
         }
         const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'reset-password' }, resetData));
-        console.log(result);
         if (result.success) {
             return res.status(common_1.HttpStatus.OK).json(result);
         }
@@ -243,7 +241,14 @@ let AuthGatewayController = class AuthGatewayController {
             return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
         }
     }
-    async refreshToken(res, refreshToken) {
+    async refreshToken(req, res) {
+        const refreshToken = req.cookies?.refreshToken;
+        if (!refreshToken) {
+            return res.status(common_1.HttpStatus.UNAUTHORIZED).json({
+                success: false,
+                message: 'Refresh token is missing',
+            });
+        }
         const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'refresh-token' }, refreshToken));
         if (result.success) {
             res.clearCookie('accessToken');
@@ -259,7 +264,6 @@ let AuthGatewayController = class AuthGatewayController {
                 secure: false,
                 sameSite: 'lax',
             });
-            console.log("result at gateway :", result);
             return res.status(common_1.HttpStatus.OK).json(result);
         }
         else {
@@ -272,7 +276,15 @@ let AuthGatewayController = class AuthGatewayController {
             return res.status(common_1.HttpStatus.OK).json(result);
         }
         else {
-            console.log("result at gateway:", result);
+            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
+        }
+    }
+    async deleteAccount(userId, res) {
+        const result = await (0, rxjs_1.lastValueFrom)(this.authClient.send({ cmd: 'delete-account' }, userId));
+        if (result.success) {
+            return res.status(common_1.HttpStatus.OK).json(result);
+        }
+        else {
             return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
         }
     }
@@ -321,10 +333,10 @@ __decorate([
 ], AuthGatewayController.prototype, "getUserData", null);
 __decorate([
     (0, common_1.Post)('refresh-token'),
-    __param(0, (0, common_1.Res)()),
-    __param(1, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AuthGatewayController.prototype, "refreshToken", null);
 __decorate([
@@ -336,6 +348,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AuthGatewayController.prototype, "updateProfile", null);
+__decorate([
+    (0, common_1.Delete)('delete-account/:userId'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AuthGatewayController.prototype, "deleteAccount", null);
 exports.AuthGatewayController = AuthGatewayController = __decorate([
     (0, common_1.Controller)('auth'),
     __param(0, (0, common_1.Inject)('auth-service')),
@@ -770,10 +791,8 @@ let JwtAuthGuard = class JwtAuthGuard {
         }
         catch (error) {
             throw new common_1.UnauthorizedException({
+                statusCode: 401,
                 message: 'Invalid or expired token',
-                data: {
-                    refreshToken: refreshToken,
-                }
             });
         }
     }
@@ -874,26 +893,6 @@ let NotificationGatewayController = class NotificationGatewayController {
         }
         return res.status(common_1.HttpStatus.OK).json(result);
     }
-    async logActivity(body, res) {
-        if (!body.userId || !body.activity || !body.timestamp) {
-            return res.status(common_1.HttpStatus.BAD_REQUEST).json({
-                success: false,
-                message: 'User ID, activity, and timestamp are required',
-            });
-        }
-        const result = await (0, rxjs_1.lastValueFrom)(this.notificationClient.send({ cmd: 'log-activity' }, body));
-        if (!result.success) {
-            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
-        }
-        return res.status(common_1.HttpStatus.OK).json(result);
-    }
-    async getLogsByUserId(userId, res) {
-        const result = await (0, rxjs_1.lastValueFrom)(this.notificationClient.send({ cmd: 'get-logs-by-user' }, userId));
-        if (!result.success) {
-            return res.status(common_1.HttpStatus.BAD_REQUEST).json(result);
-        }
-        return res.status(common_1.HttpStatus.OK).json(result);
-    }
 };
 exports.NotificationGatewayController = NotificationGatewayController;
 __decorate([
@@ -912,22 +911,6 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], NotificationGatewayController.prototype, "sendWelcomeEmail", null);
-__decorate([
-    (0, common_1.Post)('log-activity'),
-    __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Res)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
-    __metadata("design:returntype", Promise)
-], NotificationGatewayController.prototype, "logActivity", null);
-__decorate([
-    (0, common_1.Get)('get-logs-by-user/:userId'),
-    __param(0, (0, common_1.Param)('userId')),
-    __param(1, (0, common_1.Res)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", Promise)
-], NotificationGatewayController.prototype, "getLogsByUserId", null);
 exports.NotificationGatewayController = NotificationGatewayController = __decorate([
     (0, common_1.Controller)('notification'),
     __param(0, (0, common_1.Inject)('notification-service')),
