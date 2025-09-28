@@ -1,4 +1,5 @@
 node_modules/
+dist/
 
 # Environment Variables
 .env
@@ -64,3 +65,4 @@ Thumbs.db
 
 /dist
 
+ 

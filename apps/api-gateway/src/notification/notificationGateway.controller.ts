@@ -1,4 +1,13 @@
-import { Body, Controller, Get, HttpStatus, Inject, Param, Post, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Inject,
+  Param,
+  Post,
+  Res,
+} from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import type { Response } from 'express';
 import { lastValueFrom } from 'rxjs';
@@ -50,4 +59,26 @@ export class NotificationGatewayController {
     return res.status(HttpStatus.OK).json(result);
   }
 
+  @Post('share-document/:documentId')
+  async sendShareDocumentEmail(
+    @Param('documentId') documentId: string,
+    @Body() emailList: any,
+    @Res() res: Response,
+  ) {
+    if (!emailList || emailList.length === 0) {
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json({ success: false, message: 'Email list is required' });
+    }
+    const result = await lastValueFrom(
+      this.notificationClient.send(
+        { cmd: 'share-document' },
+        { documentId, emailList },
+      ),
+    );
+    if (!result.success) {
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+    return res.status(HttpStatus.OK).json(result);
+  }
 }
