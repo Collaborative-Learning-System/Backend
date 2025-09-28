@@ -8,6 +8,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { WsJwtAuthGuard } from './guards/ws-jwt-auth.guard';
 import { NotificationGatewayController } from './notification/notificationGateway.controller';
 import { WorkspaceGatewayController } from './workspace/workspaceGateway.controller';
+import { QuizGatewayController } from './quiz/quizGateway.controller';
 import { ChatGateway } from './chat/chat.gateway';
 import { ChatController } from './chat/chat.controller';
 import { UserGatewayController } from './user/userGateway.controller';
@@ -53,6 +54,16 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
         },
       },
       {
+        name: 'quiz-leaderboard-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3006,
+        },
+      }
+
+      },
+      {
         name: 'doc-editing-service',
         transport: Transport.TCP,
         options: {
@@ -66,7 +77,7 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
     ApiGatewayController,
     AuthGatewayController,
     NotificationGatewayController,
-    WorkspaceGatewayController,
+    WorkspaceGatewayController, QuizGatewayController,
     ChatController,
     UserGatewayController,
     DocEditGatewayController,
