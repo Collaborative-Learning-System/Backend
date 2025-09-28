@@ -679,6 +679,26 @@ export class WorkspaceGatewayController {
     }
   }
 
+  @Get('get-group-members/:groupId')
+  async getGroupMembers(@Param('groupId') groupId: string) {
+    try {
+      const members = await this.workspaceServiceClient
+        .send('get-group-members', { groupId })
+        .toPromise();
+
+      return {
+        success: true,
+        message: 'Group members retrieved successfully',
+        data: members,
+      };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to retrieve group members',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async onModuleDestroy() {
     await this.workspaceServiceClient.close();
   }

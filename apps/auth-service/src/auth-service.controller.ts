@@ -75,4 +75,11 @@ export class AuthServiceController {
     const result = await this.authServiceService.deleteUser(userId);
     return result;
   }
+
+  // POST: Find User By Id
+  @MessagePattern({ cmd: 'find-user-by-id' })
+  async findUserById(userId: string) {
+    const result = await this.authServiceService.findUserById(userId);
+    return result;
+  }
 }

@@ -285,4 +285,17 @@ export class AuthServiceService {
       message: 'Account Removed successfully',
     };
   }
+
+  // Find User By Id
+  async findUserById(userId: string) {
+    const user = await this.userRepository.findOne({ where: { userId } });
+    if (!user) {
+      return;
+    }
+    return {
+      userId: user.userId,
+      fullName: user.fullName,
+      email: user.email,
+    };
+  }
 }

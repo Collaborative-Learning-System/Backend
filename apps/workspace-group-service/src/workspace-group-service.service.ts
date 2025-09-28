@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Workspace } from './entities/workspace.entity';
@@ -23,6 +23,7 @@ import {
   GetChatHistoryDto,
   ChatHistoryResponseDto
 } from './dtos/workspace.dto';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class WorkspaceGroupServiceService {
@@ -37,11 +38,10 @@ export class WorkspaceGroupServiceService {
     private groupMemberRepository: Repository<GroupMember>,
     @InjectRepository(ChatMessage)
     private chatMessageRepository: Repository<ChatMessage>,
+    @Inject('auth-service') 
+    private readonly authClient: ClientProxy,
   ) {}
 
-  getHello(): string {
-    return 'Hello World!';
-  }
 
   async createWorkspace(userId: string, createWorkspaceDto: CreateWorkspaceDto): Promise<WorkspaceResponseDto> {    
     // Temporary fix: use a test userId if the passed userId is undefined/null
@@ -625,4 +625,34 @@ export class WorkspaceGroupServiceService {
       throw new ConflictException('Failed to get group members. Please try again.');
     }
   }
+
+  async fetchGroupMembers(groupId: string): Promise<string[]> {
+    try {
+      const members = await this.groupMemberRepository.find({
+        where: { groupid: groupId }
+      });
+      let groupMemberDetails: any[] = [];
+      await Promise.all(members.map(async member => {
+        groupMemberDetails.push(await this.getUserDetails(member.userid));
+      }));
+
+      return groupMemberDetails;
+      
+     } catch (error) {
+      console.error('Error fetching group members:', error);
+      throw new ConflictException('Failed to fetch group members. Please try again.');
+    }
+  }
+
+  async getUserDetails(userId: string): Promise<any> { 
+    try {
+      const result = await this.authClient
+        .send({ cmd: 'find-user-by-id' }, userId)
+        .toPromise();
+      return result;
+
+    } catch (error) {
+      throw new ConflictException('Failed to get user details. Please try again.');
+    }
+   }
 }
