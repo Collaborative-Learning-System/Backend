@@ -6,6 +6,7 @@ import { User } from './entities/user.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -43,11 +44,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       useFactory: async (configService: ConfigService) => ({
         global: true,
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '24h',
-        },
       }),
     }),
+    ClientsModule.register([
+      {
+        name: 'user-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3004,
+        },
+      },
+    ]),
   ],
   controllers: [AuthServiceController],
   providers: [AuthServiceService],

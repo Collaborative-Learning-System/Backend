@@ -3,7 +3,6 @@ import { NotificationServiceController } from './notification-service.controller
 import { NotificationServiceService } from './notification-service.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { Logging } from './entities/logging.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
@@ -22,7 +21,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_DATABASE'),
-          entities: [Logging],
+          entities: [],
           synchronize: configService.get<string>('DB_SYNCHRONIZE') === 'true',
           ssl: {
             rejectUnauthorized:
@@ -32,7 +31,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         };
       },
     }),
-    TypeOrmModule.forFeature([Logging]),
+    TypeOrmModule.forFeature([]),
     ClientsModule.register([
       {
         name: 'auth-service',

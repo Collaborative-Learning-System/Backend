@@ -8,11 +8,17 @@ import {
   Get,
   Param,
   Inject,
+  Delete,
+  Req,
 } from '@nestjs/common';
-import { request, type Response } from 'express';
-import { JwtAuthGuard } from '../jwt-auth.guard';
+import { type Response } from 'express';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
+
+export interface RequestWithCookies extends Request {
+  cookies: { [key: string]: string };
+}
 
 @Controller('auth')
 export class AuthGatewayController {
@@ -71,18 +77,16 @@ export class AuthGatewayController {
 
   @Post('reset-password')
   async resetPassword(@Res() res: Response, @Body() resetData: any) {
-    console.log(resetData);
-    const { email, newPassword } = resetData;
-    if (!email || !newPassword) {
+    const { userId, newPassword } = resetData;
+    if (!userId || !newPassword) {
       return res.status(HttpStatus.BAD_REQUEST).json({
         success: false,
-        message: 'Email and new password are required',
+        message: 'User ID and new password are required',
       });
     }
     const result = await lastValueFrom(
       this.authClient.send({ cmd: 'reset-password' }, resetData),
     );
-    console.log(result);
     if (result.success) {
       return res.status(HttpStatus.OK).json(result);
     } else {
@@ -104,7 +108,14 @@ export class AuthGatewayController {
   }
 
   @Post('refresh-token')
-  async refreshToken(@Res() res: Response, @Body() refreshToken: string) {
+  async refreshToken(@Req() req: RequestWithCookies, @Res() res: Response) {
+    const refreshToken = req.cookies?.refreshToken;
+    if (!refreshToken) {
+      return res.status(HttpStatus.UNAUTHORIZED).json({
+        success: false,
+        message: 'Refresh token is missing',
+      });
+    }
     const result = await lastValueFrom(
       this.authClient.send({ cmd: 'refresh-token' }, refreshToken),
     );
@@ -122,7 +133,6 @@ export class AuthGatewayController {
         secure: false,
         sameSite: 'lax',
       });
-      console.log("result at gateway :", result)
       return res.status(HttpStatus.OK).json(result);
     } else {
       return res.status(HttpStatus.UNAUTHORIZED).json(result);
@@ -138,7 +148,19 @@ export class AuthGatewayController {
     if (result.success) {
       return res.status(HttpStatus.OK).json(result);
     } else {
-      console.log("result at gateway:", result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+  }
+
+  @Delete('delete-account/:userId')
+  @UseGuards(JwtAuthGuard)
+  async deleteAccount(@Param('userId') userId: string, @Res() res: Response) {
+    const result = await lastValueFrom(
+      this.authClient.send({ cmd: 'delete-account' }, userId),
+    );
+    if (result.success) {
+      return res.status(HttpStatus.OK).json(result);
+    } else {
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
   }

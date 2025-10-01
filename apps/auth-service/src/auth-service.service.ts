@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { SignupDto } from './dtos/signup.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,6 +10,8 @@ import { RefreshToken } from './entities/refresh-token.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { TokensDto } from './dtos/tokens.dto';
+import { RefreshTokenDto } from './dtos/refresh-token.dto';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class AuthServiceService {
@@ -19,7 +21,9 @@ export class AuthServiceService {
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     private jwtService: JwtService,
-  ) { }
+    @Inject('user-service')
+    private readonly userClient: ClientProxy,
+  ) {}
 
   async signup(signupData: SignupDto) {
     const { fullName, email, password } = signupData;
@@ -43,6 +47,7 @@ export class AuthServiceService {
       password: hashedPassword,
       role: UserRole.USER,
     });
+
     return {
       success: true,
       statusCode: 201,
@@ -73,6 +78,9 @@ export class AuthServiceService {
     }
     // Generate tokens
     const tokens = await this.generateUserTokens(user.userId);
+    // await this.userClient
+    //   .send({ cmd: 'save-user-settings' }, user?.userId)
+    //   .toPromise();
 
     return {
       success: true,
@@ -87,7 +95,6 @@ export class AuthServiceService {
     const user = await this.refreshTokenRepository.findOne({
       where: { token: refreshToken },
     });
-    console.log('results', user);
 
     if (!user?.token) {
       return {
@@ -96,7 +103,6 @@ export class AuthServiceService {
         message: 'Invalid refresh token',
       };
     }
-
     if (user.expiresAt < new Date()) {
       return {
         success: false,
@@ -140,12 +146,18 @@ export class AuthServiceService {
   // Logout
   async logout(userId: string) {
     try {
-      await this.refreshTokenRepository.delete({ id: userId });
-      return {
-        success: true,
-        statusCode: 200,
-        message: 'User logged out successfully',
-      };
+      const user = await this.refreshTokenRepository.findOne({
+        where: { id: userId },
+      });
+      if (user) {
+        await this.refreshTokenRepository.remove(user);
+        return {
+          success: true,
+          statusCode: 200,
+          message: 'User logged out successfully',
+        };
+      }
+      return { success: false, statusCode: 404, message: 'User not found' };
     } catch (error) {
       return {
         success: false,
@@ -158,13 +170,13 @@ export class AuthServiceService {
   // Reset Password
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
     const user = await this.userRepository.findOne({
-      where: { email: resetPasswordDto.email },
+      where: { userId: resetPasswordDto.userId },
     });
     if (!user) {
       return {
         success: false,
         statusCode: 404,
-        message: 'User not found with the provided email',
+        message: 'User not found',
       };
     }
 
@@ -194,7 +206,13 @@ export class AuthServiceService {
       success: true,
       statusCode: 200,
       message: 'User found',
-      data: { userId: user.userId, fullName: user.fullName, email: user.email, role: user.role, bio: user.bio},
+      data: {
+        userId: user.userId,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        bio: user.bio,
+      },
     };
   }
 
@@ -216,36 +234,11 @@ export class AuthServiceService {
     };
   }
 
-  // Validate Tokens
-  async validateTokens(tokens: TokensDto) {
-    const { accessToken, refreshToken } = tokens;
-    try {
-      const decoded = this.jwtService.verify(accessToken);
-      return {
-        success: true,
-        statusCode: 200,
-        message: 'Access Token is valid',
-        data: decoded,
-      };
-    } catch (error) {
-      try {
-        const result = await this.refresh(refreshToken);
-        return result;
-      } catch (refreshError) {
-        return {
-          success: false,
-          statusCode: 401,
-          message: 'Invalid or expired tokens',
-          error: refreshError.message,
-        };
-      }
-    }
-  }
-
   // Update Profile
   async updateProfile(updateData) {
-    console.log(updateData)
-    const user = await this.userRepository.findOne({ where: { userId: updateData.userId } });
+    const user = await this.userRepository.findOne({
+      where: { userId: updateData.userId },
+    });
     if (!user) {
       return {
         success: false,
@@ -254,7 +247,9 @@ export class AuthServiceService {
       };
     }
 
-    const IsEmailExist = await this.userRepository.findOne({ where: { email: updateData.email } });
+    const IsEmailExist = await this.userRepository.findOne({
+      where: { email: updateData.email },
+    });
     if (IsEmailExist && IsEmailExist.email !== user.email) {
       return {
         success: false,
@@ -270,6 +265,37 @@ export class AuthServiceService {
       success: true,
       statusCode: 200,
       message: 'Profile updated successfully',
+    };
+  }
+
+  // Delete User
+  async deleteUser(userId: string) {
+    const user = await this.userRepository.findOne({ where: { userId } });
+    if (!user) {
+      return {
+        success: false,
+        statusCode: 404,
+        message: 'User not found',
+      };
+    }
+    await this.userRepository.remove(user);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Account Removed successfully',
+    };
+  }
+
+  // Find User By Id
+  async findUserById(userId: string) {
+    const user = await this.userRepository.findOne({ where: { userId } });
+    if (!user) {
+      return;
+    }
+    return {
+      userId: user.userId,
+      fullName: user.fullName,
+      email: user.email,
     };
   }
 }

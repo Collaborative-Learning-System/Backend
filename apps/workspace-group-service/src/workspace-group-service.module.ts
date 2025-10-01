@@ -8,6 +8,7 @@ import { WorkspaceMember } from './entities/workspace_user.entity';
 import { Group } from './entities/group.entity';
 import { GroupMember } from './entities/group-member.entity';
 import { ChatMessage } from './entities/chat-message.entity';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -37,6 +38,16 @@ import { ChatMessage } from './entities/chat-message.entity';
           },
         }),
     TypeOrmModule.forFeature([Workspace, WorkspaceMember, Group, GroupMember, ChatMessage]),
+    ClientsModule.register([
+      {
+        name: 'auth-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3001,
+        },
+      },
+    ])
   ],
   controllers: [WorkspaceGroupServiceController],
   providers: [WorkspaceGroupServiceService],
