@@ -9,9 +9,10 @@ import {
   UseGuards,
   Inject,
   ParseIntPipe,
+  Delete,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { JwtAuthGuard } from '../jwt-auth.guard';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 
@@ -65,7 +66,7 @@ export class EduAssistantGatewayController {
     }
   }
 
-  @Get(':id')
+  @Get('plan/:id')
   @UseGuards(JwtAuthGuard)
   async getStudyPlan(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
     try {
@@ -86,12 +87,25 @@ export class EduAssistantGatewayController {
       });
     }
   }
+  @Delete('delete-plan/:id')
+  @UseGuards(JwtAuthGuard)
+  async deleteStudyPlan(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+    try {
+      const result = await lastValueFrom(
+        this.eduAssistantClient.send({ cmd: 'delete-study-plan' }, { id }),
+      );
 
-  @Get()
-  getHello(@Res() res: Response) {
-    return res.status(HttpStatus.OK).json({
-      success: true,
-      message: 'Edu Assistant Service Gateway is running!',
-    });
+      if (!result.success) {
+        return res.status(HttpStatus.NOT_FOUND).json(result);
+      }
+
+      return res.status(HttpStatus.OK).json(result);
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'Failed to delete study plan',
+        error: error.message,
+      });
+    }
   }
-}
+}  

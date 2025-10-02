@@ -62,4 +62,21 @@ export class EduAssistantServiceController {
       };
     }
   }
+
+  @MessagePattern({ cmd: 'delete-study-plan' })
+  async deleteStudyPlan(data: { id: number }) {
+    try {
+      await this.eduAssistantServiceService.deleteStudyPlan(data.id);
+      return {
+        success: true,
+        message: 'Study plan deleted successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Failed to delete study plan',
+        error: error.message,
+      };
+    }
+  }
 }

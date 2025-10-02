@@ -91,7 +91,7 @@ INSTRUCTIONS:
 6. Schedule tasks during preferred time slots: ${request.preferredTimeSlots.join(', ')}
 7. ${request.includeRegularBreaks ? 'Include 10-15 minute breaks between study sessions' : 'Focus on continuous study sessions'}
 8. Ensure tasks align with the study goal: ${request.studygoal}
-9. Use realistic time estimates for each task
+9. Use realistic time estimates for each task(show every times with minutes and hours )
 
 
 Generate the study plan now:`;

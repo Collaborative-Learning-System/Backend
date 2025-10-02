@@ -62,7 +62,7 @@ export class EduAssistantServiceService {
       const savedTasks = await this.studyTaskRepository.save(tasks);
       this.logger.log(`Saved ${savedTasks.length} study tasks`);
 
-      // Build and return the response
+      
       return this.buildStudyPlanResponse(savedPlan, savedTasks, aiResponse.title);
     } catch (error) {
       this.logger.error('Error generating study plan:', error);
@@ -127,5 +127,15 @@ export class EduAssistantServiceService {
     return studyPlans.map(plan => 
       this.buildStudyPlanResponse(plan, plan.tasks, `Study Plan ${plan.id}`)
     );
+  }
+
+  async deleteStudyPlan(id: number): Promise<void> {
+    const studyPlan = await this.studyPlanRepository.findOne({ where: { id } });
+    
+    if (!studyPlan) {
+      throw new Error('Study plan not found');
+    }
+
+    await this.studyPlanRepository.remove(studyPlan);
   }
 }

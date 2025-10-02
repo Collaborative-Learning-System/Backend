@@ -13,9 +13,13 @@ import { GeminiService } from './services/gemini.service';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    HttpModule.register({
-      timeout: 30000,
-      maxRedirects: 5,
+    HttpModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        timeout: configService.get<number>('HTTP_TIMEOUT') || 60000,
+        maxRedirects: 5,
+      }),
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
