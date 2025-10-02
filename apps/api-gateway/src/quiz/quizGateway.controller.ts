@@ -136,7 +136,7 @@ export class QuizGatewayController {
       return res.status(HttpStatus.OK).json(result);
     } catch (error) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
+        success: false, 
         message: 'Error fetching quizzes: ' + (error?.message || error),
         data: null,
         errorDetails: error,

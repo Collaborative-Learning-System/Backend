@@ -185,14 +185,11 @@ export class WorkspaceGroupServiceService {
   }
 
   async getUserWorkspaces(userId: string): Promise<UserWorkspacesResponseDto> {
-    console.log('getUserWorkspaces called with userId:', userId);
     
     const userMemberships = await this.workspaceMemberRepository.find({
       where: { userid: userId },
     });
     
-    console.log('Found memberships for user:', userMemberships);
-    console.log('Number of memberships:', userMemberships.length);
 
     const workspaces = await Promise.all(
       userMemberships.map(async (membership) => {
@@ -228,8 +225,7 @@ export class WorkspaceGroupServiceService {
     // Filter out null values
     const validWorkspaces = workspaces.filter(workspace => workspace !== null);
 
-    console.log('Final workspaces to return:', validWorkspaces);
-    console.log('Total count:', validWorkspaces.length);
+
 
     return {
       workspaces: validWorkspaces,
