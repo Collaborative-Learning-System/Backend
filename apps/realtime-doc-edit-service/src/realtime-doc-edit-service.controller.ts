@@ -5,8 +5,5 @@ import { RealtimeDocEditServiceService } from './realtime-doc-edit-service.servi
 export class RealtimeDocEditServiceController {
   constructor(private readonly realtimeDocEditServiceService: RealtimeDocEditServiceService) {}
 
-  @Get('hello')
-  getHello(): string {
-    return this.realtimeDocEditServiceService.getHello();
-  }
+
 }
