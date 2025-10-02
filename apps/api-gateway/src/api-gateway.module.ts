@@ -9,6 +9,7 @@ import { WsJwtAuthGuard } from './guards/ws-jwt-auth.guard';
 import { NotificationGatewayController } from './notification/notificationGateway.controller';
 import { WorkspaceGatewayController } from './workspace/workspaceGateway.controller';
 import { QuizGatewayController } from './quiz/quizGateway.controller';
+import { EduAssistantGatewayController } from './edu-assistant/eduAssistantGateway.controller';
 import { ChatGateway } from './chat/chat.gateway';
 import { ChatController } from './chat/chat.controller';
 import { UserGatewayController } from './user/userGateway.controller';
@@ -62,6 +63,14 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
         },
       },
       {
+        name: 'edu-assistant-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3007,
+        },
+      },
+      {
         name: 'doc-editing-service',
         transport: Transport.TCP,
         options: {
@@ -77,7 +86,7 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
     NotificationGatewayController,
     WorkspaceGatewayController,
     QuizGatewayController,
-    ChatController,
+    EduAssistantGatewayController, ChatController,
     UserGatewayController,
     DocEditGatewayController,
   ],
