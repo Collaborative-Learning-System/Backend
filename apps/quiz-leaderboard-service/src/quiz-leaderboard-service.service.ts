@@ -5,11 +5,14 @@ import { Quiz } from './entities/quiz.entity';
 import { Question } from './entities/question.entity';
 import { QuestionOption } from './entities/question-option.entity';
 import { QuizAttempt } from './entities/quizattempt.entity';
-import { AttemptAnswer } from './entities/attemptanswer.entity';
+import { AttemptAnswer } from './entities/attemptAnswer.entity';
 import { CreateQuizDto } from './dtos/quiz.dto';
 import { CompleteQuizDto } from './dtos/complete-quiz.dto';
 import { CreateQuestionDto } from './dtos/question.dto';
-import { CreateQuizAttemptDto, UpdateQuizAttemptDto } from './dtos/quiz-attempt.dto';
+import {
+  CreateQuizAttemptDto,
+  UpdateQuizAttemptDto,
+} from './dtos/quiz-attempt.dto';
 import { CreateAttemptAnswerDto } from './dtos/attempt-answer.dto';
 
 @Injectable()
@@ -28,7 +31,6 @@ export class QuizLeaderboardServiceService {
     private dataSource: DataSource,
   ) {}
 
-
   async createQuiz(CreateQuizDto: CreateQuizDto): Promise<Quiz> {
     try {
       const quiz = this.quizRepository.create({
@@ -42,24 +44,23 @@ export class QuizLeaderboardServiceService {
 
       const savedQuiz = await this.quizRepository.save(quiz);
       return savedQuiz;
-
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Error creating quiz:', error);
       throw error;
     }
   }
 
-  async completeQuizWithQuestions(completeQuizDto: CompleteQuizDto): Promise<Quiz> {
+  async completeQuizWithQuestions(
+    completeQuizDto: CompleteQuizDto,
+  ): Promise<Quiz> {
     const queryRunner = this.dataSource.createQueryRunner();
-    
+
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      
       const quiz = await queryRunner.manager.findOne(Quiz, {
-        where: { quizId: completeQuizDto.quizId }
+        where: { quizId: completeQuizDto.quizId },
       });
 
       if (!quiz) {
@@ -68,7 +69,6 @@ export class QuizLeaderboardServiceService {
 
       // Create questions and options
       for (const questionDto of completeQuizDto.questions) {
-        
         const question = queryRunner.manager.create(Question, {
           quizId: quiz.quizId,
           question: questionDto.question,
@@ -77,9 +77,11 @@ export class QuizLeaderboardServiceService {
           correctAnswer: questionDto.correctAnswer,
         });
 
-        const savedQuestion = await queryRunner.manager.save(Question, question);
+        const savedQuestion = await queryRunner.manager.save(
+          Question,
+          question,
+        );
 
-       
         if (questionDto.options && questionDto.options.length > 0) {
           for (const optionDto of questionDto.options) {
             const option = queryRunner.manager.create(QuestionOption, {
@@ -106,7 +108,6 @@ export class QuizLeaderboardServiceService {
       }
 
       return completeQuiz;
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.error('Error completing quiz with questions:', error);
@@ -118,12 +119,11 @@ export class QuizLeaderboardServiceService {
 
   async createCompleteQuiz(createQuizDto: CreateQuizDto): Promise<Quiz> {
     const queryRunner = this.dataSource.createQueryRunner();
-    
+
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      
       const quiz = queryRunner.manager.create(Quiz, {
         groupId: createQuizDto.groupId,
         title: createQuizDto.title,
@@ -147,9 +147,11 @@ export class QuizLeaderboardServiceService {
             correctAnswer: questionDto.correctAnswer,
           });
 
-          const savedQuestion = await queryRunner.manager.save(Question, question);
+          const savedQuestion = await queryRunner.manager.save(
+            Question,
+            question,
+          );
 
-          
           if (questionDto.options && questionDto.options.length > 0) {
             for (const optionDto of questionDto.options) {
               const option = queryRunner.manager.create(QuestionOption, {
@@ -166,7 +168,6 @@ export class QuizLeaderboardServiceService {
 
       await queryRunner.commitTransaction();
 
-      
       const completeQuiz = await this.quizRepository.findOne({
         where: { quizId: savedQuiz.quizId },
         relations: ['questions', 'questions.questionOptions'],
@@ -177,7 +178,6 @@ export class QuizLeaderboardServiceService {
       }
 
       return completeQuiz;
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.error('Error creating complete quiz:', error);
@@ -218,8 +218,9 @@ export class QuizLeaderboardServiceService {
     }
   }
 
-  
-  async startQuizAttempt(createQuizAttemptDto: CreateQuizAttemptDto): Promise<{ attemptId: string }> {
+  async startQuizAttempt(
+    createQuizAttemptDto: CreateQuizAttemptDto,
+  ): Promise<{ attemptId: string }> {
     try {
       const quizAttempt = this.quizAttemptRepository.create({
         quizId: createQuizAttemptDto.quizId,
@@ -236,7 +237,9 @@ export class QuizLeaderboardServiceService {
     }
   }
 
-  async saveUserAnswer(createAttemptAnswerDto: CreateAttemptAnswerDto): Promise<AttemptAnswer> {
+  async saveUserAnswer(
+    createAttemptAnswerDto: CreateAttemptAnswerDto,
+  ): Promise<AttemptAnswer> {
     try {
       // Fetch the question with its options to validate the answer
       const question = await this.questionRepository.findOne({
@@ -251,41 +254,56 @@ export class QuizLeaderboardServiceService {
       // Validate the answer based on question type
       let isCorrect: boolean | null = null;
 
-      if (question.questionType === 'MCQ' && createAttemptAnswerDto.selectedOptionId) {
+      if (
+        question.questionType === 'MCQ' &&
+        createAttemptAnswerDto.selectedOptionId
+      ) {
         // For Multiple Choice Questions, check if selected option is correct
         const selectedOption = question.questionOptions.find(
-          option => option.optionId === createAttemptAnswerDto.selectedOptionId
+          (option) =>
+            option.optionId === createAttemptAnswerDto.selectedOptionId,
         );
         isCorrect = selectedOption ? selectedOption.isCorrect : false;
-      } else if (question.questionType === 'TRUE_FALSE' && createAttemptAnswerDto.selectedOptionId) {
+      } else if (
+        question.questionType === 'TRUE_FALSE' &&
+        createAttemptAnswerDto.selectedOptionId
+      ) {
         // For True/False Questions, check if selected option is correct
         const selectedOption = question.questionOptions.find(
-          option => option.optionId === createAttemptAnswerDto.selectedOptionId
+          (option) =>
+            option.optionId === createAttemptAnswerDto.selectedOptionId,
         );
         isCorrect = selectedOption ? selectedOption.isCorrect : false;
-      } else if (question.questionType === 'SHORT_ANSWER' && createAttemptAnswerDto.userAnswer) {
+      } else if (
+        question.questionType === 'SHORT_ANSWER' &&
+        createAttemptAnswerDto.userAnswer
+      ) {
         // For Short Answer Questions, compare with stored correct answer
         // Note: This is case-insensitive comparison, you might want to make it more sophisticated
-        const userAnswer = createAttemptAnswerDto.userAnswer.trim().toLowerCase();
+        const userAnswer = createAttemptAnswerDto.userAnswer
+          .trim()
+          .toLowerCase();
         const correctAnswer = question.correctAnswer?.trim().toLowerCase();
         isCorrect = userAnswer === correctAnswer;
       }
 
       // Check if an answer for this question in this attempt already exists
       const existingAnswer = await this.attemptAnswerRepository.findOne({
-        where: { 
+        where: {
           attemptId: createAttemptAnswerDto.attemptId,
-          questionId: createAttemptAnswerDto.questionId
-        }
+          questionId: createAttemptAnswerDto.questionId,
+        },
       });
 
       if (existingAnswer) {
         // Update existing answer
-        existingAnswer.selectedOptionId = createAttemptAnswerDto.selectedOptionId || null;
+        existingAnswer.selectedOptionId =
+          createAttemptAnswerDto.selectedOptionId || null;
         existingAnswer.userAnswer = createAttemptAnswerDto.userAnswer || null;
         existingAnswer.isCorrect = isCorrect;
-        
-        const updatedAnswer = await this.attemptAnswerRepository.save(existingAnswer);
+
+        const updatedAnswer =
+          await this.attemptAnswerRepository.save(existingAnswer);
         return updatedAnswer;
       } else {
         // Create new answer
@@ -297,7 +315,8 @@ export class QuizLeaderboardServiceService {
           isCorrect: isCorrect,
         });
 
-        const savedAnswer = await this.attemptAnswerRepository.save(attemptAnswer);
+        const savedAnswer =
+          await this.attemptAnswerRepository.save(attemptAnswer);
         return savedAnswer;
       }
     } catch (error) {
@@ -306,12 +325,15 @@ export class QuizLeaderboardServiceService {
     }
   }
 
-  async completeQuizAttempt(attemptId: string, userId: string): Promise<QuizAttempt> {
+  async completeQuizAttempt(
+    attemptId: string,
+    userId: string,
+  ): Promise<QuizAttempt> {
     try {
       // Find the quiz attempt
       const quizAttempt = await this.quizAttemptRepository.findOne({
         where: { attemptId, userId },
-        relations: ['answers']
+        relations: ['answers'],
       });
 
       if (!quizAttempt) {
@@ -324,27 +346,30 @@ export class QuizLeaderboardServiceService {
 
       // Get all questions for the quiz with their points
       const questions = await this.questionRepository.find({
-        where: { quizId: quizAttempt.quizId }
+        where: { quizId: quizAttempt.quizId },
       });
 
       // Calculate total possible points
-      const totalPossiblePoints = questions.reduce((sum, question) => sum + question.points, 0);
+      const totalPossiblePoints = questions.reduce(
+        (sum, question) => sum + question.points,
+        0,
+      );
 
       // Calculate user's score based on correct answers
       let userPoints = 0;
       const answers = await this.attemptAnswerRepository.find({
         where: { attemptId },
-        relations: []
+        relations: [],
       });
 
       // Create a map of questionId to question points for efficient lookup
       const questionPointsMap = new Map();
-      questions.forEach(question => {
+      questions.forEach((question) => {
         questionPointsMap.set(question.questionId, question.points);
       });
 
       // Calculate points from correct answers
-      answers.forEach(answer => {
+      answers.forEach((answer) => {
         if (answer.isCorrect) {
           const questionPoints = questionPointsMap.get(answer.questionId) || 0;
           userPoints += questionPoints;
@@ -352,14 +377,15 @@ export class QuizLeaderboardServiceService {
       });
 
       // Calculate percentage score
-      const percentageScore = totalPossiblePoints > 0 ? (userPoints / totalPossiblePoints) * 100 : 0;
+      const percentageScore =
+        totalPossiblePoints > 0 ? (userPoints / totalPossiblePoints) * 100 : 0;
 
       // Update the quiz attempt
       quizAttempt.score = Math.round(percentageScore * 100) / 100; // Round to 2 decimal places
       quizAttempt.isCompleted = true;
 
       const updatedAttempt = await this.quizAttemptRepository.save(quizAttempt);
-      
+
       return updatedAttempt;
     } catch (error) {
       console.error('Error completing quiz attempt:', error);
@@ -367,7 +393,10 @@ export class QuizLeaderboardServiceService {
     }
   }
 
-  async getUserQuizAttempts(userId: string, quizId: string): Promise<{
+  async getUserQuizAttempts(
+    userId: string,
+    quizId: string,
+  ): Promise<{
     attempts: any[];
     bestScore: number;
     averageScore: number;
@@ -376,12 +405,12 @@ export class QuizLeaderboardServiceService {
     try {
       // Fetch all attempts for the user on the specific quiz
       const attempts = await this.quizAttemptRepository.find({
-        where: { 
-          userId, 
+        where: {
+          userId,
           quizId,
-          isCompleted: true 
+          isCompleted: true,
         },
-        order: { attemptAt: 'DESC' } 
+        order: { attemptAt: 'DESC' },
       });
 
       if (attempts.length === 0) {
@@ -393,40 +422,38 @@ export class QuizLeaderboardServiceService {
         };
       }
 
-     
       const questions = await this.questionRepository.find({
-        where: { quizId }
+        where: { quizId },
       });
 
       const totalQuestions = questions.length;
 
-     
-      const formattedAttempts = attempts.map(attempt => {
-        
-        const timeTaken = 0; 
+      const formattedAttempts = attempts.map((attempt) => {
+        const timeTaken = 0;
 
         return {
           id: attempt.attemptId,
           quizId: attempt.quizId,
           userId: attempt.userId,
-          score: Math.round(attempt.score), 
+          score: Math.round(attempt.score),
           totalQuestions: totalQuestions,
           percentage: attempt.score,
           startedAt: attempt.attemptAt.toISOString(),
-          completedAt: attempt.attemptAt.toISOString(), 
-         
-          status: attempt.isCompleted ? 'COMPLETED' : 'IN_PROGRESS'
+          completedAt: attempt.attemptAt.toISOString(),
+
+          status: attempt.isCompleted ? 'COMPLETED' : 'IN_PROGRESS',
         };
       });
 
-      
-      const scores = attempts.map(attempt => parseFloat(attempt.score.toString())).filter(score => !isNaN(score));
-     
-      
+      const scores = attempts
+        .map((attempt) => parseFloat(attempt.score.toString()))
+        .filter((score) => !isNaN(score));
+
       const bestScore = scores.length > 0 ? Math.max(...scores) : 0;
-      const averageScore = scores.length > 0 ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
-      
-     
+      const averageScore =
+        scores.length > 0
+          ? scores.reduce((sum, score) => sum + score, 0) / scores.length
+          : 0;
 
       return {
         attempts: formattedAttempts,
@@ -440,4 +467,78 @@ export class QuizLeaderboardServiceService {
     }
   }
 
+  async getQuizResultsForLeaderboard(groupId: string) {
+    // Get all quizzes in the group
+    const quizzes = await this.quizRepository.find({
+      where: { groupId },
+      select: ['quizId'],
+    });
+
+    if (!quizzes.length) return [];
+
+    const quizIds = quizzes.map((q) => q.quizId);
+
+    // Get leaderboard results
+   const results = await this.quizAttemptRepository
+     .createQueryBuilder('attempt')
+     .innerJoin('attempt.user', 'user')
+     .innerJoin('attempt.quiz', 'quiz')
+     .select('user.userId', 'userId')
+     .addSelect('user.fullName', 'name')
+     .addSelect(
+       `
+      SUM(
+        (attempt.score / 100) *
+        CASE 
+          WHEN quiz.difficulty = 'HARD' THEN 1.0
+          WHEN quiz.difficulty = 'MEDIUM' THEN 0.9
+          WHEN quiz.difficulty = 'EASY' THEN 0.8
+          ELSE 1.0
+        END
+      )
+      `,
+       'totalPoints',
+     )
+     .addSelect('COUNT(DISTINCT attempt.quizId)', 'quizCount')
+     .where('attempt.quizId IN (:...quizIds)', { quizIds })
+     .andWhere((qb) => {
+       const subQuery = qb
+         .subQuery()
+         .select('MIN(a2.attemptAt)')
+         .from('quizattempt', 'a2')
+         .where('a2.userId = attempt.userId')
+         .andWhere('a2.quizId = attempt.quizId')
+         .getQuery();
+       return 'attempt.attemptAt = ' + subQuery;
+     })
+     .groupBy('user.userId')
+     .addGroupBy('user.fullName')
+     // Repeat the expression for PostgreSQL ORDER BY
+     .orderBy(
+       `
+      SUM(
+        (attempt.score / 100) *
+        CASE 
+          WHEN quiz.difficulty = 'HARD' THEN 1.0
+          WHEN quiz.difficulty = 'MEDIUM' THEN 0.9
+          WHEN quiz.difficulty = 'EASY' THEN 0.8
+          ELSE 1.0
+        END
+      ) / COUNT(DISTINCT attempt.quizId)
+      `,
+       'DESC',
+     )
+     .getRawMany();
+
+   return {
+     success: true,
+     data: results.map((r) => ({
+       userId: r.userId,
+       name: r.name,
+       avgPoints: (Number(r.totalPoints) / Number(r.quizCount)).toFixed(2),
+       totalPoints: Number(r.totalPoints).toFixed(2),
+       quizzesTaken: Number(r.quizCount),
+     })),
+   };
+  }
 }

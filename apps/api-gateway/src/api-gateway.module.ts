@@ -54,6 +54,14 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
           port: 3004,
         },
       },
+            {
+        name: 'doc-editing-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3005,
+        },
+      },
       {
         name: 'quiz-leaderboard-service',
         transport: Transport.TCP,
@@ -68,14 +76,6 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
         options: {
           host: '127.0.0.1',
           port: 3007,
-        },
-      },
-      {
-        name: 'doc-editing-service',
-        transport: Transport.TCP,
-        options: {
-          host: '127.0.0.1',
-          port: 3005,
         },
       },
     ]),
