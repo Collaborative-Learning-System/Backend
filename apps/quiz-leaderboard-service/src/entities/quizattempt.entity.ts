@@ -1,5 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from "typeorm";
-import { AttemptAnswer } from "./attemptanswer.entity";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, ManyToOne, JoinColumn } from "typeorm";
+import { AttemptAnswer } from "./attemptAnswer.entity";
+import { Quiz } from "./quiz.entity";
+import { User } from "./user.entity";
 
 @Entity('quizattempt') 
 export class QuizAttempt {
@@ -25,4 +27,12 @@ export class QuizAttempt {
     
     @OneToMany(() => AttemptAnswer, attemptAnswer => attemptAnswer.attempt)
     answers: AttemptAnswer[];
+
+    @ManyToOne(() => Quiz)
+    @JoinColumn({ name: 'quizid' })
+    quiz: Quiz;
+
+    @ManyToOne(() => User)
+    @JoinColumn({ name: 'userid' })
+    user: User;
 }

@@ -4,7 +4,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-const envPath = path.resolve(process.cwd(), 'apps', 'quiz-leaderboard-service', '.env');
+const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
 dotenv.config({ path: envPath });
 
 
@@ -20,5 +20,6 @@ async function bootstrap() {
     },
   );
   await app.listen();
+  console.log('Quiz Leaderboard Service is running on port 3006');
 }
 bootstrap();
