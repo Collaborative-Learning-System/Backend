@@ -21,10 +21,10 @@ export class UpdateQuizAttemptDto {
 }
 
 export class QuizAttemptResponseDto {
-    attemptId: string;
-    quizId: string;
-    userId: string;
-    score: number;
-    attemptAt: Date;
-    isCompleted: boolean;
+  attemptId: string;
+  quizId: string;
+  userId: string;
+  score: number;
+  attemptAt: Date;
+  isCompleted: boolean;
 }

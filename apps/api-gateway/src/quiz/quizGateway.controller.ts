@@ -31,10 +31,11 @@ import {
 } from './dtos/quiz-gateway.dto';
 
 @Controller('quiz')
-@UseGuards(JwtAuthGuard)
+//@UseGuards(JwtAuthGuard)
 export class QuizGatewayController {
   constructor(
-    @Inject('quiz-leaderboard-service') private readonly quizClient: ClientProxy,
+    @Inject('quiz-leaderboard-service')
+    private readonly quizClient: ClientProxy,
   ) {}
 
   @Post()
@@ -44,27 +45,19 @@ export class QuizGatewayController {
     @Res() res: Response,
   ) {
     try {
-      console.log('Received quiz data:', createQuizDto);
-
       const quizData = {
         ...createQuizDto,
       };
 
-      console.log('Sending to quiz service:', quizData);
-      
       const result = await lastValueFrom(
         this.quizClient.send('create_quiz', quizData),
       );
-
-      console.log('Response from quiz service:', result);
-
       if (!result?.success) {
         return res.status(HttpStatus.BAD_REQUEST).json(result);
       }
 
       return res.status(HttpStatus.CREATED).json(result);
     } catch (error) {
-      console.error('Quiz creation error:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Error creating quiz: ' + (error?.message || error),
@@ -81,21 +74,15 @@ export class QuizGatewayController {
     @Res() res: Response,
   ) {
     try {
-      console.log('Received complete quiz data:', completeQuizDto);
-      
       const result = await lastValueFrom(
         this.quizClient.send('complete_quiz_with_questions', completeQuizDto),
       );
-
-      console.log('Response from quiz service:', result);
-
       if (!result?.success) {
         return res.status(HttpStatus.BAD_REQUEST).json(result);
       }
 
       return res.status(HttpStatus.OK).json(result);
     } catch (error) {
-      console.error('Quiz completion error:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Error completing quiz: ' + (error?.message || error),
@@ -112,13 +99,9 @@ export class QuizGatewayController {
     @Res() res: Response,
   ) {
     try {
-      console.log('Received complete quiz creation data:', createCompleteQuizDto);
-      
       const result = await lastValueFrom(
         this.quizClient.send('create_complete_quiz', createCompleteQuizDto),
       );
-
-      console.log('Response from quiz service:', result);
 
       if (!result?.success) {
         return res.status(HttpStatus.BAD_REQUEST).json(result);
@@ -126,7 +109,6 @@ export class QuizGatewayController {
 
       return res.status(HttpStatus.CREATED).json(result);
     } catch (error) {
-      console.error('Complete quiz creation error:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Error creating complete quiz: ' + (error?.message || error),
@@ -143,13 +125,9 @@ export class QuizGatewayController {
     @Res() res: Response,
   ) {
     try {
-      console.log('Received get quizzes by group request for groupId:', groupId);
-      
       const result = await lastValueFrom(
         this.quizClient.send('get_quizzes_by_group', { groupId }),
       );
-
-      console.log('Response from quiz service:', result);
 
       if (!result?.success) {
         return res.status(HttpStatus.BAD_REQUEST).json(result);
@@ -157,9 +135,8 @@ export class QuizGatewayController {
 
       return res.status(HttpStatus.OK).json(result);
     } catch (error) {
-      console.error('Get quizzes by group error:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        success: false,
+        success: false, 
         message: 'Error fetching quizzes: ' + (error?.message || error),
         data: null,
         errorDetails: error,
@@ -174,13 +151,9 @@ export class QuizGatewayController {
     @Res() res: Response,
   ) {
     try {
-      console.log('Getting quiz by ID:', quizId);
-      
       const result = await lastValueFrom(
         this.quizClient.send('get_quiz_by_id', { quizId }),
       );
-
-      console.log('Response from quiz service:', result);
 
       if (!result?.success) {
         return res.status(HttpStatus.BAD_REQUEST).json(result);
@@ -188,7 +161,6 @@ export class QuizGatewayController {
 
       return res.status(HttpStatus.OK).json(result);
     } catch (error) {
-      console.error('Get quiz by ID error:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Error fetching quiz: ' + (error?.message || error),
@@ -198,8 +170,6 @@ export class QuizGatewayController {
     }
   }
 
-  
-
   @Post('attempt/start')
   async startQuizAttempt(
     @Body() startQuizAttemptDto: StartQuizAttemptDto,
@@ -207,13 +177,9 @@ export class QuizGatewayController {
     @Res() res: Response,
   ) {
     try {
-      console.log('Starting quiz attempt:', startQuizAttemptDto);
-      
       const result = await lastValueFrom(
         this.quizClient.send('start_quiz_attempt', startQuizAttemptDto),
       );
-
-      console.log('Response from quiz service:', result);
 
       if (!result?.success) {
         return res.status(HttpStatus.BAD_REQUEST).json(result);
@@ -221,7 +187,6 @@ export class QuizGatewayController {
 
       return res.status(HttpStatus.CREATED).json(result);
     } catch (error) {
-      console.error('Start quiz attempt error:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Error starting quiz attempt: ' + (error?.message || error),
@@ -238,21 +203,15 @@ export class QuizGatewayController {
     @Res() res: Response,
   ) {
     try {
-      console.log('Saving user answer:', saveUserAnswerDto);
-      
       const result = await lastValueFrom(
         this.quizClient.send('save_user_answer', saveUserAnswerDto),
       );
-
-      console.log('Response from quiz service:', result);
-
       if (!result?.success) {
         return res.status(HttpStatus.BAD_REQUEST).json(result);
       }
 
       return res.status(HttpStatus.OK).json(result);
     } catch (error) {
-      console.error('Save user answer error:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Error saving answer: ' + (error?.message || error),
@@ -265,30 +224,25 @@ export class QuizGatewayController {
   @Put('attempt/complete')
   async completeQuizAttempt(
     @Body() completeQuizAttemptDto: CompleteQuizAttemptDto,
-    @Request() req: any,
     @Res() res: Response,
   ) {
     try {
-      console.log('Completing quiz attempt:', completeQuizAttemptDto);
-      
       const result = await lastValueFrom(
         this.quizClient.send('complete_quiz_attempt', completeQuizAttemptDto),
       );
 
-      console.log('Response from quiz service:', result);
-
       if (!result?.success) {
-        return res.status(HttpStatus.BAD_REQUEST).json(result);
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          success: false,
+          message: result?.message || 'Failed to complete quiz attempt',
+        });
       }
 
       return res.status(HttpStatus.OK).json(result);
     } catch (error) {
-      console.error('Complete quiz attempt error:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Error completing quiz attempt: ' + (error?.message || error),
-        data: null,
-        errorDetails: error,
       });
     }
   }
@@ -301,18 +255,14 @@ export class QuizGatewayController {
     @Res() res: Response,
   ) {
     try {
-      console.log('Getting user quiz attempts for userId:', userId, 'quizId:', quizId);
-      
       const getUserQuizAttemptsDto: GetUserQuizAttemptsDto = {
         userId,
         quizId,
       };
-      
+
       const result = await lastValueFrom(
         this.quizClient.send('get_user_quiz_attempts', getUserQuizAttemptsDto),
       );
-
-      console.log('Response from quiz service:', result);
 
       if (!result?.success) {
         return res.status(HttpStatus.BAD_REQUEST).json(result);
@@ -320,10 +270,35 @@ export class QuizGatewayController {
 
       return res.status(HttpStatus.OK).json(result);
     } catch (error) {
-      console.error('Get user quiz attempts error:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: 'Error fetching user quiz attempts: ' + (error?.message || error),
+        message:
+          'Error fetching user quiz attempts: ' + (error?.message || error),
+        data: null,
+        errorDetails: error,
+      });
+    }
+  }
+
+  @Get('results/:groupId')
+  async getQuizResultsForLeaderboard(
+    @Param('groupId') groupId: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await lastValueFrom(
+        this.quizClient.send('get_quiz_results_for_leaderboard', { groupId }),
+      );
+
+      if (!result?.success) {
+        return res.status(HttpStatus.BAD_REQUEST).json(result);
+      }
+
+      return res.status(HttpStatus.OK).json(result);
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'Error fetching quiz results: ' + (error?.message || error),
         data: null,
         errorDetails: error,
       });
