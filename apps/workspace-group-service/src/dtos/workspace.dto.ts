@@ -105,6 +105,7 @@ export class ChatMessageResponseDto {
   chatId: string;
   groupId: string;
   userId: string;
+  userName?: string;
   text: string;
   sentAt: Date;
 }

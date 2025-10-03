@@ -13,7 +13,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { JwtAuthGuard } from '../jwt-auth.guard';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import {

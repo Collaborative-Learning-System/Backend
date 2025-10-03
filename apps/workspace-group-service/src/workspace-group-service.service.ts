@@ -515,7 +515,6 @@ export class WorkspaceGroupServiceService {
     const { groupId, text } = sendChatMessageDto;
 
     try {
-      // Verify that the group exists
       const group = await this.groupRepository.findOne({
         where: { groupid: groupId }
       });
@@ -537,15 +536,26 @@ export class WorkspaceGroupServiceService {
       const chatMessage = this.chatMessageRepository.create({
         groupid: groupId,
         userid: userId,
-        text: text
+        text: text,
+        sentat: new Date()
       });
 
       const savedMessage = await this.chatMessageRepository.save(chatMessage);
+
+      // Fetch sender's username (fullName)
+      let senderName = '';
+      try {
+        const userDetails = await this.getUserDetails(savedMessage.userid);
+        senderName = userDetails?.fullName || '';
+      } catch (e) {
+        senderName = '';
+      }
 
       return {
         chatId: savedMessage.chatid,
         groupId: savedMessage.groupid,
         userId: savedMessage.userid,
+        userName: senderName,
         text: savedMessage.text,
         sentAt: savedMessage.sentat
       };
@@ -588,10 +598,23 @@ export class WorkspaceGroupServiceService {
         skip: offset
       });
 
+      // Fetch all unique userIds in the messages
+      const userIds = Array.from(new Set(messages.map(m => m.userid)));
+      const userIdToName: Record<string, string> = {};
+      await Promise.all(userIds.map(async (uid) => {
+        try {
+          const userDetails = await this.getUserDetails(uid);
+          userIdToName[uid] = userDetails?.fullName || '';
+        } catch (e) {
+          userIdToName[uid] = '';
+        }
+      }));
+
       const chatMessages: ChatMessageResponseDto[] = messages.map(message => ({
         chatId: message.chatid,
         groupId: message.groupid,
         userId: message.userid,
+        userName: userIdToName[message.userid] || '',
         text: message.text,
         sentAt: message.sentat
       }));
@@ -640,15 +663,65 @@ export class WorkspaceGroupServiceService {
     }
   }
 
+
   async getUserDetails(userId: string): Promise<any> { 
     try {
       const result = await this.authClient
         .send({ cmd: 'find-user-by-id' }, userId)
         .toPromise();
       return result;
-
     } catch (error) {
       throw new ConflictException('Failed to get user details. Please try again.');
     }
-   }
+  }
+
+  /**
+   * Delete a group if the user is admin of the workspace
+   * @param workspaceId string
+   * @param groupId string
+   * @param userId string
+   */
+  async deleteGroup(workspaceId: string, groupId: string, userId: string): Promise<{ message: string }> {
+    console.log('[deleteGroup] workspaceId:', workspaceId, 'groupId:', groupId, 'userId:', userId);
+    // Validate input
+    if (!workspaceId || !groupId || !userId) {
+      console.error('[deleteGroup] Missing required parameters');
+      throw new BadRequestException('workspaceId, groupId, and userId are required');
+    }
+
+    // Check if group exists
+    const group = await this.groupRepository.findOne({ where: { groupid: groupId, workspaceid: workspaceId } });
+    if (!group) {
+      console.error('[deleteGroup] Group not found');
+      throw new NotFoundException('Group not found');
+    }
+
+    // Check if user is a member of the workspace
+    const membership = await this.workspaceMemberRepository.findOne({ where: { workspaceid: workspaceId, userid: userId } });
+    if (!membership) {
+      console.error('[deleteGroup] User is not a member of the workspace');
+      throw new ForbiddenException('You are not a member of this workspace');
+    }
+
+    // Only admin can delete group
+    if (membership.role !== 'admin') {
+      console.error('[deleteGroup] User is not admin');
+      throw new ForbiddenException('Only workspace admins can delete groups');
+    }
+
+    try {
+      // Delete all group members
+      await this.groupMemberRepository.delete({ groupid: groupId });
+      // Delete all chat messages in the group
+      await this.chatMessageRepository.delete({ groupid: groupId });
+      // Delete the group itself
+      await this.groupRepository.delete({ groupid: groupId });
+      console.log('[deleteGroup] Group deleted successfully');
+      return { message: 'Group deleted successfully' };
+    } catch (error) {
+      console.error('[deleteGroup] Error deleting group:', error?.message || error);
+      // Propagate the real error message if available
+      throw new ConflictException(error?.message || 'Failed to delete group. Please try again.');
+    }
+  }
 }
