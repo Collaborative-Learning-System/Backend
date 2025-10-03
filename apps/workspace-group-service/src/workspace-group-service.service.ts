@@ -1,4 +1,11 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Workspace } from './entities/workspace.entity';
@@ -6,11 +13,11 @@ import { WorkspaceMember } from './entities/workspace_user.entity';
 import { Group } from './entities/group.entity';
 import { GroupMember } from './entities/group-member.entity';
 import { ChatMessage } from './entities/chat-message.entity';
-import { 
-  CreateWorkspaceDto, 
-  JoinWorkspaceDto, 
+import {
+  CreateWorkspaceDto,
+  JoinWorkspaceDto,
   LeaveWorkspaceDto,
-  WorkspaceResponseDto, 
+  WorkspaceResponseDto,
   UserWorkspacesResponseDto,
   AllWorkspacesResponseDto,
   CreateGroupDto,
@@ -21,7 +28,8 @@ import {
   SendChatMessageDto,
   ChatMessageResponseDto,
   GetChatHistoryDto,
-  ChatHistoryResponseDto
+  ChatHistoryResponseDto,
+  AssignAdminDto,
 } from './dtos/workspace.dto';
 import { ClientProxy } from '@nestjs/microservices';
 
@@ -38,15 +46,17 @@ export class WorkspaceGroupServiceService {
     private groupMemberRepository: Repository<GroupMember>,
     @InjectRepository(ChatMessage)
     private chatMessageRepository: Repository<ChatMessage>,
-    @Inject('auth-service') 
+    @Inject('auth-service')
     private readonly authClient: ClientProxy,
   ) {}
 
-
-  async createWorkspace(userId: string, createWorkspaceDto: CreateWorkspaceDto): Promise<WorkspaceResponseDto> {    
+  async createWorkspace(
+    userId: string,
+    createWorkspaceDto: CreateWorkspaceDto,
+  ): Promise<WorkspaceResponseDto> {
     // Temporary fix: use a test userId if the passed userId is undefined/null
     const finalUserId = userId || 'test-user-id-12345';
-    
+
     try {
       const workspace = this.workspaceRepository.create({
         workspacename: createWorkspaceDto.workspacename,
@@ -61,6 +71,11 @@ export class WorkspaceGroupServiceService {
         role: 'admin',
       });
 
+      const admin = await this.workspaceMemberRepository.findOne({
+        where: { workspaceid: savedWorkspace.workspaceid, role: 'admin' },
+        relations: ['user'],
+      });
+
       await this.workspaceMemberRepository.save(adminMember);
 
       return {
@@ -68,6 +83,7 @@ export class WorkspaceGroupServiceService {
         name: savedWorkspace.workspacename,
         description: savedWorkspace.description,
         adminId: finalUserId,
+        adminName: admin?.user?.fullName || 'Unknown Admin',
         role: 'admin',
       };
     } catch (error) {
@@ -75,7 +91,10 @@ export class WorkspaceGroupServiceService {
     }
   }
 
-  async joinWorkspace(userId: string, joinWorkspaceDto: JoinWorkspaceDto): Promise<WorkspaceResponseDto> {
+  async joinWorkspace(
+    userId: string,
+    joinWorkspaceDto: JoinWorkspaceDto,
+  ): Promise<WorkspaceResponseDto> {
     const { workspaceId } = joinWorkspaceDto;
 
     // Validate input
@@ -100,7 +119,9 @@ export class WorkspaceGroupServiceService {
     if (existingMember) {
       // Check if user is the admin (creator) of the workspace
       if (existingMember.role === 'admin') {
-        throw new ConflictException('You cannot join a workspace that you created. You are already the admin of this workspace.');
+        throw new ConflictException(
+          'You cannot join a workspace that you created. You are already the admin of this workspace.',
+        );
       }
       // User is already a member
       throw new ConflictException('You have already joined this workspace.');
@@ -116,8 +137,9 @@ export class WorkspaceGroupServiceService {
 
       await this.workspaceMemberRepository.save(member);
     } catch (error) {
-      console.error('Error saving workspace member:', error);
-      throw new ConflictException('Failed to join workspace. Please try again.');
+      throw new ConflictException(
+        'Failed to join workspace. Please try again.',
+      );
     }
 
     // Get member count
@@ -128,6 +150,7 @@ export class WorkspaceGroupServiceService {
     // Find admin to get adminId
     const adminMember = await this.workspaceMemberRepository.findOne({
       where: { workspaceid: workspaceId, role: 'admin' },
+      relations: ['user'],
     });
 
     return {
@@ -135,12 +158,16 @@ export class WorkspaceGroupServiceService {
       name: workspace.workspacename,
       description: workspace.description,
       adminId: adminMember?.userid || '',
+      adminName: adminMember?.user?.fullName || 'Unknown Admin',
       memberCount,
       role: 'member',
     };
   }
 
-  async leaveWorkspace(userId: string, leaveWorkspaceDto: LeaveWorkspaceDto): Promise<{ message: string }> {
+  async leaveWorkspace(
+    userId: string,
+    leaveWorkspaceDto: LeaveWorkspaceDto,
+  ): Promise<{ message: string }> {
     const { workspaceId } = leaveWorkspaceDto;
 
     // Validate input
@@ -168,28 +195,29 @@ export class WorkspaceGroupServiceService {
 
     // Check if user is the admin - admins cannot leave their own workspace
     if (membership.role === 'admin') {
-      throw new BadRequestException('Workspace admins cannot leave their own workspace. You must transfer admin rights or delete the workspace instead.');
+      throw new BadRequestException(
+        'Workspace admins cannot leave their own workspace. You must transfer admin rights or delete the workspace instead.',
+      );
     }
 
     try {
       // Remove user from workspace
       await this.workspaceMemberRepository.remove(membership);
-      
+
       return {
-        message: 'Successfully left the workspace'
+        message: 'Successfully left the workspace',
       };
     } catch (error) {
-      console.error('Error leaving workspace:', error);
-      throw new ConflictException('Failed to leave workspace. Please try again.');
+      throw new ConflictException(
+        'Failed to leave workspace. Please try again.',
+      );
     }
   }
 
   async getUserWorkspaces(userId: string): Promise<UserWorkspacesResponseDto> {
-    
     const userMemberships = await this.workspaceMemberRepository.find({
       where: { userid: userId },
     });
-    
 
     const workspaces = await Promise.all(
       userMemberships.map(async (membership) => {
@@ -209,6 +237,7 @@ export class WorkspaceGroupServiceService {
         // Find admin for this workspace
         const adminMember = await this.workspaceMemberRepository.findOne({
           where: { workspaceid: membership.workspaceid, role: 'admin' },
+          relations: ['user'],
         });
 
         return {
@@ -216,16 +245,17 @@ export class WorkspaceGroupServiceService {
           name: workspace.workspacename,
           description: workspace.description,
           adminId: adminMember?.userid || '',
+          adminName: adminMember?.user?.fullName || 'Unknown Admin',
           memberCount,
           role: membership.role,
         };
-      })
+      }),
     );
 
     // Filter out null values
-    const validWorkspaces = workspaces.filter(workspace => workspace !== null);
-
-
+    const validWorkspaces = workspaces.filter(
+      (workspace) => workspace !== null,
+    );
 
     return {
       workspaces: validWorkspaces,
@@ -233,7 +263,10 @@ export class WorkspaceGroupServiceService {
     };
   }
 
-  async getWorkspaceById(workspaceId: string, userId: string): Promise<WorkspaceResponseDto> {
+  async getWorkspaceById(
+    workspaceId: string,
+    userId: string,
+  ): Promise<WorkspaceResponseDto> {
     const workspace = await this.workspaceRepository.findOne({
       where: { workspaceid: workspaceId },
     });
@@ -258,6 +291,7 @@ export class WorkspaceGroupServiceService {
     // Find admin for this workspace
     const adminMember = await this.workspaceMemberRepository.findOne({
       where: { workspaceid: workspaceId, role: 'admin' },
+      relations: ['user'],
     });
 
     return {
@@ -265,6 +299,7 @@ export class WorkspaceGroupServiceService {
       name: workspace.workspacename,
       description: workspace.description,
       adminId: adminMember?.userid || '',
+      adminName: adminMember?.user?.fullName || 'Unknown Admin',
       memberCount,
       role: membership.role,
     };
@@ -275,7 +310,7 @@ export class WorkspaceGroupServiceService {
       select: ['workspaceid', 'workspacename'],
     });
 
-    const workspaceList = workspaces.map(workspace => ({
+    const workspaceList = workspaces.map((workspace) => ({
       id: workspace.workspaceid,
       name: workspace.workspacename,
     }));
@@ -286,7 +321,10 @@ export class WorkspaceGroupServiceService {
     };
   }
 
-  async checkMembershipStatus(userId: string, workspaceId: string): Promise<{ isMember: boolean; role?: string; message: string }> {
+  async checkMembershipStatus(
+    userId: string,
+    workspaceId: string,
+  ): Promise<{ isMember: boolean; role?: string; message: string }> {
     if (!userId || !workspaceId) {
       throw new BadRequestException('User ID and Workspace ID are required');
     }
@@ -297,9 +335,9 @@ export class WorkspaceGroupServiceService {
     });
 
     if (!workspace) {
-      return { 
-        isMember: false, 
-        message: 'Workspace not found' 
+      return {
+        isMember: false,
+        message: 'Workspace not found',
       };
     }
 
@@ -309,21 +347,102 @@ export class WorkspaceGroupServiceService {
     });
 
     if (!membership) {
-      return { 
-        isMember: false, 
-        message: 'User is not a member of this workspace' 
+      return {
+        isMember: false,
+        message: 'User is not a member of this workspace',
       };
     }
 
-    return { 
-      isMember: true, 
+    return {
+      isMember: true,
       role: membership.role,
-      message: `User is a ${membership.role} of this workspace` 
+      message: `User is a ${membership.role} of this workspace`,
     };
   }
 
+  // Get Workspace Members
+  async getWorkspaceMembers(workspaceId: string) {
+    const members = await this.workspaceMemberRepository.find({
+      where: { workspaceid: workspaceId },
+      relations: ['user'],
+    });
+
+    return members.map((member) => ({
+      userId: member.userid,
+      name: member.user?.fullName || 'Unknown User',
+    }));
+  }
+
+  // Grant Admin Role
+  async assignAdmin(assignAdminDto: AssignAdminDto) {
+    console.log(assignAdminDto)
+    const { workspaceId, newAdminId } = assignAdminDto;
+
+    // Validate input
+    if (!workspaceId || !newAdminId) {
+      return {
+        success: false,
+        message: 'Workspace ID and User ID are required',
+      };
+    }
+
+    // Check if workspace exists
+    const workspace = await this.workspaceRepository.findOne({
+      where: { workspaceid: workspaceId },
+    });
+
+    if (!workspace) {
+      return {
+        success: false,
+        message: 'Workspace not found',
+      };
+    }
+
+    // Check if user is a member of the workspace
+    const membership = await this.workspaceMemberRepository.findOne({
+      where: { workspaceid: workspaceId, userid: newAdminId },
+    });
+    if (!membership) {
+      return {
+        success: false,
+        message: 'User is not a member of this workspace',
+      };
+    }
+
+    const currentAdmin = await this.workspaceMemberRepository.findOne({
+      where: { workspaceid: workspaceId, role: 'admin' },
+    });
+
+    if (currentAdmin && currentAdmin.userid === newAdminId) {
+      return {
+        success: false,
+        message: 'User is already the admin of this workspace',
+      };
+    }
+
+    await this.workspaceMemberRepository.update(
+      { workspaceid: workspaceId, userid: currentAdmin?.userid },
+      { role: 'member' },
+    );
+
+    await this.workspaceMemberRepository.update(
+      { workspaceid: workspaceId, userid: newAdminId },
+      { role: 'admin' },
+    );
+
+    return {
+      success: true,
+      message: 'Admin role assigned successfully',
+    };
+  }
+
+
   // Group-related methods
-  async createGroup(userId: string, workspaceId: string, createGroupDto: CreateGroupDto): Promise<GroupResponseDto> {
+  async createGroup(
+    userId: string,
+    workspaceId: string,
+    createGroupDto: CreateGroupDto,
+  ): Promise<GroupResponseDto> {
     // Validate input
     if (!userId || !workspaceId) {
       throw new BadRequestException('User ID and Workspace ID are required');
@@ -358,7 +477,9 @@ export class WorkspaceGroupServiceService {
     });
 
     if (existingGroup) {
-      throw new ConflictException('A group with this name already exists in this workspace');
+      throw new ConflictException(
+        'A group with this name already exists in this workspace',
+      );
     }
 
     try {
@@ -387,12 +508,14 @@ export class WorkspaceGroupServiceService {
         isMember: true, // User who creates the group is automatically a member
       };
     } catch (error) {
-      console.error('Error creating group:', error);
       throw new ConflictException('Failed to create group');
     }
   }
 
-  async getWorkspaceGroups(userId: string, workspaceId: string): Promise<WorkspaceGroupsResponseDto> {
+  async getWorkspaceGroups(
+    userId: string,
+    workspaceId: string,
+  ): Promise<WorkspaceGroupsResponseDto> {
     // Validate input
     if (!userId || !workspaceId) {
       throw new BadRequestException('User ID and Workspace ID are required');
@@ -436,7 +559,7 @@ export class WorkspaceGroupServiceService {
           workspaceId: group.workspaceid,
           isMember: !!groupMembership, // Convert to boolean
         };
-      })
+      }),
     );
 
     return {
@@ -445,7 +568,10 @@ export class WorkspaceGroupServiceService {
     };
   }
 
-  async joinLeaveGroup(userId: string, joinLeaveGroupDto: JoinLeaveGroupDto): Promise<GroupActionResponseDto> {
+  async joinLeaveGroup(
+    userId: string,
+    joinLeaveGroupDto: JoinLeaveGroupDto,
+  ): Promise<GroupActionResponseDto> {
     const { groupId } = joinLeaveGroupDto;
 
     // Validate input
@@ -468,7 +594,9 @@ export class WorkspaceGroupServiceService {
     });
 
     if (!workspaceMembership) {
-      throw new ForbiddenException('You are not a member of the workspace that contains this group');
+      throw new ForbiddenException(
+        'You are not a member of the workspace that contains this group',
+      );
     }
 
     // Check if user is already a member of the group
@@ -480,7 +608,7 @@ export class WorkspaceGroupServiceService {
       if (groupMembership) {
         // User is a member, so leave the group
         await this.groupMemberRepository.remove(groupMembership);
-        
+
         return {
           message: `Successfully left the group "${group.groupname}"`,
           action: 'left',
@@ -504,20 +632,23 @@ export class WorkspaceGroupServiceService {
         };
       }
     } catch (error) {
-      console.error('Error in group join/leave operation:', error);
-      throw new ConflictException('Failed to perform group operation. Please try again.');
+      throw new ConflictException(
+        'Failed to perform group operation. Please try again.',
+      );
     }
   }
 
-
   // Chat functionality methods
-  async sendChatMessage(userId: string, sendChatMessageDto: SendChatMessageDto): Promise<ChatMessageResponseDto> {
+  async sendChatMessage(
+    userId: string,
+    sendChatMessageDto: SendChatMessageDto,
+  ): Promise<ChatMessageResponseDto> {
     const { groupId, text } = sendChatMessageDto;
 
     try {
       // Verify that the group exists
       const group = await this.groupRepository.findOne({
-        where: { groupid: groupId }
+        where: { groupid: groupId },
       });
 
       if (!group) {
@@ -526,18 +657,20 @@ export class WorkspaceGroupServiceService {
 
       // Verify that the user is a member of the group
       const groupMember = await this.groupMemberRepository.findOne({
-        where: { groupid: groupId, userid: userId }
+        where: { groupid: groupId, userid: userId },
       });
 
       if (!groupMember) {
-        throw new ForbiddenException('You must be a member of the group to send messages');
+        throw new ForbiddenException(
+          'You must be a member of the group to send messages',
+        );
       }
 
       // Create and save the chat message
       const chatMessage = this.chatMessageRepository.create({
         groupid: groupId,
         userid: userId,
-        text: text
+        text: text,
       });
 
       const savedMessage = await this.chatMessageRepository.save(chatMessage);
@@ -547,24 +680,29 @@ export class WorkspaceGroupServiceService {
         groupId: savedMessage.groupid,
         userId: savedMessage.userid,
         text: savedMessage.text,
-        sentAt: savedMessage.sentat
+        sentAt: savedMessage.sentat,
       };
     } catch (error) {
-      console.error('Error sending chat message:', error);
-      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException
+      ) {
         throw error;
       }
       throw new ConflictException('Failed to send message. Please try again.');
     }
   }
 
-  async getChatHistory(userId: string, getChatHistoryDto: GetChatHistoryDto): Promise<ChatHistoryResponseDto> {
+  async getChatHistory(
+    userId: string,
+    getChatHistoryDto: GetChatHistoryDto,
+  ): Promise<ChatHistoryResponseDto> {
     const { groupId, limit = 50, offset = 0 } = getChatHistoryDto;
 
     try {
       // Verify that the group exists
       const group = await this.groupRepository.findOne({
-        where: { groupid: groupId }
+        where: { groupid: groupId },
       });
 
       if (!group) {
@@ -573,82 +711,97 @@ export class WorkspaceGroupServiceService {
 
       // Verify that the user is a member of the group
       const groupMember = await this.groupMemberRepository.findOne({
-        where: { groupid: groupId, userid: userId }
+        where: { groupid: groupId, userid: userId },
       });
 
       if (!groupMember) {
-        throw new ForbiddenException('You must be a member of the group to view chat history');
+        throw new ForbiddenException(
+          'You must be a member of the group to view chat history',
+        );
       }
 
       // Get chat messages with pagination
-      const [messages, totalCount] = await this.chatMessageRepository.findAndCount({
-        where: { groupid: groupId },
-        order: { sentat: 'DESC' },
-        take: limit,
-        skip: offset
-      });
+      const [messages, totalCount] =
+        await this.chatMessageRepository.findAndCount({
+          where: { groupid: groupId },
+          order: { sentat: 'DESC' },
+          take: limit,
+          skip: offset,
+        });
 
-      const chatMessages: ChatMessageResponseDto[] = messages.map(message => ({
-        chatId: message.chatid,
-        groupId: message.groupid,
-        userId: message.userid,
-        text: message.text,
-        sentAt: message.sentat
-      }));
+      const chatMessages: ChatMessageResponseDto[] = messages.map(
+        (message) => ({
+          chatId: message.chatid,
+          groupId: message.groupid,
+          userId: message.userid,
+          text: message.text,
+          sentAt: message.sentat,
+        }),
+      );
 
       return {
         messages: chatMessages,
-        totalCount
+        totalCount,
       };
     } catch (error) {
-      console.error('Error getting chat history:', error);
-      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException
+      ) {
         throw error;
       }
-      throw new ConflictException('Failed to retrieve chat history. Please try again.');
+      throw new ConflictException(
+        'Failed to retrieve chat history. Please try again.',
+      );
     }
   }
 
   async getGroupMembers(groupId: string): Promise<string[]> {
     try {
       const groupMembers = await this.groupMemberRepository.find({
-        where: { groupid: groupId }
+        where: { groupid: groupId },
       });
 
-      return groupMembers.map(member => member.userid);
+      return groupMembers.map((member) => member.userid);
     } catch (error) {
       console.error('Error getting group members:', error);
-      throw new ConflictException('Failed to get group members. Please try again.');
+      throw new ConflictException(
+        'Failed to get group members. Please try again.',
+      );
     }
   }
 
   async fetchGroupMembers(groupId: string): Promise<string[]> {
     try {
       const members = await this.groupMemberRepository.find({
-        where: { groupid: groupId }
+        where: { groupid: groupId },
       });
       let groupMemberDetails: any[] = [];
-      await Promise.all(members.map(async member => {
-        groupMemberDetails.push(await this.getUserDetails(member.userid));
-      }));
+      await Promise.all(
+        members.map(async (member) => {
+          groupMemberDetails.push(await this.getUserDetails(member.userid));
+        }),
+      );
 
       return groupMemberDetails;
-      
-     } catch (error) {
-      console.error('Error fetching group members:', error);
-      throw new ConflictException('Failed to fetch group members. Please try again.');
+    } catch (error) {
+
+      throw new ConflictException(
+        'Failed to fetch group members. Please try again.',
+      );
     }
   }
 
-  async getUserDetails(userId: string): Promise<any> { 
+  async getUserDetails(userId: string): Promise<any> {
     try {
       const result = await this.authClient
         .send({ cmd: 'find-user-by-id' }, userId)
         .toPromise();
       return result;
-
     } catch (error) {
-      throw new ConflictException('Failed to get user details. Please try again.');
+      throw new ConflictException(
+        'Failed to get user details. Please try again.',
+      );
     }
-   }
+  }
 }
