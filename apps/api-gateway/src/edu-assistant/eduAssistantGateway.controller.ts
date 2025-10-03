@@ -143,11 +143,11 @@ export class EduAssistantGatewayController {
       fileSize: 10 * 1024 * 1024, // 10MB
     },
     fileFilter: (req, file, callback) => {
-      const allowedMimeTypes = ['text/plain']; // Temporarily only text files
+      const allowedMimeTypes = ['text/plain', 'application/pdf']; // Support both text and PDF files
       if (allowedMimeTypes.includes(file.mimetype)) {
         callback(null, true);
       } else {
-        callback(new Error(`Unsupported file type: ${file.mimetype}. Currently only text files are supported.`), false);
+        callback(new Error(`Unsupported file type: ${file.mimetype}. Supported types: ${allowedMimeTypes.join(', ')}.`), false);
       }
     },
   }))

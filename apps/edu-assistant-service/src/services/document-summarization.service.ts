@@ -1,40 +1,37 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 import { TextSummarizationDto } from '../dtos/text-summarization.dto';
 import { SummarizationResponseDto } from '../dtos/summarization-response.dto';
 
 @Injectable()
 export class DocumentSummarizationService {
   private readonly logger = new Logger(DocumentSummarizationService.name);
-  private readonly genAI: GoogleGenerativeAI;
-  private readonly model: any;
+  private readonly geminiApiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  private readonly MAX_CHUNK_SIZE = 4000;
+  private readonly OVERLAP_SIZE = 200;
 
-  // Configuration constants
-  private readonly MAX_CHUNK_SIZE = 4000; // Characters per chunk
-  private readonly OVERLAP_SIZE = 200; // Overlap between chunks
-
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly httpService: HttpService,
+  ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY not found in environment variables');
     }
-    
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
   }
 
   private adjustMaxWordsByLength(baseMaxWords: number, length: string): number {
-    // If maxWords is not provided, use length-based defaults
     const defaultMaxWords = baseMaxWords || this.getDefaultMaxWords(length);
     
     switch (length) {
       case 'short':
-        return Math.floor(defaultMaxWords * 0.5); // 50% of base
+        return Math.floor(defaultMaxWords * 0.5);
       case 'medium':
-        return defaultMaxWords; // 100% of base
+        return defaultMaxWords;
       case 'detailed':
-        return Math.floor(defaultMaxWords * 1.5); // 150% of base
+        return Math.floor(defaultMaxWords * 1.5);
       default:
         return defaultMaxWords;
     }
@@ -53,21 +50,51 @@ export class DocumentSummarizationService {
     }
   }
 
+  private async callGeminiAPI(prompt: string): Promise<string> {
+    const apiKey = this.configService.get('GEMINI_API_KEY');
+    const apiUrl = `${this.geminiApiBaseUrl}?key=${apiKey}`;
+    
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(
+          apiUrl,
+          {
+            contents: [{
+              role: 'user',
+              parts: [{ text: prompt }]
+            }]
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          }
+        )
+      );
+
+      const responseText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!responseText) {
+        throw new Error('Invalid response format from Gemini API');
+      }
+
+      return responseText.trim();
+    } catch (error) {
+      this.logger.error('Failed to call Gemini API', error);
+      throw new Error('Failed to generate summary from AI service');
+    }
+  }
+
   async summarizeText(dto: TextSummarizationDto): Promise<SummarizationResponseDto> {
     const startTime = Date.now();
     const summaryType = dto.summaryType || 'detailed';
     const length = dto.length || 'medium';
     
-    // If maxWords is not provided, use length-based defaults
     let maxWords = dto.maxWords || this.getDefaultMaxWords(length);
-    
-    // Adjust maxWords based on length preference
     maxWords = this.adjustMaxWordsByLength(maxWords, length);
-    
+
     try {
-      this.logger.log(`Starting text summarization for ${dto.text.length} characters with length: ${dto.length}, focus: ${dto.focus}, tone: ${dto.tone}`);
+      this.logger.log(`Starting text summarization for ${dto.text.length} characters`);
       
-      // If text is small enough, process directly
       if (dto.text.length <= this.MAX_CHUNK_SIZE) {
         const summary = await this.generateSingleSummary(dto.text, summaryType, maxWords, dto);
         
@@ -83,7 +110,6 @@ export class DocumentSummarizationService {
         );
       }
 
-      // For larger texts, use hierarchical summarization
       return await this.hierarchicalSummarization(dto, startTime);
       
     } catch (error) {
@@ -99,35 +125,28 @@ export class DocumentSummarizationService {
     const summaryType = dto.summaryType || 'detailed';
     const length = dto.length || 'medium';
     
-    // If maxWords is not provided, use length-based defaults
     let maxWords = dto.maxWords || this.getDefaultMaxWords(length);
-    
-    // Adjust maxWords based on length preference
     maxWords = this.adjustMaxWordsByLength(maxWords, length);
     
-    // Step 1: Split text into chunks
     const chunks = this.splitTextIntoChunks(dto.text);
     this.logger.log(`Split text into ${chunks.length} chunks`);
 
-    // Step 2: Summarize each chunk
     const chunkSummaries: string[] = [];
     for (let i = 0; i < chunks.length; i++) {
       this.logger.log(`Processing chunk ${i + 1}/${chunks.length}`);
       
       const chunkSummary = await this.generateSingleSummary(
         chunks[i], 
-        'brief', // Use brief for chunks to keep them concise
-        Math.ceil(maxWords / chunks.length), // Distribute word limit across chunks
+        'brief', 
+        Math.ceil(maxWords / chunks.length), 
         dto
       );
       
       chunkSummaries.push(chunkSummary);
     }
 
-    // Step 3: Combine chunk summaries
     const combinedChunkSummaries = chunkSummaries.join('\n\n');
     
-    // Step 4: Generate final summary from chunk summaries
     const finalSummary = await this.generateSingleSummary(
       combinedChunkSummaries,
       summaryType,
@@ -154,9 +173,7 @@ export class DocumentSummarizationService {
     while (currentIndex < text.length) {
       let endIndex = currentIndex + this.MAX_CHUNK_SIZE;
       
-      // If we're not at the end of the text, try to break at a sentence or word boundary
       if (endIndex < text.length) {
-        // Look for sentence boundary (. ! ?) within the last 200 characters
         const sentenceBreak = text.lastIndexOf('.', endIndex);
         const exclamationBreak = text.lastIndexOf('!', endIndex);
         const questionBreak = text.lastIndexOf('?', endIndex);
@@ -166,7 +183,6 @@ export class DocumentSummarizationService {
         if (lastSentenceBreak > currentIndex + this.MAX_CHUNK_SIZE - 500) {
           endIndex = lastSentenceBreak + 1;
         } else {
-          // Fallback to word boundary
           const lastSpaceIndex = text.lastIndexOf(' ', endIndex);
           if (lastSpaceIndex > currentIndex + this.MAX_CHUNK_SIZE - 100) {
             endIndex = lastSpaceIndex;
@@ -175,7 +191,7 @@ export class DocumentSummarizationService {
       }
 
       chunks.push(text.slice(currentIndex, endIndex).trim());
-      currentIndex = endIndex - this.OVERLAP_SIZE; // Create overlap
+      currentIndex = endIndex - this.OVERLAP_SIZE;
       
       if (currentIndex < 0) currentIndex = endIndex;
     }
@@ -192,19 +208,15 @@ export class DocumentSummarizationService {
     const prompt = this.buildSummarizationPrompt(text, summaryType, maxWords, dto);
     
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      let summary = response.text().trim();
+      let summary = await this.callGeminiAPI(prompt);
       
       if (!summary) {
         throw new Error('Empty response from AI model');
       }
 
-      // Validate that summary is actually shorter than original
       if (summary.length >= text.length) {
-        this.logger.warn(`Summary is longer than original (${summary.length} vs ${text.length} chars). Requesting shorter version.`);
+        this.logger.warn(`Summary is longer than original text, requesting shorter version`);
         
-        // Try again with more strict requirements
         const strictPrompt = `
 The previous summary was too long. Please create a much shorter summary of the following text.
 
@@ -218,9 +230,7 @@ Text: ${text}
 
 Short Summary:`;
 
-        const retryResult = await this.model.generateContent(strictPrompt);
-        const retryResponse = await retryResult.response;
-        summary = retryResponse.text().trim();
+        summary = await this.callGeminiAPI(strictPrompt);
       }
       
       return summary;
@@ -240,7 +250,7 @@ Short Summary:`;
     switch (summaryType) {
       case 'brief':
         instructions = `Create a very concise summary that captures only the most essential points in as few words as possible.`;
-        maxWords = Math.min(maxWords, Math.floor(maxWords * 0.5)); // Brief should be even shorter
+        maxWords = Math.min(maxWords, Math.floor(maxWords * 0.5));
         break;
       case 'detailed':
         instructions = `Create a comprehensive but concise summary that covers important topics efficiently.`;
@@ -283,9 +293,8 @@ Short Summary:`;
         toneInstructions = 'Use professional, clear, and formal language appropriate for business contexts.';
     }
 
-    // Calculate character-based limits to ensure the summary is shorter
     const originalCharCount = text.length;
-    const maxCharacters = Math.min(maxWords * 6, Math.floor(originalCharCount * 0.6)); // Ensure summary is at most 60% of original length
+    const maxCharacters = Math.min(maxWords * 6, Math.floor(originalCharCount * 0.6));
 
     return `
 Please summarize the following text. ${instructions}
