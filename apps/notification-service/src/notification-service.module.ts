@@ -4,6 +4,7 @@ import { NotificationServiceService } from './notification-service.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Notification } from './entities/notification.entity';
 
 @Module({
   imports: [
@@ -21,17 +22,22 @@ import { TypeOrmModule } from '@nestjs/typeorm';
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_DATABASE'),
-          entities: [],
+          entities: [Notification],
           synchronize: configService.get<string>('DB_SYNCHRONIZE') === 'true',
           ssl: {
             rejectUnauthorized:
               configService.get<string>('DB_SSL_REJECT_UNAUTHORIZED') ===
               'true',
           },
+          // Connection pool settings
+          poolSize: 5, // Maximum number of connections in the pool
+          connectionTimeoutMillis: 2000, // Connection timeout in milliseconds
+          idleTimeoutMillis: 30000, // Idle connection timeout
+          maxQueryExecutionTime: 1000, // Query execution timeout
         };
       },
     }),
-    TypeOrmModule.forFeature([]),
+    TypeOrmModule.forFeature([Notification]),
     ClientsModule.register([
       {
         name: 'auth-service',

@@ -5,6 +5,10 @@ import { ConfigService } from '@nestjs/config';
 import { WelcomeEmailDto } from './dtos/welcomeEmail.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { ShareDocDto } from './dtos/shareDoc.dto';
+import { NotificationDataDto } from './dtos/notificationData.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Notification } from './entities/notification.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class NotificationServiceService implements OnModuleInit {
@@ -12,6 +16,8 @@ export class NotificationServiceService implements OnModuleInit {
   private from: string | undefined;
 
   constructor(
+    @InjectRepository(Notification)
+    private readonly notificationRepository: Repository<Notification>,
     private configService: ConfigService,
     @Inject('auth-service')
     private readonly authClient: ClientProxy,
@@ -264,6 +270,83 @@ export class NotificationServiceService implements OnModuleInit {
       return { success: true, message: 'Email Sent Successfully' };
     } catch (error: any) {
       return { success: false, message: error.message };
+    }
+  }
+
+  async sendNotifications(notificationDataDto: NotificationDataDto) {
+    const { users, notification, timestamp, isRead, link } =
+      notificationDataDto;
+    console.log(notificationDataDto);
+
+    await Promise.all(
+      users.map(async (userId) => {
+        const newNotification = this.notificationRepository.create({
+          userId: userId,
+          notification: notification,
+          timestamp: new Date(timestamp),
+          isRead: isRead,
+          link: link,
+        });
+
+        await this.notificationRepository.save(newNotification);
+      }),
+    );
+
+    return {
+      success: true,
+      message: 'Notifications sent successfully',
+    };
+  }
+
+  async getNotifications(userId: string) {
+    try {
+      const notifications = await this.notificationRepository.find({
+        where: { userId },
+        order: { timestamp: 'DESC' },
+      });
+      if (notifications.length === 0) {
+        return {
+          success: false,
+          message: 'No notifications found',
+        };
+      }
+      return {
+        success: true,
+        data: notifications,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Error retrieving notifications',
+      };
+    }
+  }
+
+  async markAsRead(notificationId: string) {
+    try {
+      const notification = await this.notificationRepository.findOne({
+        where: { notificationId: notificationId },
+      });
+      if (!notification) {
+        return {
+          success: false,
+          message: 'Notification not found',
+        };
+      }
+
+      await this.notificationRepository.update(notificationId, {
+        isRead: true,
+      });
+
+      return {
+        success: true,
+        message: 'Notification marked as read',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Error marking notification as read',
+      };
     }
   }
 }

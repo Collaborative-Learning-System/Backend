@@ -1,6 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { Readable } from 'stream';
+import * as multer from 'multer';
 import { EduAssistantServiceService } from './edu-assistant-service.service';
 import { GenerateStudyPlanDto } from './dtos/generate-study-plan.dto';
 import { DocumentSummarizationService } from './services/document-summarization.service';

@@ -9,6 +9,7 @@ import { Group } from './entities/group.entity';
 import { GroupMember } from './entities/group-member.entity';
 import { ChatMessage } from './entities/chat-message.entity';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { User } from './entities/user.entity';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
               username: configService.get<string>('DB_USERNAME'),
               password: configService.get<string>('DB_PASSWORD'),
               database: configService.get<string>('DB_DATABASE'),
-              entities: [Workspace, WorkspaceMember, Group, GroupMember, ChatMessage],
+              entities: [Workspace, WorkspaceMember, Group, GroupMember, ChatMessage, User],
               synchronize:
                 configService.get<string>('DB_SYNCHRONIZE') === 'true',
               ssl: {
@@ -34,10 +35,15 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
                   configService.get<string>('DB_SSL_REJECT_UNAUTHORIZED') ===
                   'true',
               },
+              // Connection pool settings
+              poolSize: 5, // Maximum number of connections in the pool
+              connectionTimeoutMillis: 2000, // Connection timeout in milliseconds
+              idleTimeoutMillis: 30000, // Idle connection timeout
+              maxQueryExecutionTime: 1000, // Query execution timeout
             };
           },
         }),
-    TypeOrmModule.forFeature([Workspace, WorkspaceMember, Group, GroupMember, ChatMessage]),
+    TypeOrmModule.forFeature([Workspace, WorkspaceMember, Group, GroupMember, ChatMessage, User]),
     ClientsModule.register([
       {
         name: 'auth-service',

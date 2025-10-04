@@ -1,7 +1,16 @@
 import { Controller, UseFilters } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { WorkspaceGroupServiceService } from './workspace-group-service.service';
-import { CreateWorkspaceDto, JoinWorkspaceDto, LeaveWorkspaceDto, CreateGroupDto, JoinLeaveGroupDto, SendChatMessageDto, GetChatHistoryDto } from './dtos/workspace.dto';
+import {
+  CreateWorkspaceDto,
+  JoinWorkspaceDto,
+  LeaveWorkspaceDto,
+  CreateGroupDto,
+  JoinLeaveGroupDto,
+  SendChatMessageDto,
+  GetChatHistoryDto,
+  AssignAdminDto,
+} from './dtos/workspace.dto';
 import { WorkspaceExceptionFilter } from './filters/workspace-exception.filter';
 
 @Controller()
@@ -84,7 +93,10 @@ export class WorkspaceGroupServiceController {
   @MessagePattern('get_workspace_details')
   async getWorkspaceDetails(data: { userId: string; workspaceId: string }) {
     try {
-      return await this.workspaceGroupServiceService.getWorkspaceById(data.workspaceId, data.userId);
+      return await this.workspaceGroupServiceService.getWorkspaceById(
+        data.workspaceId,
+        data.userId,
+      );
     } catch (error) {
       console.error('Error in getWorkspaceDetails controller:', error);
       throw error;
@@ -152,6 +164,21 @@ export class WorkspaceGroupServiceController {
       console.error('Error in getGroupMembersOld controller:', error);
       throw error;
     }
+  }
+
+  @MessagePattern('get-workspace-members')
+  async getWorkspaceMembers(data: { workspaceId: string }) {
+    const result = await this.workspaceGroupServiceService.getWorkspaceMembers(
+      data.workspaceId,
+    );
+    return result;
+  }
+  @MessagePattern('assign-admin')
+  async assignAdmin(assignAdminDto: AssignAdminDto) {
+    const result =
+      await this.workspaceGroupServiceService.assignAdmin(assignAdminDto);
+    console.log(result);
+    return result;
   }
 
   // Socket.IO Chat

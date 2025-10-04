@@ -474,7 +474,11 @@ export class QuizLeaderboardServiceService {
       select: ['quizId'],
     });
 
-    if (!quizzes.length) return [];
+    if (!quizzes.length) return {
+      success: true,
+      message: 'No quizzes found in this group',
+      data: [],
+    };
 
     const quizIds = quizzes.map((q) => q.quizId);
 
@@ -532,6 +536,7 @@ export class QuizLeaderboardServiceService {
 
    return {
      success: true,
+     message: 'Leaderboard fetched successfully',
      data: results.map((r) => ({
        userId: r.userId,
        name: r.name,
