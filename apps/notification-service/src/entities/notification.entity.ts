@@ -13,4 +13,10 @@ export class Notification {
 
   @Column({ name: 'timestamp' })
   timestamp: Date;
+
+  @Column({ name: 'isread', default: false })
+  isRead: boolean;
+
+  @Column({ name: 'link', nullable: true })
+  link?: string;
 }

@@ -104,4 +104,18 @@ export class NotificationGatewayController {
     }
     return res.status(HttpStatus.OK).json(result);
   }
+
+  @Post('mark-as-read/:notificationId')
+  async markAsRead(
+    @Param('notificationId') notificationId: string,
+    @Res() res: Response,
+  ) {
+    const result = await lastValueFrom(
+      this.notificationClient.send({ cmd: 'mark-as-read' }, notificationId),
+    );
+    if (!result.success) {
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+    return res.status(HttpStatus.OK).json(result);
+  }
 }

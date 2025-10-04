@@ -274,7 +274,8 @@ export class NotificationServiceService implements OnModuleInit {
   }
 
   async sendNotifications(notificationDataDto: NotificationDataDto) {
-    const { users, notification, timestamp } = notificationDataDto;
+    const { users, notification, timestamp, isRead, link } =
+      notificationDataDto;
     console.log(notificationDataDto);
 
     await Promise.all(
@@ -283,6 +284,8 @@ export class NotificationServiceService implements OnModuleInit {
           userId: userId,
           notification: notification,
           timestamp: new Date(timestamp),
+          isRead: isRead,
+          link: link,
         });
 
         await this.notificationRepository.save(newNotification);
@@ -315,6 +318,34 @@ export class NotificationServiceService implements OnModuleInit {
       return {
         success: false,
         message: 'Error retrieving notifications',
+      };
+    }
+  }
+
+  async markAsRead(notificationId: string) {
+    try {
+      const notification = await this.notificationRepository.findOne({
+        where: { notificationId: notificationId },
+      });
+      if (!notification) {
+        return {
+          success: false,
+          message: 'Notification not found',
+        };
+      }
+
+      await this.notificationRepository.update(notificationId, {
+        isRead: true,
+      });
+
+      return {
+        success: true,
+        message: 'Notification marked as read',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Error marking notification as read',
       };
     }
   }

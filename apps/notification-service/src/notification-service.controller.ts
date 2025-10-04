@@ -41,4 +41,9 @@ export class NotificationServiceController {
   async getNotifications(userId: string) {
     return this.notificationServiceService.getNotifications(userId);
   }
+
+  @MessagePattern({ cmd: 'mark-as-read' })
+  async markAsRead(notificationId: string) {
+    return this.notificationServiceService.markAsRead(notificationId);
+  }
 }
