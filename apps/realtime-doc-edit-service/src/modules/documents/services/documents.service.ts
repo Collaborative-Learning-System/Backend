@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Documents } from '../entities/documents.entity';
 import { Collaborators, UserRole } from '../entities/collaborators.entity';
 import { DocumentSnapshots } from '../entities/document-snapshots.entity';
+import { User } from '../entities/user.entity';
 import { RedisService } from '../../redis/redis.service';
 import * as Y from 'yjs';
 
@@ -17,6 +18,8 @@ export class DocumentsService {
     private readonly collaboratorRepository: Repository<Collaborators>,
     @InjectRepository(DocumentSnapshots)
     private readonly docRepo: Repository<DocumentSnapshots>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async createDocument(groupId: string, userId: string) {
@@ -128,5 +131,61 @@ export class DocumentsService {
       return { success: false, message: 'Document not found' };
     }
     return { success: true, data: doc };
+  }
+
+  async updateTitle(documentId: string, title: string) {
+    try {
+      const doc = await this.documentsRepository.findOne({
+        where: { docId: documentId },
+      });
+      if (!doc) {
+        return { success: false, message: 'Document not found' };
+      }
+      doc.title = title;
+      await this.documentsRepository.save(doc);
+      return { success: true, data: doc };
+    } catch (error) {
+      return { success: false, message: 'Failed to update document title', error };
+    }
+  }
+  async deleteDocument(documentId: string, userId: string) {
+    try {
+      // First, verify the document exists and user is the owner
+      const doc = await this.documentsRepository.findOne({
+        where: { docId: documentId },
+      });
+      
+      if (!doc) {
+        return { success: false, message: 'Document not found' };
+      }
+
+      if (doc.ownerId !== userId) {
+        return { 
+          success: false, 
+          message: 'Only the document owner can delete the document' 
+        };
+      }
+
+      // Delete related data first (due to foreign key constraints)
+      await this.collaboratorRepository.delete({ docId: documentId });
+      await this.docRepo.delete({ docId: documentId });
+      
+      // Clear Redis cache
+      await this.redisService.delete(`doc:${documentId}`);
+      
+      // Delete the document
+      await this.documentsRepository.delete({ docId: documentId });
+
+      return { 
+        success: true, 
+        message: 'Document deleted successfully' 
+      };
+    } catch (error) {
+      return { 
+        success: false, 
+        message: 'Failed to delete document', 
+        error: error.message 
+      };
+    }
   }
 }
