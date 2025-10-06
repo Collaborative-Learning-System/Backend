@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 // for .env loads
-const envPath = path.resolve(process.cwd(), 'apps', 'workspace-group-service', '.env');
+const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
 dotenv.config({ path: envPath });
 
 async function bootstrap() {
@@ -20,5 +20,6 @@ async function bootstrap() {
     },
   );
   await app.listen();
+  console.log('Workspace Group Service is running on port 3003');
 }
 bootstrap();

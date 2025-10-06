@@ -20,4 +20,12 @@ export class CollaboratorsController {
       return res.status(200).json(result)
   }
 
+  @Post('remove-collaborator/:docId')
+  async removeCollaborator(@Param('docId') docId: string, @Body() body: any, @Res() res) {
+      const userId = body.userId;
+      const result = await this.collaboratorService.removeCollaborator(docId, userId);
+      if (!result.success) return res.status(400).json(result)
+      return res.status(200).json(result)
+  }
+
 }

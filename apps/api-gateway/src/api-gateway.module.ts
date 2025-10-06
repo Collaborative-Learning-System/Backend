@@ -35,7 +35,7 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
         transport: Transport.TCP,
         options: {
           host: '127.0.0.1',
-          port: 4005,
+          port: 3002,
         },
       },
       {
@@ -54,7 +54,7 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
           port: 3004,
         },
       },
-            {
+      {
         name: 'doc-editing-service',
         transport: Transport.TCP,
         options: {
@@ -86,7 +86,8 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
     NotificationGatewayController,
     WorkspaceGatewayController,
     QuizGatewayController,
-    EduAssistantGatewayController, ChatController,
+    EduAssistantGatewayController,
+    ChatController,
     UserGatewayController,
     DocEditGatewayController,
   ],

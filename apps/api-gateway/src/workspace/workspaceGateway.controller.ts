@@ -24,6 +24,7 @@ import {
   GetWorkspaceDetailsDto,
   CreateGroupDto,
   JoinLeaveGroupDto,
+  AssignAdminDto,
 } from './dtos/workspace-gateway.dto';
 
 @Controller('api/workspaces')
@@ -702,4 +703,38 @@ export class WorkspaceGatewayController {
   async onModuleDestroy() {
     await this.workspaceServiceClient.close();
   }
+
+  @Get('get-workspace-members/:workspaceId')
+  async getWorkspaceMembers(@Param('workspaceId') workspaceId: string) {
+    try {
+      const members = await this.workspaceServiceClient
+        .send('get-workspace-members', { workspaceId })
+        .toPromise();
+      return {
+        success: true,
+        message: 'Workspace members retrieved successfully',
+        data: members,
+      };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to retrieve workspace members',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('assign-admin')
+  async assignAdmin(@Body() assignAdminDto: AssignAdminDto) {
+    try { 
+      const result = await this.workspaceServiceClient
+        .send('assign-admin',  assignAdminDto)
+        .toPromise();
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to assign admin',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  } 
 }
