@@ -34,6 +34,11 @@ import { UserSettings } from './entities/user_settings.entity';
               configService.get<string>('DB_SSL_REJECT_UNAUTHORIZED') ===
               'true',
           },
+          // Connection pool settings
+          poolSize: 5, // Maximum number of connections in the pool
+          connectionTimeoutMillis: 2000, // Connection timeout in milliseconds
+          idleTimeoutMillis: 30000, // Idle connection timeout
+          maxQueryExecutionTime: 1000, // Query execution timeout
         };
       },
     }),

@@ -32,4 +32,22 @@ export class DocumentsController {
     }
     return res.status(200).json(result);
   }
+
+  @Post('update-title/:documentId')
+  async updateTitle(@Param('documentId') documentId: string, @Body() body: any, @Res() res) {
+    const result = await this.documentsService.updateTitle(documentId, body.title);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    return res.status(200).json(result);
+  }
+
+  @Post('delete-document/:documentId')
+  async deleteDocument(@Param('documentId') documentId: string, @Body() body: { userId: string }, @Res() res) {
+    const result = await this.documentsService.deleteDocument(documentId, body.userId);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    return res.status(200).json(result);
+  }
 }

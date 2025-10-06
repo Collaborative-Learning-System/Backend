@@ -33,6 +33,7 @@ export class WorkspaceResponseDto {
   name: string;
   description?: string;
   adminId: string;
+  adminName: string;
   memberCount?: number;
   role?: string; // 'admin' | 'member'
 }
@@ -40,6 +41,16 @@ export class WorkspaceResponseDto {
 export class UserWorkspacesResponseDto {
   workspaces: WorkspaceResponseDto[];
   totalCount: number;
+}
+
+export class AssignAdminDto {
+  @IsUUID()
+  @IsNotEmpty()
+  workspaceId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  newAdminId: string;
 }
 
 export class WorkspaceSelectionDto {

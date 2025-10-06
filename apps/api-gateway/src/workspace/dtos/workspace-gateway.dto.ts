@@ -29,6 +29,16 @@ export class GetWorkspaceDetailsDto {
   workspaceId: string;
 }
 
+export class AssignAdminDto { 
+  @IsUUID()
+  @IsNotEmpty()
+  workspaceId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+}
+
 
 
 // DTO for getting group details
