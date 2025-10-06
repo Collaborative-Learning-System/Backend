@@ -5,7 +5,7 @@ import { Quiz } from './entities/quiz.entity';
 import { Question } from './entities/question.entity';
 import { QuestionOption } from './entities/question-option.entity';
 import { QuizAttempt } from './entities/quizattempt.entity';
-import { AttemptAnswer } from './entities/attemptAnswer.entity';
+import { AttemptAnswer } from './entities/attemptanswer.entity';
 import { CreateQuizDto } from './dtos/quiz.dto';
 import { CompleteQuizDto } from './dtos/complete-quiz.dto';
 import { CreateQuestionDto } from './dtos/question.dto';
