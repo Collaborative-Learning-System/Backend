@@ -114,4 +114,14 @@ export class UserGatewayController {
     }
     return res.status(HttpStatus.OK).json(result);
   }
+  @Get('get-suggested-workspaces/:userId')
+  async getSuggestedWorkspaces(@Param('userId') userId: string, @Res() res: Response) {
+    const result = await lastValueFrom(
+      this.userClient.send({ cmd: 'get-suggested-workspaces' }, userId),
+    );
+    if (!result.success) {
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    } 
+    return res.status(HttpStatus.OK).json(result);
+  }
 }

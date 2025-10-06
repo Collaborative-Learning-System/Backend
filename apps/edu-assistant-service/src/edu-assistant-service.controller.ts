@@ -7,6 +7,7 @@ import { GenerateStudyPlanDto } from './dtos/generate-study-plan.dto';
 import { DocumentSummarizationService } from './services/document-summarization.service';
 import { PdfProcessingService } from './services/pdf-processing.service';
 import { TextSummarizationDto } from './dtos/text-summarization.dto';
+import { SuggestedWorkspacesDto } from './dtos/suggestWorkspace.dto';
 
 @Controller()
 export class EduAssistantServiceController {
@@ -139,5 +140,11 @@ export class EduAssistantServiceController {
         error: error.message,
       };
     }
+  }
+
+  @MessagePattern({ cmd: 'get-personalized-workspace-suggestions' })
+  async getPersonalizedWorkspaceSuggestions(suggestedWorkspaceDto: SuggestedWorkspacesDto) { 
+    const result = await this.eduAssistantServiceService.getPersonalizedWorkspaceSuggestions(suggestedWorkspaceDto);
+    return result;
   }
 }

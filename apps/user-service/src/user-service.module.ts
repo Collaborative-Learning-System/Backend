@@ -9,6 +9,7 @@ import { Workspace } from './entities/workspace.entity';
 import { WorkspaceMember } from './entities/workspace_user.entity';
 import { Logging } from './entities/logging.entity';
 import { UserSettings } from './entities/user_settings.entity';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -27,7 +28,14 @@ import { UserSettings } from './entities/user_settings.entity';
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_DATABASE'),
-          entities: [GroupMember, Group, Workspace, WorkspaceMember, Logging, UserSettings],
+          entities: [
+            GroupMember,
+            Group,
+            Workspace,
+            WorkspaceMember,
+            Logging,
+            UserSettings,
+          ],
           synchronize: configService.get<string>('DB_SYNCHRONIZE') === 'true',
           ssl: {
             rejectUnauthorized:
@@ -43,7 +51,24 @@ import { UserSettings } from './entities/user_settings.entity';
       },
     }),
 
-    TypeOrmModule.forFeature([GroupMember, Group, Workspace, WorkspaceMember, Logging, UserSettings]),
+    TypeOrmModule.forFeature([
+      GroupMember,
+      Group,
+      Workspace,
+      WorkspaceMember,
+      Logging,
+      UserSettings,
+    ]),
+    ClientsModule.register([
+      {
+        name: 'edu-assistant-service',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3007,
+        },
+      },
+    ]),
   ],
   controllers: [UserServiceController],
   providers: [UserServiceService],

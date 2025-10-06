@@ -12,8 +12,8 @@ export class ChatMessage {
   @Column({ type: 'uuid', nullable: false })
   userid: string;
 
-  @Column({ type: 'text' })
-  text: string;
+  @Column({ type: 'text', nullable: false })
+  text: string; 
 
   @CreateDateColumn()
   sentat: Date;
