@@ -10,12 +10,16 @@ import {
 import { Server, Socket } from 'socket.io';
 import * as Y from 'yjs';
 import { DocumentsService } from '../services/documents.service';
+import { CollaborationService } from '../services/collaboration.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class DocGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
 
-  constructor(private readonly documentService: DocumentsService) {}
+  constructor(
+    private readonly documentService: DocumentsService,
+    private readonly collaborationService: CollaborationService,
+  ) {}
 
   async handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
@@ -33,10 +37,27 @@ export class DocGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { docId: string; userId: string },
   ) {
-    client.join(data.docId);
-    const ydoc = await this.documentService.loadDocument(data.docId);
-    client.emit('initDoc', { update: Y.encodeStateAsUpdate(ydoc) });
-    console.log(`User ${data.userId} joined doc ${data.docId}`);
+    try {
+      client.join(data.docId);
+      
+      // Load document from service
+      const ydoc = await this.documentService.loadDocument(data.docId);
+      
+      // Get document data including title
+      const documentData = await this.documentService.getDocumentData(data.docId);
+      const title = documentData.success && documentData.data ? documentData.data.title : 'Untitled Document';
+      
+      // Send initial document state to the joining client
+      client.emit('initDoc', { 
+        update: Y.encodeStateAsUpdate(ydoc),
+        title: title 
+      });
+      
+      console.log(`User ${data.userId} joined doc ${data.docId}`);
+    } catch (error) {
+      console.error('Error in joinDoc:', error);
+      client.emit('error', { message: 'Failed to join document' });
+    }
   }
 
   @SubscribeMessage('syncUpdate')
@@ -44,10 +65,42 @@ export class DocGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { docId: string; content: Uint8Array; userId: string },
   ) {
-    const ydoc = await this.documentService.loadDocument(data.docId);
-    Y.applyUpdate(ydoc, new Uint8Array(data.content));
-    await this.documentService.saveDocument(data.docId, ydoc);
-    client.to(data.docId).emit('syncUpdate', { content: data.content });
-    console.log(`Doc ${data.docId} updated by ${data.userId}`);
+    try {
+      const ydoc = await this.documentService.loadDocument(data.docId);
+      Y.applyUpdate(ydoc, new Uint8Array(data.content));
+      await this.documentService.saveDocument(data.docId, ydoc);
+      
+      // Broadcast update to all other clients in the document room
+      client.to(data.docId).emit('syncUpdate', { content: data.content });
+      console.log(`Doc ${data.docId} updated by ${data.userId}`);
+    } catch (error) {
+      console.error('Error in syncUpdate:', error);
+      client.emit('error', { message: 'Failed to sync document update' });
+    }
+  }
+
+  @SubscribeMessage('titleUpdate')
+  async handleTitleUpdate(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { docId: string; title: string; userId: string },
+  ) {
+    try {
+      // Update title in database
+      const result = await this.documentService.updateTitle(data.docId, data.title);
+      
+      if (result.success) {
+        // Broadcast title update to all other clients in the document room
+        client.to(data.docId).emit('titleUpdate', { 
+          title: data.title, 
+          userId: data.userId 
+        });
+        console.log(`Doc ${data.docId} title updated to "${data.title}" by ${data.userId}`);
+      } else {
+        client.emit('error', { message: 'Failed to update document title' });
+      }
+    } catch (error) {
+      console.error('Error in titleUpdate:', error);
+      client.emit('error', { message: 'Failed to update document title' });
+    }
   }
 }

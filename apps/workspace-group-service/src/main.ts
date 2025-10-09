@@ -8,7 +8,6 @@ import * as path from 'path';
 const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
 dotenv.config({ path: envPath });
 
-
 async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     WorkspaceGroupServiceModule,
@@ -21,5 +20,6 @@ async function bootstrap() {
     },
   );
   await app.listen();
+  console.log('Workspace Group Service is running on port 3003');
 }
 bootstrap();
