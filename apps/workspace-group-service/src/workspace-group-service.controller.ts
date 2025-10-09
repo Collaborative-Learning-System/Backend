@@ -228,6 +228,25 @@ export class WorkspaceGroupServiceController {
     }
   }
 
+  @MessagePattern('delete_group')
+  async deleteGroup(data: {
+    workspaceId: string;
+    groupId: string;
+    userId: string;
+  }) {
+    try {
+      console.log('Delete group request:', data);
+      return await this.workspaceGroupServiceService.deleteGroup(
+        data.workspaceId,
+        data.groupId,
+        data.userId,
+      );
+    } catch (error) {
+      console.error('Error in deleteGroup controller:', error);
+      throw error;
+    }
+  }
+
   @MessagePattern('add_members')
   async addMembers(addMembersDto: AddMemberDto) {
     const result =

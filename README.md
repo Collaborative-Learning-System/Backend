@@ -31,6 +31,19 @@
 $ npm install
 ```
 
+## Environment variables
+
+Resource sharing in the chat service requires Supabase storage credentials. Add the following variables to your environment (for example in `.env`):
+
+```bash
+SUPABASE_URL=<your-supabase-url>
+SUPABASE_KEY=<your-service-role-key>
+# Optional: defaults to `S5P` when omitted
+SUPABASE_BUCKET=S5P
+```
+
+These values are used by the workspace group service to upload shared files (images, videos, PDFs) and distribute the resulting public URLs to chat participants.
+
 ## Compile and run the project
 
 ```bash
