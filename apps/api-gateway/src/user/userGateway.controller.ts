@@ -7,12 +7,15 @@ import {
   Param,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { type Response } from 'express';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @Controller('user')
+@UseGuards(JwtAuthGuard)
 export class UserGatewayController {
   constructor(
     @Inject('user-service') private readonly userClient: ClientProxy,

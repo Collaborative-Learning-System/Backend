@@ -7,12 +7,15 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import * as Y from 'yjs';
 import { DocumentsService } from '../services/documents.service';
 import { CollaborationService } from '../services/collaboration.service';
+import { WsJwtAuthGuard } from '../../../guards/ws-jwt-auth.guard';
 
 @WebSocketGateway({ cors: { origin: '*' } })
+@UseGuards(WsJwtAuthGuard)
 export class DocGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
 

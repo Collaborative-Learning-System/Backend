@@ -204,7 +204,6 @@ export class WorkspaceGroupServiceController {
     getChatHistoryDto: GetChatHistoryDto;
   }) {
     try {
-      console.log('Get chat history request:', data);
       return await this.workspaceGroupServiceService.getChatHistory(
         data.userId,
         data.getChatHistoryDto,
@@ -218,7 +217,6 @@ export class WorkspaceGroupServiceController {
   @MessagePattern('get_group_members')
   async getGroupMembers(data: { groupId: string }) {
     try {
-      console.log('Get group members request:', data);
       return await this.workspaceGroupServiceService.getGroupMembers(
         data.groupId,
       );

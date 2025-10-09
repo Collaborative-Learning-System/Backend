@@ -3,6 +3,7 @@ import { RealtimeDocEditServiceController } from './realtime-doc-edit-service.co
 import { RealtimeDocEditServiceService } from './realtime-doc-edit-service.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
 import { DocumentModule } from './modules/documents/document.module';
 import { Documents } from './modules/documents/entities/documents.entity';
 import { DocumentSnapshots } from './modules/documents/entities/document-snapshots.entity';
@@ -47,6 +48,15 @@ import { User } from './modules/documents/entities/user.entity';
       User,
       DocumentSnapshots,
     ]),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        global: true,
+        secret: configService.get<string>('JWT_SECRET_KEY'),
+       
+      }),
+    }),
     DocumentModule,
   ],
   controllers: [RealtimeDocEditServiceController],
