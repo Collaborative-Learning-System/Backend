@@ -57,11 +57,42 @@ export class ChatController {
 
   @Post('send')
   async sendMessage(
-    @Body() body: { groupId: string; text: string },
+    @Body()
+    body: {
+      groupId: string;
+      text?: string;
+      attachment?: {
+        fileName: string;
+        mimeType: string;
+        base64Data: string;
+        title?: string;
+        description?: string;
+      };
+    },
     @Request() req: any,
   ) {
+    const userId = req.user?.sub || req.user?.userId;
     try {
-      const userId = req.user?.sub || req.user?.userId;
+      console.log('[ChatController] sendMessage invoked', {
+        userId,
+        groupId: body?.groupId,
+        hasText: Boolean(body?.text?.trim()),
+        hasAttachment: Boolean(body?.attachment),
+      });
+
+      if (!body?.groupId) {
+        return {
+          success: false,
+          message: 'Group ID is required',
+        };
+      }
+
+      if (!body.text?.trim() && !body.attachment) {
+        return {
+          success: false,
+          message: 'Message must include text or an attachmenyyyyyyt',
+        };
+      }
 
       const savedMessage = await firstValueFrom(
         this.workspaceService.send('send_chat_message', {
@@ -69,9 +100,17 @@ export class ChatController {
           sendChatMessageDto: {
             groupId: body.groupId,
             text: body.text,
+            attachment: body.attachment,
           },
         }),
       );
+
+      console.log('[ChatController] Message persisted via REST', {
+        chatId: savedMessage.chatId,
+        groupId: savedMessage.groupId,
+        userId: savedMessage.userId,
+        messageType: savedMessage.messageType,
+      });
 
       return {
         success: true,
@@ -79,6 +118,11 @@ export class ChatController {
       };
     } catch (error) {
       console.error('Error sending message:', error);
+      console.error('[ChatController] sendMessage failed', {
+        userId,
+        groupId: body?.groupId,
+        message: error?.message,
+      });
       return {
         success: false,
         message: 'Failed to send message',
