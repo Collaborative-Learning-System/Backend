@@ -1,4 +1,11 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Workspace } from './entities/workspace.entity';
@@ -6,6 +13,7 @@ import { WorkspaceMember } from './entities/workspace_user.entity';
 import { Group } from './entities/group.entity';
 import { GroupMember } from './entities/group-member.entity';
 import { ChatMessage } from './entities/chat-message.entity';
+import { Resource } from './entities/resource.entity';
 import { 
   CreateWorkspaceDto, 
   JoinWorkspaceDto, 
@@ -24,6 +32,9 @@ import {
   ChatHistoryResponseDto
 } from './dtos/workspace.dto';
 import { ClientProxy } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
+import { SupabaseClient, createClient } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class WorkspaceGroupServiceService {
@@ -38,9 +49,104 @@ export class WorkspaceGroupServiceService {
     private groupMemberRepository: Repository<GroupMember>,
     @InjectRepository(ChatMessage)
     private chatMessageRepository: Repository<ChatMessage>,
+    @InjectRepository(Resource)
+    private resourceRepository: Repository<Resource>,
     @Inject('auth-service') 
     private readonly authClient: ClientProxy,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.supabaseBucket = this.configService.get<string>('SUPABASE_BUCKET') ?? 'S5P';
+  }
+
+  private supabaseInstance: SupabaseClient | null = null;
+
+  private getSupabaseClient(): SupabaseClient {
+    if (!this.supabaseInstance) {
+      const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+      const supabaseKey = this.configService.get<string>('SUPABASE_KEY');
+      console.log('Initializing Supabase client', { supabaseUrl, hasKey: Boolean(supabaseKey) }); 
+      if (!supabaseUrl || !supabaseKey) {
+        console.warn(
+          'Supabase credentials are missing. Resource uploads will fail until SUPABASE_URL and SUPABASE_KEY are configured.',
+        );
+        throw new ConflictException(
+          'Unable to upload file: Supabase credentials are not configured.',
+        );
+      }
+
+      this.supabaseInstance = createClient(supabaseUrl, supabaseKey);
+    }
+
+    return this.supabaseInstance;
+  }
+
+  private readonly supabaseBucket: string;
+
+  private determineResourceType(mimeType: string): 'image' | 'video' | 'pdf' {
+    if (mimeType.startsWith('image/')) {
+      return 'image';
+    }
+
+    if (mimeType.startsWith('video/')) {
+      return 'video';
+    }
+
+    if (mimeType === 'application/pdf') {
+      return 'pdf';
+    }
+
+    throw new BadRequestException(
+      'Unsupported file type. Only images, videos, and PDFs are allowed.',
+    );
+  }
+
+  private async uploadResourceToSupabase(
+    groupId: string,
+    fileName: string,
+    mimeType: string,
+    fileBuffer: Buffer,
+  ): Promise<string> {
+    const supabase = this.getSupabaseClient();
+    const safeFileName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+    const storagePath = `${groupId}/${uuidv4()}-${safeFileName}`;
+
+    console.log('[uploadResourceToSupabase] Upload starting', {
+      groupId,
+      fileName,
+      mimeType,
+      storagePath,
+      bucket: this.supabaseBucket,
+    });
+
+    const { error: uploadError } = await supabase.storage
+      .from(this.supabaseBucket)
+      .upload(storagePath, fileBuffer, {
+        contentType: mimeType,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error('Supabase upload error:', uploadError);
+      throw new ConflictException('Failed to upload file to storage');
+    }
+
+    const { data } = supabase.storage
+      .from(this.supabaseBucket)
+      .getPublicUrl(storagePath);
+
+    if (!data?.publicUrl) {
+      throw new ConflictException(
+        'Failed to obtain public URL for uploaded file',
+      );
+    }
+
+    console.log('[uploadResourceToSupabase] Upload successful', {
+      storagePath,
+      publicUrl: data.publicUrl,
+    });
+
+    return data.publicUrl;
+  }
 
 
   async createWorkspace(userId: string, createWorkspaceDto: CreateWorkspaceDto): Promise<WorkspaceResponseDto> {    
@@ -511,8 +617,24 @@ export class WorkspaceGroupServiceService {
 
 
   // Chat functionality methods
-  async sendChatMessage(userId: string, sendChatMessageDto: SendChatMessageDto): Promise<ChatMessageResponseDto> {
-    const { groupId, text } = sendChatMessageDto;
+  async sendChatMessage(
+    userId: string,
+    sendChatMessageDto: SendChatMessageDto,
+  ): Promise<ChatMessageResponseDto> {
+    const { groupId, text, attachment } = sendChatMessageDto;
+
+    console.log('[sendChatMessage] Received request', {
+      userId,
+      groupId,
+      hasText: Boolean(text?.trim()),
+      hasAttachment: Boolean(attachment),
+    });
+
+    if (!text?.trim() && !attachment) {
+      throw new BadRequestException(
+        'Message must include text or an attachmengggt.',
+      );
+    }
 
     try {
       const group = await this.groupRepository.findOne({
@@ -523,6 +645,8 @@ export class WorkspaceGroupServiceService {
         throw new NotFoundException(`Group with ID ${groupId} not found`);
       }
 
+      console.log('[sendChatMessage] Group validated', { groupId });
+
       // Verify that the user is a member of the group
       const groupMember = await this.groupMemberRepository.findOne({
         where: { groupid: groupId, userid: userId }
@@ -532,15 +656,91 @@ export class WorkspaceGroupServiceService {
         throw new ForbiddenException('You must be a member of the group to send messages');
       }
 
+      console.log('[sendChatMessage] User membership confirmed', { userId, groupId });
+
+      let savedResource: Resource | null = null;
+      if (attachment) {
+        console.log('[sendChatMessage] Processing attachment', {
+          fileName: attachment.fileName,
+          mimeType: attachment.mimeType,
+          title: attachment.title,
+        });
+        const resourceType = this.determineResourceType(attachment.mimeType);
+        console.log('[sendChatMessage] Determined resource type', {
+          mimeType: attachment.mimeType,
+          resourceType,
+        });
+
+        let fileBuffer: Buffer;
+        try {
+          fileBuffer = Buffer.from(attachment.base64Data, 'base64');
+        } catch (conversionError) {
+          console.error('Invalid base64 data provided for attachment', conversionError);
+          throw new BadRequestException('Attachment data is not valid base64');
+        }
+
+        if (!fileBuffer || fileBuffer.length === 0) {
+          throw new BadRequestException('Attachment data is empty');
+        }
+
+        console.log('[sendChatMessage] Attachment decoded', {
+          fileName: attachment.fileName,
+          sizeBytes: fileBuffer.length,
+        });
+
+        const publicUrl = await this.uploadResourceToSupabase(
+          groupId,
+          attachment.fileName,
+          attachment.mimeType,
+          fileBuffer,
+        );
+
+        console.log('[sendChatMessage] Upload completed', {
+          fileName: attachment.fileName,
+          publicUrl,
+        });
+
+        const resourceEntity = this.resourceRepository.create({
+          userid: userId,
+          groupid: groupId,
+          title: attachment.title?.trim() || attachment.fileName,
+          type: resourceType,
+          storageurl: publicUrl,
+          description: attachment.description?.trim() || undefined,
+        });
+
+        savedResource = await this.resourceRepository.save(resourceEntity);
+
+        console.log('[sendChatMessage] Resource persisted', {
+          resourceId: savedResource.resourceid,
+          groupId,
+          userId,
+        });
+      }
+
+      const messageType: 'text' | 'resource' = savedResource ? 'resource' : 'text';
+
       // Create and save the chat message
       const chatMessage = this.chatMessageRepository.create({
         groupid: groupId,
         userid: userId,
-        text: text,
+        text: text?.trim() || undefined,
+        resourceid: savedResource?.resourceid,
+        messagetype: messageType,
         sentat: new Date()
       });
 
       const savedMessage = await this.chatMessageRepository.save(chatMessage);
+      console.log('[sendChatMessage] Chat message saved', {
+        chatId: savedMessage.chatid,
+        groupId,
+        userId,
+        messageType,
+      });
+
+      if (savedResource) {
+        savedMessage.resource = savedResource;
+      }
 
       // Fetch sender's username (fullName)
       let senderName = '';
@@ -551,13 +751,30 @@ export class WorkspaceGroupServiceService {
         senderName = '';
       }
 
+      console.log('[sendChatMessage] Preparing response payload', {
+        chatId: savedMessage.chatid,
+        hasResource: Boolean(savedResource),
+        messageType,
+      });
+
       return {
         chatId: savedMessage.chatid,
         groupId: savedMessage.groupid,
         userId: savedMessage.userid,
         userName: senderName,
-        text: savedMessage.text,
-        sentAt: savedMessage.sentat
+        text: savedMessage.text || undefined,
+        messageType,
+        resource: savedResource
+          ? {
+              resourceId: savedResource.resourceid,
+              title: savedResource.title,
+              type: savedResource.type as 'image' | 'video' | 'pdf',
+              storageUrl: savedResource.storageurl,
+              description: savedResource.description || undefined,
+              uploadedAt: savedResource.uploadat,
+            }
+          : undefined,
+        sentAt: savedMessage.sentat,
       };
     } catch (error) {
       console.error('Error sending chat message:', error);
@@ -595,7 +812,8 @@ export class WorkspaceGroupServiceService {
         where: { groupid: groupId },
         order: { sentat: 'DESC' },
         take: limit,
-        skip: offset
+        skip: offset,
+        relations: ['resource'],
       });
 
       // Fetch all unique userIds in the messages
@@ -610,13 +828,24 @@ export class WorkspaceGroupServiceService {
         }
       }));
 
-      const chatMessages: ChatMessageResponseDto[] = messages.map(message => ({
+      const chatMessages: ChatMessageResponseDto[] = messages.map((message) => ({
         chatId: message.chatid,
         groupId: message.groupid,
         userId: message.userid,
         userName: userIdToName[message.userid] || '',
-        text: message.text,
-        sentAt: message.sentat
+        text: message.text || undefined,
+        messageType: message.messagetype,
+        resource: message.resource
+          ? {
+              resourceId: message.resource.resourceid,
+              title: message.resource.title,
+              type: message.resource.type as 'image' | 'video' | 'pdf',
+              storageUrl: message.resource.storageurl,
+              description: message.resource.description || undefined,
+              uploadedAt: message.resource.uploadat,
+            }
+          : undefined,
+        sentAt: message.sentat,
       }));
 
       return {
