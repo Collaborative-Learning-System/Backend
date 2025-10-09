@@ -4,7 +4,7 @@
   "sourceRoot": "apps/Backend/src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "webpack": true,
+    "webpack": false,
     "tsConfigPath": "apps/Backend/tsconfig.app.json"
   },
   "monorepo": true,
@@ -34,7 +34,6 @@
       "entryFile": "main",
       "sourceRoot": "apps/api-gateway/src",
       "compilerOptions": {
-        "webpack": false,
         "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
       }
     },
@@ -44,7 +43,6 @@
       "entryFile": "main",
       "sourceRoot": "apps/auth-service/src",
       "compilerOptions": {
-        "webpack": false,
         "tsConfigPath": "apps/auth-service/tsconfig.app.json"
       }
     },
@@ -54,7 +52,6 @@
       "entryFile": "main",
       "sourceRoot": "apps/chat-service/src",
       "compilerOptions": {
-        "webpack": false,
         "tsConfigPath": "apps/chat-service/tsconfig.app.json"
       }
     },
@@ -64,7 +61,6 @@
       "entryFile": "main",
       "sourceRoot": "apps/edu-assistant-service/src",
       "compilerOptions": {
-        "webpack": false,
         "tsConfigPath": "apps/edu-assistant-service/tsconfig.app.json"
       }
     },
@@ -74,7 +70,6 @@
       "entryFile": "main",
       "sourceRoot": "apps/notification-service/src",
       "compilerOptions": {
-        "webpack": false,
         "tsConfigPath": "apps/notification-service/tsconfig.app.json"
       }
     },
@@ -84,7 +79,6 @@
       "entryFile": "main",
       "sourceRoot": "apps/quiz-leaderboard-service/src",
       "compilerOptions": {
-        "webpack": false,
         "tsConfigPath": "apps/quiz-leaderboard-service/tsconfig.app.json"
       }
     },
@@ -94,7 +88,6 @@
       "entryFile": "main",
       "sourceRoot": "apps/realtime-doc-edit-service/src",
       "compilerOptions": {
-        "webpack": false,
         "tsConfigPath": "apps/realtime-doc-edit-service/tsconfig.app.json"
       }
     },
@@ -104,7 +97,6 @@
       "entryFile": "main",
       "sourceRoot": "apps/user-service/src",
       "compilerOptions": {
-        "webpack": false,
         "tsConfigPath": "apps/user-service/tsconfig.app.json"
       }
     },
@@ -114,7 +106,6 @@
       "entryFile": "main",
       "sourceRoot": "apps/workspace-group-service/src",
       "compilerOptions": {
-        "webpack": false,
         "tsConfigPath": "apps/workspace-group-service/tsconfig.app.json"
       }
     }
