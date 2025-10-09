@@ -274,28 +274,35 @@ export class NotificationServiceService implements OnModuleInit {
   }
 
   async sendNotifications(notificationDataDto: NotificationDataDto) {
-    const { users, notification, timestamp, isRead, link } =
-      notificationDataDto;
-    console.log(notificationDataDto);
+    try {
+      const { users, notification, timestamp, isRead, link } =
+        notificationDataDto;
+      await Promise.all(
+        users.map(async (userId) => {
+          const newNotification = this.notificationRepository.create({
+            userId: userId,
+            notification: notification,
+            timestamp: new Date(timestamp),
+            isRead: isRead,
+            link: link,
+          });
 
-    await Promise.all(
-      users.map(async (userId) => {
-        const newNotification = this.notificationRepository.create({
-          userId: userId,
-          notification: notification,
-          timestamp: new Date(timestamp),
-          isRead: isRead,
-          link: link,
-        });
+          await this.notificationRepository.save(newNotification);
+        }),
+      );
 
-        await this.notificationRepository.save(newNotification);
-      }),
-    );
-
-    return {
-      success: true,
-      message: 'Notifications sent successfully',
-    };
+      return {
+        success: true,
+        message: 'Notifications sent successfully',
+      };
+    } catch (error) {
+      console.error('Error sending notifications:', error);
+      return {
+        success: false,
+        message: 'Failed to send notifications',
+        error: error.message,
+      };
+    }
   }
 
   async getNotifications(userId: string) {

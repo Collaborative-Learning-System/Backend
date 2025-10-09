@@ -748,7 +748,11 @@ export class WorkspaceGatewayController {
   ) {
     try {
       const result = await this.workspaceServiceClient
-        .send('add_members', { workspaceId, emails: body.emails })
+        .send('add_members', {
+          workspaceId,
+          emails: body.emails,
+          workspaceName: body.workspaceName,
+        })
         .toPromise();
       return res.status(HttpStatus.OK).json(result);
     } catch (error) {

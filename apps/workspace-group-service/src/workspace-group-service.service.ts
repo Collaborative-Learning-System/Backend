@@ -440,7 +440,7 @@ export class WorkspaceGroupServiceService {
   }
   async addMembers(addMembersDto: AddMemberDto) {
     try {
-      const { workspaceId, emails } = addMembersDto;
+      const { workspaceId, emails, workspaceName } = addMembersDto;
       const failUsers: string[] = [];
       const alreadyMembers: string[] = [];
       let successUsers: string[] = [];
@@ -477,17 +477,22 @@ export class WorkspaceGroupServiceService {
       );
 
       if (successUsers.length > 0) {
-        // Send notification to the user
-        await this.notificationClient.send(
-          { cmd: 'send-notifications' },
-          {
-            users: successUsers,
-            notification: `You have been added to a new workspace.`,
-            timestamp: new Date(),
-            isRead: false,
-            link: `/workspaces/${workspaceId}`,
-          },
-        );
+        const notificationPayload = {
+          users: successUsers,
+          notification: `You have been added to a new workspace: ${workspaceName}.`,
+          timestamp: new Date().toISOString(),
+          isRead: false,
+          link: `/workspace/${workspaceId}`,
+        };
+
+        try {
+          // Send notification to the user
+          await this.notificationClient
+            .send({ cmd: 'send-notifications' }, notificationPayload)
+            .toPromise();
+        } catch (error) {
+          console.error('Failed to send notification:', error);
+        }
       }
 
       return {

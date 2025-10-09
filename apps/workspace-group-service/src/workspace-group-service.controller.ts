@@ -230,10 +230,8 @@ export class WorkspaceGroupServiceController {
 
   @MessagePattern('add_members')
   async addMembers(addMembersDto: AddMemberDto) {
-    console.log(addMembersDto);
     const result =
       await this.workspaceGroupServiceService.addMembers(addMembersDto);
-    console.log('result', result);
     return result;
   }
 }

@@ -142,4 +142,6 @@ export class AddMemberDto {
   workspaceId: string;
   @IsArray()
   emails: string[];
+  @IsString()
+  workspaceName: string;
 }
