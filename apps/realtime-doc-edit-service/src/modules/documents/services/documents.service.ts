@@ -63,18 +63,13 @@ export class DocumentsService {
 
   async saveDocument(docId: string, ydoc: Y.Doc): Promise<void> {
     const update = Y.encodeStateAsUpdate(ydoc);
-
-    console.log(
-      'Document update.....................................................:',
-      update,
-    );
-    // Save in Redis (fast)
+    
     await this.redisService.setBuffer(`doc:${docId}`, Buffer.from(update));
 
     // Also persist snapshot in DB periodically
     const doc = await this.docRepo.update(
-      { docId }, // where clause
-      { snapshot: Buffer.from(update) }, // new values
+      { docId },
+      { snapshot: Buffer.from(update) },
     );
   }
 
@@ -85,7 +80,7 @@ export class DocumentsService {
     if (cached) {
       Y.applyUpdate(ydoc, cached);
     } else {
-      // Fallback: load snapshot from DB
+      // load snapshot from DB
       const doc = await this.docRepo.findOne({ where: { docId: docId } });
       if (doc?.snapshot) {
         Y.applyUpdate(ydoc, doc.snapshot);
@@ -166,14 +161,11 @@ export class DocumentsService {
         };
       }
 
-      // Delete related data first (due to foreign key constraints)
       await this.collaboratorRepository.delete({ docId: documentId });
       await this.docRepo.delete({ docId: documentId });
       
-      // Clear Redis cache
       await this.redisService.delete(`doc:${documentId}`);
-      
-      // Delete the document
+
       await this.documentsRepository.delete({ docId: documentId });
 
       return { 
