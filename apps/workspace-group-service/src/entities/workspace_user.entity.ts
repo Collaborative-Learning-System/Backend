@@ -8,6 +8,7 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 import { Workspace } from './workspace.entity';
+import { User } from './user.entity';
 
 @Entity('workspace_user')
 export class WorkspaceMember {
@@ -23,4 +24,8 @@ export class WorkspaceMember {
   @ManyToOne(() => Workspace, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'workspaceid' })
   workspace: Workspace;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'userid' })
+  user: User;
 }

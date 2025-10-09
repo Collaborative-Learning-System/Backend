@@ -2,11 +2,16 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
+import { MulterModule } from '@nestjs/platform-express';
+import * as multer from 'multer';
 import { EduAssistantServiceController } from './edu-assistant-service.controller';
 import { EduAssistantServiceService } from './edu-assistant-service.service';
 import { StudyPlan } from './entities/study_plan.entity';
 import { StudyTask } from './entities/study-task.entity';
 import { GeminiService } from './services/gemini.service';
+import { DocumentSummarizationService } from './services/document-summarization.service';
+import { PdfProcessingService } from './services/pdf-processing.service';
+import { SummarizationController } from './controllers/summarization.controller';
 
 @Module({
   imports: [
@@ -20,6 +25,12 @@ import { GeminiService } from './services/gemini.service';
         timeout: configService.get<number>('HTTP_TIMEOUT') || 60000,
         maxRedirects: 5,
       }),
+    }),
+    MulterModule.register({
+      storage: multer.memoryStorage(), // Store files in memory as Buffer
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+      },
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -37,11 +48,21 @@ import { GeminiService } from './services/gemini.service';
           rejectUnauthorized: configService.get<string>('DB_SSL_REJECT_UNAUTHORIZED') === 'true',
         },
         logging: process.env.NODE_ENV === 'development',
+        // Connection pool settings
+        poolSize: 5, // Maximum number of connections in the pool
+        connectionTimeoutMillis: 2000, // Connection timeout in milliseconds
+        idleTimeoutMillis: 30000, // Idle connection timeout
+        maxQueryExecutionTime: 1000, // Query execution timeout
       }),
     }),
     TypeOrmModule.forFeature([StudyPlan, StudyTask]),
   ],
-  controllers: [EduAssistantServiceController],
-  providers: [EduAssistantServiceService, GeminiService],
+  controllers: [EduAssistantServiceController, SummarizationController],
+  providers: [
+    EduAssistantServiceService, 
+    GeminiService, 
+    DocumentSummarizationService, 
+    PdfProcessingService
+  ],
 })
 export class EduAssistantServiceModule {}

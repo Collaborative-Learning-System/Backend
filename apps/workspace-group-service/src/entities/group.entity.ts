@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { Workspace } from './workspace.entity';
+import { GroupMember } from './group-member.entity';
 
 @Entity('groups')
 export class Group {
@@ -18,4 +19,7 @@ export class Group {
   @ManyToOne(() => Workspace)
   @JoinColumn({ name: 'workspaceid' })
   workspace: Workspace;
+
+  @OneToMany(() => GroupMember, (groupMember) => groupMember.group, { cascade: true, onDelete: 'CASCADE' })
+  members: GroupMember[];
 }

@@ -46,4 +46,8 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await sub.subscribe(channel);
     sub.on('message', (_, message) => handler(message));
   }
+
+  async delete(key: string): Promise<number> {
+    return await this.client.del(key);
+  }
 }
