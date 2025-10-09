@@ -740,6 +740,7 @@ export class WorkspaceGatewayController {
     }
   }
 
+  @Post('add-members/:workspaceId')
   async addMembers(
     @Param('workspaceId') workspaceId: string,
     @Body() body: any,

@@ -49,6 +49,8 @@ export class WorkspaceGroupServiceService {
     private chatMessageRepository: Repository<ChatMessage>,
     @Inject('auth-service')
     private readonly authClient: ClientProxy,
+    @Inject('notification-service')
+    private readonly notificationClient: ClientProxy,
   ) {}
 
   async createWorkspace(
@@ -441,6 +443,7 @@ export class WorkspaceGroupServiceService {
       const { workspaceId, emails } = addMembersDto;
       const failUsers: string[] = [];
       const alreadyMembers: string[] = [];
+      let successUsers: string[] = [];
 
       await Promise.all(
         emails.map(async (email) => {
@@ -464,12 +467,28 @@ export class WorkspaceGroupServiceService {
               role: 'member',
             });
 
+            successUsers.push(result.data.userId);
+
             await this.workspaceMemberRepository.save(member);
           } else {
             failUsers.push(email);
           }
         }),
       );
+
+      if (successUsers.length > 0) {
+        // Send notification to the user
+        await this.notificationClient.send(
+          { cmd: 'send-notifications' },
+          {
+            users: successUsers,
+            notification: `You have been added to a new workspace.`,
+            timestamp: new Date(),
+            isRead: false,
+            link: `/workspaces/${workspaceId}`,
+          },
+        );
+      }
 
       return {
         success: true,
