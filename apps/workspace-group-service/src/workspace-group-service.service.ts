@@ -30,6 +30,7 @@ import {
   GetChatHistoryDto,
   ChatHistoryResponseDto,
   AssignAdminDto,
+  AddMemberDto,
 } from './dtos/workspace.dto';
 import { ClientProxy } from '@nestjs/microservices';
 
@@ -375,7 +376,7 @@ export class WorkspaceGroupServiceService {
 
   // Grant Admin Role
   async assignAdmin(assignAdminDto: AssignAdminDto) {
-    console.log(assignAdminDto)
+    console.log(assignAdminDto);
     const { workspaceId, newAdminId } = assignAdminDto;
 
     // Validate input
@@ -435,7 +436,56 @@ export class WorkspaceGroupServiceService {
       message: 'Admin role assigned successfully',
     };
   }
+  async addMembers(addMembersDto: AddMemberDto) {
+    try {
+      const { workspaceId, emails } = addMembersDto;
+      const failUsers: string[] = [];
+      const alreadyMembers: string[] = [];
 
+      await Promise.all(
+        emails.map(async (email) => {
+          const result = await this.authClient
+            .send({ cmd: 'find-user-by-email' }, email)
+            .toPromise();
+
+          if (result.success) {
+            const isUser = await this.workspaceMemberRepository.findOne({
+              where: { userid: result.data.userId, workspaceid: workspaceId },
+            });
+
+            if (isUser) {
+              alreadyMembers.push(email);
+              return;
+            }
+
+            const member = this.workspaceMemberRepository.create({
+              userid: result.data.userId,
+              workspaceid: workspaceId,
+              role: 'member',
+            });
+
+            await this.workspaceMemberRepository.save(member);
+          } else {
+            failUsers.push(email);
+          }
+        }),
+      );
+
+      return {
+        success: true,
+        data: {
+          failedUsers: failUsers,
+          alreadyMembers: alreadyMembers,
+        },
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        success: false,
+        message: 'Failed to add members. Please try again.',
+      };
+    }
+  }
 
   // Group-related methods
   async createGroup(
@@ -785,7 +835,6 @@ export class WorkspaceGroupServiceService {
 
       return groupMemberDetails;
     } catch (error) {
-
       throw new ConflictException(
         'Failed to fetch group members. Please try again.',
       );

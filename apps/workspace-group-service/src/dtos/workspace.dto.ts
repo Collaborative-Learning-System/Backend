@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsUUID, IsArray } from 'class-validator';
 
 export class CreateWorkspaceDto {
   @IsString()
@@ -135,4 +135,11 @@ export class GetChatHistoryDto {
 export class ChatHistoryResponseDto {
   messages: ChatMessageResponseDto[];
   totalCount: number;
+}
+
+export class AddMemberDto {
+  @IsNotEmpty()
+  workspaceId: string;
+  @IsArray()
+  emails: string[];
 }

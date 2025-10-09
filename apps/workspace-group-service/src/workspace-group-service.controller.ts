@@ -10,6 +10,7 @@ import {
   SendChatMessageDto,
   GetChatHistoryDto,
   AssignAdminDto,
+  AddMemberDto,
 } from './dtos/workspace.dto';
 import { WorkspaceExceptionFilter } from './filters/workspace-exception.filter';
 
@@ -225,5 +226,14 @@ export class WorkspaceGroupServiceController {
       console.error('Error in getGroupMembers controller:', error);
       throw error;
     }
+  }
+
+  @MessagePattern('add_members')
+  async addMembers(addMembersDto: AddMemberDto) {
+    console.log(addMembersDto);
+    const result =
+      await this.workspaceGroupServiceService.addMembers(addMembersDto);
+    console.log('result', result);
+    return result;
   }
 }

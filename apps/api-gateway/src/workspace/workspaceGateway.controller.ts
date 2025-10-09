@@ -8,7 +8,9 @@ import {
   Request,
   HttpException,
   HttpStatus,
+  Res,
 } from '@nestjs/common';
+import {type Response } from 'express';
 import {
   ClientProxy,
   ClientProxyFactory,
@@ -725,9 +727,9 @@ export class WorkspaceGatewayController {
 
   @Post('assign-admin')
   async assignAdmin(@Body() assignAdminDto: AssignAdminDto) {
-    try { 
+    try {
       const result = await this.workspaceServiceClient
-        .send('assign-admin',  assignAdminDto)
+        .send('assign-admin', assignAdminDto)
         .toPromise();
       return result;
     } catch (error) {
@@ -736,5 +738,23 @@ export class WorkspaceGatewayController {
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-  } 
+  }
+
+  async addMembers(
+    @Param('workspaceId') workspaceId: string,
+    @Body() body: any,
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.workspaceServiceClient
+        .send('add_members', { workspaceId, emails: body.emails })
+        .toPromise();
+      return res.status(HttpStatus.OK).json(result);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to add members',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
