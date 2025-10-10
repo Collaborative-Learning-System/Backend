@@ -38,7 +38,7 @@ export class WorkspaceGatewayController {
     this.workspaceServiceClient = ClientProxyFactory.create({
       transport: Transport.TCP,
       options: {
-        host: '127.0.0.1',
+        host: 'workspace-group-service',
         port: 3003,
       },
     });

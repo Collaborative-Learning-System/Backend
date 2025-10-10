@@ -1,0 +1,151 @@
+services:
+  # API Gateway - Entry point for all requests
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile.api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    depends_on:
+      - redis
+      - auth-service
+      - user-service
+      - notification-service
+      - workspace-group-service
+      - quiz-leaderboard-service
+      - edu-assistant-service
+      - realtime-doc-edit-service
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  # Auth Service - Authentication and authorization
+  auth-service:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile.auth-service
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./apps/auth-service/.env
+    environment:
+      - NODE_ENV=production
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  # Notification Service - Handle notifications
+  notification-service:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile.notification-service
+    ports:
+      - "3002:3002"
+    env_file:
+      - ./apps/notification-service/.env
+    environment:
+      - NODE_ENV=production
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  # Workspace Group Service - Manage workspaces and groups
+  workspace-group-service:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile.workspace-group-service
+    ports:
+      - "3003:3003"
+    env_file:
+      - ./apps/workspace-group-service/.env
+    environment:
+      - NODE_ENV=production
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  # User Service - User management
+  user-service:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile.user-service
+    ports:
+      - "3004:3004"
+    env_file:
+      - ./apps/user-service/.env
+    environment:
+      - NODE_ENV=production
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  # Quiz Leaderboard Service - Handle quizzes and leaderboards
+  quiz-leaderboard-service:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile.quiz-leaderboard-service
+    ports:
+      - "3006:3006"
+    env_file:
+      - ./apps/quiz-leaderboard-service/.env
+    environment:
+      - NODE_ENV=production
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  # Educational Assistant Service - AI-powered educational features
+  edu-assistant-service:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile.edu-assistant-service
+    ports:
+      - "3007:3007"
+    env_file:
+      - ./apps/edu-assistant-service/.env
+    environment:
+      - NODE_ENV=production
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  # Realtime Document Editing Service - Handle collaborative document editing
+  realtime-doc-edit-service:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile.realtime-doc-edit-service
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./apps/realtime-doc-edit-service/.env
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - redis
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+networks:
+  backend-network:
+    driver: bridge
+    name: collaborative-learning-network
+
+volumes:
+  # Add volumes if needed for persistent data
+  postgres_data:
+  redis_data:

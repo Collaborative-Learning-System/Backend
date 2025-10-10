@@ -53,7 +53,7 @@ import { User } from './modules/documents/entities/user.entity';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         global: true,
-        secret: configService.get<string>('JWT_SECRET_KEY'),
+        secret: configService.get<string>('JWT_SECRET'),
        
       }),
     }),

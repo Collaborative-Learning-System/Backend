@@ -805,6 +805,7 @@ export class WorkspaceGroupServiceService {
         };
       }
     } catch (error) {
+      console.log(error)
       throw new ConflictException(
         'Failed to perform group operation. Please try again.',
       );

@@ -65,7 +65,7 @@ import { User } from './entities/user.entity';
         name: 'auth-service',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'auth-service',
           port: 3001,
         },
       },
@@ -73,7 +73,7 @@ import { User } from './entities/user.entity';
         name: 'notification-service',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'notification-service',
           port: 3002,
         },
       },

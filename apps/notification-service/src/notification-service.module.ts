@@ -43,7 +43,7 @@ import { Notification } from './entities/notification.entity';
         name: 'auth-service',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'auth-service',
           port: 3001,
         },
       },
