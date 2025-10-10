@@ -82,4 +82,18 @@ export class AuthServiceController {
     const result = await this.authServiceService.findUserById(userId);
     return result;
   }
+
+  // POST: Update Profile Picture from File
+  @MessagePattern({ cmd: 'update-profile-picture-from-file' })
+  async updateProfilePictureFromFile(data: { userId: string; imageBase64: string }) {
+    const result = await this.authServiceService.updateProfilePictureFromFile(data.userId, data.imageBase64);
+    return result;
+  }
+
+  // GET: Get Profile Picture
+  @MessagePattern({ cmd: 'get-profile-picture' })
+  async getProfilePicture(userId: string) {
+    const result = await this.authServiceService.getProfilePicture(userId);
+    return result;
+  }
 }

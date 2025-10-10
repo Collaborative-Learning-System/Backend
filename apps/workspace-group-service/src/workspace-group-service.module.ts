@@ -8,6 +8,7 @@ import { WorkspaceMember } from './entities/workspace_user.entity';
 import { Group } from './entities/group.entity';
 import { GroupMember } from './entities/group-member.entity';
 import { ChatMessage } from './entities/chat-message.entity';
+import { Resource } from './entities/resource.entity';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { User } from './entities/user.entity';
 
@@ -27,7 +28,7 @@ import { User } from './entities/user.entity';
               username: configService.get<string>('DB_USERNAME'),
               password: configService.get<string>('DB_PASSWORD'),
               database: configService.get<string>('DB_DATABASE'),
-              entities: [Workspace, WorkspaceMember, Group, GroupMember, ChatMessage, User],
+              entities: [Workspace, WorkspaceMember, Group, GroupMember, ChatMessage, Resource],
               synchronize:
                 configService.get<string>('DB_SYNCHRONIZE') === 'true',
               ssl: {
@@ -43,7 +44,7 @@ import { User } from './entities/user.entity';
             };
           },
         }),
-    TypeOrmModule.forFeature([Workspace, WorkspaceMember, Group, GroupMember, ChatMessage, User]),
+  TypeOrmModule.forFeature([Workspace, WorkspaceMember, Group, GroupMember, ChatMessage, Resource]),
     ClientsModule.register([
       {
         name: 'auth-service',
