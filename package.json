@@ -30,6 +30,7 @@
     "@nestjs/platform-socket.io": "^11.1.6",
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.1.6",
+    "@supabase/supabase-js": "^2.58.0",
     "@types/bcrypt": "^6.0.0",
     "@types/socket.io-client": "^1.4.36",
     "bcrypt": "^6.0.0",
@@ -39,6 +40,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
+
     "ioredis": "^5.8.0",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.6",

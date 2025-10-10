@@ -700,6 +700,90 @@ export class WorkspaceGatewayController {
     }
   }
 
+  @Post(':workspaceId/groups/:groupId/delete')
+  async deleteGroup(
+    @Param('workspaceId') workspaceId: string,
+    @Param('groupId') groupId: string,
+    @Request() req: any,
+  ) {
+    const userId = req.user.sub || req.user.userId || req.user.id;
+
+    if (!userId) {
+      throw new HttpException(
+        'User ID not found in token',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    try {
+      const result = await this.workspaceServiceClient
+        .send('delete_group', { workspaceId, groupId, userId })
+        .pipe(
+          timeout(5000),
+          catchError((err) => {
+            console.error('Error deleting group:', err);
+            if (err instanceof TimeoutError) {
+              return throwError(
+                () =>
+                  new HttpException(
+                    'Request to workspace service timed out',
+                    HttpStatus.REQUEST_TIMEOUT,
+                  ),
+              );
+            }
+            // Handle different types of errors
+            if (err.error) {
+              const error = err.error;
+              if (error.statusCode === 404) {
+                return throwError(
+                  () =>
+                    new HttpException(
+                      error.message || 'Group not found',
+                      HttpStatus.NOT_FOUND,
+                    ),
+                );
+              } else if (error.statusCode === 403) {
+                return throwError(
+                  () =>
+                    new HttpException(
+                      error.message || 'You do not have permission to delete this group',
+                      HttpStatus.FORBIDDEN,
+                    ),
+                );
+              } else if (error.statusCode === 400) {
+                return throwError(
+                  () =>
+                    new HttpException(
+                      error.message || 'Invalid request',
+                      HttpStatus.BAD_REQUEST,
+                    ),
+                );
+              }
+            }
+            return throwError(
+              () =>
+                new HttpException(
+                  'Failed to delete group',
+                  HttpStatus.INTERNAL_SERVER_ERROR,
+                ),
+            );
+          }),
+        )
+        .toPromise();
+
+      return {
+        success: true,
+        message: 'Group deleted successfully',
+        data: result,
+      };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to delete group',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async onModuleDestroy() {
     await this.workspaceServiceClient.close();
   }
