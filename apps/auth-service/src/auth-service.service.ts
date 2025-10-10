@@ -12,6 +12,7 @@ import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { TokensDto } from './dtos/tokens.dto';
 import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { ClientProxy } from '@nestjs/microservices';
+import { CloudinaryService } from './services/cloudinary.service';
 
 @Injectable()
 export class AuthServiceService {
@@ -23,6 +24,7 @@ export class AuthServiceService {
     private jwtService: JwtService,
     @Inject('user-service')
     private readonly userClient: ClientProxy,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async signup(signupData: SignupDto) {
@@ -212,6 +214,8 @@ export class AuthServiceService {
         email: user.email,
         role: user.role,
         bio: user.bio,
+        profilePicUrl: user.profilePicUrl || null,
+        hasProfilePicture: !!user.profilePicUrl
       },
     };
   }
@@ -297,5 +301,82 @@ export class AuthServiceService {
       fullName: user.fullName,
       email: user.email,
     };
+  }
+
+  // Update Profile Picture from File
+  async updateProfilePictureFromFile(userId: string, imageBase64: string) {
+    try {
+      // Find the user
+      const user = await this.userRepository.findOne({ where: { userId } });
+      if (!user) {
+        return {
+          success: false,
+          statusCode: 404,
+          message: 'User not found',
+        };
+      }
+
+      // Upload image to Cloudinary with user ID as public_id
+      const imageUrl = await this.cloudinaryService.uploadImage(
+        imageBase64,
+        `user_${userId}_profile`
+      );
+
+      // Update user's profilePicUrl
+      await this.userRepository.update(userId, { profilePicUrl: imageUrl });
+
+      return {
+        success: true,
+        statusCode: 200,
+        message: 'Profile picture updated successfully',
+        data: {
+          profilePicUrl: imageUrl,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Failed to update profile picture',
+        error: error.message,
+      };
+    }
+  }
+
+  // Get Profile Picture URL
+  async getProfilePicture(userId: string) {
+    try {
+      const user = await this.userRepository.findOne({ 
+        where: { userId },
+        select: ['userId', 'profilePicUrl', 'fullName'] // Only select needed fields
+      });
+      
+      if (!user) {
+        return {
+          success: false,
+          statusCode: 404,
+          message: 'User not found',
+        };
+      }
+
+      return {
+        success: true,
+        statusCode: 200,
+        message: 'Profile picture retrieved successfully',
+        data: {
+          userId: user.userId,
+          fullName: user.fullName,
+          profilePicUrl: user.profilePicUrl || null, // Return null if no profile picture
+          hasProfilePicture: !!user.profilePicUrl
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Failed to retrieve profile picture',
+        error: error.message,
+      };
+    }
   }
 }
