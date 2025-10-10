@@ -2,7 +2,7 @@ name: Build and Push all microservices to AWS ECR
 
 on:
   push:
-    branches: [ main ]  
+    branches: [ main ]
 
 env:
   AWS_REGION: eu-north-1
@@ -26,10 +26,11 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push all dockerfiles
+      - name: Build and push all Dockerfiles
         run: |
-          for file in docker/*.Dockerfile; do
-            SERVICE_NAME=$(basename "$file" .Dockerfile)
+          shopt -s nullglob
+          for file in docker/Dockerfile.*; do
+            SERVICE_NAME=$(basename "$file" | cut -d. -f2)
             ECR_REPO="educollab/$SERVICE_NAME"
             echo "🚀 Building and pushing $SERVICE_NAME"
 
