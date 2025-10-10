@@ -35,7 +35,7 @@ jobs:
 
           for file in Docker/Dockerfile.*; do
             SERVICE_NAME=$(basename "$file" | cut -d. -f2)
-            ECR_REPO="$SERVICE_NAME"
+            ECR_REPO="educollab/$SERVICE_NAME"
             
             echo "🚀 Building and pushing $SERVICE_NAME"
 
