@@ -24,20 +24,28 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push all Dockerfiles
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
+          echo "🪣 Using registry: $ECR_REGISTRY"
 
           for file in docker/Dockerfile.*; do
             SERVICE_NAME=$(basename "$file" | cut -d. -f2)
-            ECR_REPO="educollab/$SERVICE_NAME"
+            ECR_REPO="$SERVICE_NAME"
+            
             echo "🚀 Building and pushing $SERVICE_NAME"
 
-            docker build -t "$ECR_REGISTRY/$ECR_REPO:${{ env.IMAGE_TAG }}" -f "$file" .
-            docker push "$ECR_REGISTRY/$ECR_REPO:${{ env.IMAGE_TAG }}"
+            # Build image
+            docker build -t "$ECR_REGISTRY/$ECR_REPO:${IMAGE_TAG}" -f "$file" .
 
-            docker tag "$ECR_REGISTRY/$ECR_REPO:${{ env.IMAGE_TAG }}" \
-                       "$ECR_REGISTRY/$ECR_REPO:latest"
+            # Push versioned tag
+            docker push "$ECR_REGISTRY/$ECR_REPO:${IMAGE_TAG}"
+
+            # Tag and push latest
+            docker tag "$ECR_REGISTRY/$ECR_REPO:${IMAGE_TAG}" "$ECR_REGISTRY/$ECR_REPO:latest"
             docker push "$ECR_REGISTRY/$ECR_REPO:latest"
           done
