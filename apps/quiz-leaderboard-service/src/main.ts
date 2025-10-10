@@ -4,7 +4,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
+const envPath = path.resolve(process.cwd(), 'apps', 'quiz-leaderboard-service', '.env');
 dotenv.config({ path: envPath });
 
 
