@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 // for .env loads
-const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
+const envPath = path.resolve(process.cwd(), 'apps', 'workspace-group-service', '.env');
 dotenv.config({ path: envPath });
 
 async function bootstrap() {
