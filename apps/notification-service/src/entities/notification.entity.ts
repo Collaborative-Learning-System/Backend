@@ -5,7 +5,7 @@ export class Notification {
   @PrimaryGeneratedColumn('uuid', { name: 'notificationid' })
   notificationId: string;
 
-  @Column({ name: 'userid' })
+  @Column({ name: 'userid', type: 'uuid' })
   userId: string;
 
   @Column({ name: 'notification' })

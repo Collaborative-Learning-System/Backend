@@ -31,6 +31,7 @@ import {
   GetChatHistoryDto,
   ChatHistoryResponseDto,
   AssignAdminDto,
+  AddMemberDto,
 } from './dtos/workspace.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
@@ -54,6 +55,8 @@ export class WorkspaceGroupServiceService {
     private resourceRepository: Repository<Resource>,
     @Inject('auth-service') 
     private readonly authClient: ClientProxy,
+    @Inject('notification-service')
+    private readonly notificationClient: ClientProxy,
     private readonly configService: ConfigService,
   ) {
     this.supabaseBucket = this.configService.get<string>('SUPABASE_BUCKET') ?? 'S5P';
@@ -474,7 +477,7 @@ export class WorkspaceGroupServiceService {
 
   // Grant Admin Role
   async assignAdmin(assignAdminDto: AssignAdminDto) {
-    console.log(assignAdminDto)
+    console.log(assignAdminDto);
     const { workspaceId, newAdminId } = assignAdminDto;
 
     // Validate input
@@ -534,7 +537,78 @@ export class WorkspaceGroupServiceService {
       message: 'Admin role assigned successfully',
     };
   }
+  async addMembers(addMembersDto: AddMemberDto) {
+    try {
+      const { workspaceId, emails, workspaceName } = addMembersDto;
+      const failUsers: string[] = [];
+      const alreadyMembers: string[] = [];
+      let successUsers: string[] = [];
 
+      await Promise.all(
+        emails.map(async (email) => {
+          const result = await this.authClient
+            .send({ cmd: 'find-user-by-email' }, email)
+            .toPromise();
+
+          if (result.success) {
+            const isUser = await this.workspaceMemberRepository.findOne({
+              where: { userid: result.data.userId, workspaceid: workspaceId },
+            });
+
+            if (isUser) {
+              alreadyMembers.push(email);
+              return;
+            }
+
+            const member = this.workspaceMemberRepository.create({
+              userid: result.data.userId,
+              workspaceid: workspaceId,
+              role: 'member',
+            });
+
+            successUsers.push(result.data.userId);
+
+            await this.workspaceMemberRepository.save(member);
+          } else {
+            failUsers.push(email);
+          }
+        }),
+      );
+
+      if (successUsers.length > 0) {
+        const notificationPayload = {
+          users: successUsers,
+          notification: `You have been added to a new workspace: ${workspaceName}.`,
+          timestamp: new Date().toISOString(),
+          isRead: false,
+          link: `/workspace/${workspaceId}`,
+        };
+
+        try {
+          // Send notification to the user
+          await this.notificationClient
+            .send({ cmd: 'send-notifications' }, notificationPayload)
+            .toPromise();
+        } catch (error) {
+          console.error('Failed to send notification:', error);
+        }
+      }
+
+      return {
+        success: true,
+        data: {
+          failedUsers: failUsers,
+          alreadyMembers: alreadyMembers,
+        },
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        success: false,
+        message: 'Failed to add members. Please try again.',
+      };
+    }
+  }
 
   // Group-related methods
   async createGroup(
@@ -731,6 +805,7 @@ export class WorkspaceGroupServiceService {
         };
       }
     } catch (error) {
+      console.log(error)
       throw new ConflictException(
         'Failed to perform group operation. Please try again.',
       );
@@ -1024,7 +1099,6 @@ export class WorkspaceGroupServiceService {
 
       return groupMemberDetails;
     } catch (error) {
-
       throw new ConflictException(
         'Failed to fetch group members. Please try again.',
       );

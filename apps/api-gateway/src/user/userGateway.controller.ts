@@ -7,18 +7,21 @@ import {
   Param,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { type Response } from 'express';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @Controller('user')
 export class UserGatewayController {
   constructor(
     @Inject('user-service') private readonly userClient: ClientProxy,
-  ) { }
+  ) {}
 
   @Get('get-workspace-data/:userId')
+  @UseGuards(JwtAuthGuard)
   async getUserWorkspaceData(
     @Param('userId') userId: string,
     @Res() res: Response,
@@ -38,6 +41,7 @@ export class UserGatewayController {
   }
 
   @Get('get-group-data/:userId')
+  @UseGuards(JwtAuthGuard)
   async getUserGroupData(
     @Param('userId') userId: string,
     @Res() res: Response,
@@ -77,6 +81,7 @@ export class UserGatewayController {
   }
 
   @Get('get-logs-by-user/:userId')
+  @UseGuards(JwtAuthGuard)
   async getLogsByUserId(@Param('userId') userId: string, @Res() res: Response) {
     const result = await lastValueFrom(
       this.userClient.send({ cmd: 'get-logs-by-user' }, userId),
@@ -88,8 +93,9 @@ export class UserGatewayController {
   }
 
   @Get('get-user-settings/:userId')
+  @UseGuards(JwtAuthGuard)
   async getUserSettings(@Param('userId') userId: string, @Res() res: Response) {
-    console.log("userId", userId);
+    console.log('userId', userId);
     const result = await lastValueFrom(
       this.userClient.send({ cmd: 'get-user-settings' }, userId),
     );
@@ -100,6 +106,7 @@ export class UserGatewayController {
   }
 
   @Post('toggle-activity-tracking/:userId')
+  @UseGuards(JwtAuthGuard)
   async toggleActivityTracking(
     @Param('userId') userId: string,
     @Res() res: Response,
@@ -107,7 +114,10 @@ export class UserGatewayController {
   ) {
     console.log(body.trackUser);
     const result = await lastValueFrom(
-      this.userClient.send({ cmd: 'toggle-activity-tracking' }, { userId, trackUser: body.trackUser }),
+      this.userClient.send(
+        { cmd: 'toggle-activity-tracking' },
+        { userId, trackUser: body.trackUser },
+      ),
     );
     if (!result.success) {
       return res.status(HttpStatus.BAD_REQUEST).json(result);

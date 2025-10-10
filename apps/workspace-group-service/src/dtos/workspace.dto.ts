@@ -2,7 +2,7 @@ import {
   IsString,
   IsNotEmpty,
   IsOptional,
-  IsUUID,
+  IsUUID, IsArray,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -181,4 +181,13 @@ export class GetChatHistoryDto {
 export class ChatHistoryResponseDto {
   messages: ChatMessageResponseDto[];
   totalCount: number;
+}
+
+export class AddMemberDto {
+  @IsNotEmpty()
+  workspaceId: string;
+  @IsArray()
+  emails: string[];
+  @IsString()
+  workspaceName: string;
 }

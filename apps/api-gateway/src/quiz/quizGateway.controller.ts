@@ -31,7 +31,7 @@ import {
 } from './dtos/quiz-gateway.dto';
 
 @Controller('quiz')
-//@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class QuizGatewayController {
   constructor(
     @Inject('quiz-leaderboard-service')

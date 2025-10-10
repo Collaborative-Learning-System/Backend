@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, ManyToOne, JoinColumn } from "typeorm";
-import { AttemptAnswer } from "./attemptanswer.entity";
+import { AttemptAnswer } from "./attemptAnswer.entity";
 import { Quiz } from "./quiz.entity";
 import { User } from "./user.entity";
 

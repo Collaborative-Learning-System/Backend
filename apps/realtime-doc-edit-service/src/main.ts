@@ -3,6 +3,7 @@ import { RealtimeDocEditServiceModule } from './realtime-doc-edit-service.module
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import cookieParser from 'cookie-parser';
 
 // for .env loads
 const envPath = path.resolve(
@@ -16,6 +17,9 @@ dotenv.config({ path: envPath });
 
 async function bootstrap() {
   const app = await NestFactory.create(RealtimeDocEditServiceModule);
+
+  // Enable cookie parsing
+  app.use(cookieParser());
 
    app.enableCors({
      origin: [
