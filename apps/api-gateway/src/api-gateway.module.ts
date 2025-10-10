@@ -26,7 +26,7 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
         name: 'auth-service',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'auth-service',
           port: 3001,
         },
       },
@@ -34,7 +34,7 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
         name: 'notification-service',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'notification-service',
           port: 3002,
         },
       },
@@ -42,7 +42,7 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
         name: 'workspace-group-service',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'workspace-group-service',
           port: 3003,
         },
       },
@@ -50,7 +50,7 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
         name: 'user-service',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'user-service',
           port: 3004,
         },
       },
@@ -58,15 +58,15 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
         name: 'doc-editing-service',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
-          port: 3005,
+          host: 'realtime-doc-edit-service',
+          port: 4000,
         },
       },
       {
         name: 'quiz-leaderboard-service',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'quiz-leaderboard-service',
           port: 3006,
         },
       },
@@ -74,7 +74,7 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
         name: 'edu-assistant-service',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'edu-assistant-service',
           port: 3007,
         },
       },

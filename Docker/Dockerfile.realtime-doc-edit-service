@@ -17,14 +17,14 @@ RUN npm ci && npm cache clean --force
 # Copy the entire project (needed for monorepo structure)
 COPY . .
 
-# Build the auth-service application
-RUN npm run build auth-service
+# Build the realtime-doc-edit-service application
+RUN npm run build realtime-doc-edit-service
 
 # Expose the port the app runs on
-EXPOSE 3001
+EXPOSE 4000
 
 # Set environment variables
 ENV NODE_ENV=production
 
 # Define the command to run the application
-CMD ["node", "dist/apps/auth-service/main"]
+CMD ["node", "dist/apps/realtime-doc-edit-service/main"]

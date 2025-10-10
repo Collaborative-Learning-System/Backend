@@ -333,9 +333,9 @@ __decorate([
 
 /***/ }),
 
-/***/ "./apps/quiz-leaderboard-service/src/entities/attemptanswer.entity.ts":
+/***/ "./apps/quiz-leaderboard-service/src/entities/attemptAnswer.entity.ts":
 /*!****************************************************************************!*\
-  !*** ./apps/quiz-leaderboard-service/src/entities/attemptanswer.entity.ts ***!
+  !*** ./apps/quiz-leaderboard-service/src/entities/attemptAnswer.entity.ts ***!
   \****************************************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -627,11 +627,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.QuizAttempt = void 0;
 const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
-const attemptanswer_entity_1 = __webpack_require__(/*! ./attemptanswer.entity */ "./apps/quiz-leaderboard-service/src/entities/attemptanswer.entity.ts");
+const attemptAnswer_entity_1 = __webpack_require__(/*! ./attemptAnswer.entity */ "./apps/quiz-leaderboard-service/src/entities/attemptAnswer.entity.ts");
+const quiz_entity_1 = __webpack_require__(/*! ./quiz.entity */ "./apps/quiz-leaderboard-service/src/entities/quiz.entity.ts");
+const user_entity_1 = __webpack_require__(/*! ./user.entity */ "./apps/quiz-leaderboard-service/src/entities/user.entity.ts");
 let QuizAttempt = class QuizAttempt {
     attemptId;
     quizId;
@@ -640,6 +642,8 @@ let QuizAttempt = class QuizAttempt {
     attemptAt;
     isCompleted;
     answers;
+    quiz;
+    user;
 };
 exports.QuizAttempt = QuizAttempt;
 __decorate([
@@ -667,12 +671,96 @@ __decorate([
     __metadata("design:type", Boolean)
 ], QuizAttempt.prototype, "isCompleted", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => attemptanswer_entity_1.AttemptAnswer, attemptAnswer => attemptAnswer.attempt),
+    (0, typeorm_1.OneToMany)(() => attemptAnswer_entity_1.AttemptAnswer, attemptAnswer => attemptAnswer.attempt),
     __metadata("design:type", Array)
 ], QuizAttempt.prototype, "answers", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => quiz_entity_1.Quiz),
+    (0, typeorm_1.JoinColumn)({ name: 'quizid' }),
+    __metadata("design:type", typeof (_b = typeof quiz_entity_1.Quiz !== "undefined" && quiz_entity_1.Quiz) === "function" ? _b : Object)
+], QuizAttempt.prototype, "quiz", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.User),
+    (0, typeorm_1.JoinColumn)({ name: 'userid' }),
+    __metadata("design:type", typeof (_c = typeof user_entity_1.User !== "undefined" && user_entity_1.User) === "function" ? _c : Object)
+], QuizAttempt.prototype, "user", void 0);
 exports.QuizAttempt = QuizAttempt = __decorate([
     (0, typeorm_1.Entity)('quizattempt')
 ], QuizAttempt);
+
+
+/***/ }),
+
+/***/ "./apps/quiz-leaderboard-service/src/entities/user.entity.ts":
+/*!*******************************************************************!*\
+  !*** ./apps/quiz-leaderboard-service/src/entities/user.entity.ts ***!
+  \*******************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.User = exports.UserRole = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+var UserRole;
+(function (UserRole) {
+    UserRole["USER"] = "user";
+    UserRole["ADMIN"] = "admin";
+})(UserRole || (exports.UserRole = UserRole = {}));
+let User = class User {
+    userId;
+    fullName;
+    email;
+    password;
+    role;
+    bio;
+    profilePicUrl;
+};
+exports.User = User;
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid', { name: 'userid' }),
+    __metadata("design:type", String)
+], User.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'fullname', nullable: false }),
+    __metadata("design:type", String)
+], User.prototype, "fullName", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'email', nullable: false, unique: true }),
+    __metadata("design:type", String)
+], User.prototype, "email", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'password', nullable: false }),
+    __metadata("design:type", String)
+], User.prototype, "password", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        name: 'role',
+        type: 'enum',
+        enum: UserRole,
+        default: UserRole.USER,
+    }),
+    __metadata("design:type", String)
+], User.prototype, "role", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'bio', nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "bio", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'profilepicurl', nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "profilePicUrl", void 0);
+exports.User = User = __decorate([
+    (0, typeorm_1.Entity)('user')
+], User);
 
 
 /***/ }),
@@ -723,7 +811,7 @@ const quiz_leaderboard_service_module_1 = __webpack_require__(/*! ./quiz-leaderb
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const dotenv = __importStar(__webpack_require__(/*! dotenv */ "dotenv"));
 const path = __importStar(__webpack_require__(/*! path */ "path"));
-const envPath = path.resolve(process.cwd(), 'apps', 'quiz-leaderboard-service', '.env');
+const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
 dotenv.config({ path: envPath });
 async function bootstrap() {
     const app = await core_1.NestFactory.createMicroservice(quiz_leaderboard_service_module_1.QuizLeaderboardServiceModule, {
@@ -734,6 +822,7 @@ async function bootstrap() {
         },
     });
     await app.listen();
+    console.log('Quiz Leaderboard Service is running on port 3006');
 }
 bootstrap();
 
@@ -779,7 +868,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: true,
                 data: quiz,
-                message: 'Quiz created successfully'
+                message: 'Quiz created successfully',
             };
         }
         catch (error) {
@@ -787,7 +876,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: false,
                 data: null,
-                message: 'Error creating quiz: ' + (error?.message || error)
+                message: 'Error creating quiz: ' + (error?.message || error),
             };
         }
     }
@@ -799,7 +888,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: true,
                 data: quiz,
-                message: 'Quiz completed successfully with questions and options'
+                message: 'Quiz completed successfully with questions and options',
             };
         }
         catch (error) {
@@ -807,7 +896,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: false,
                 data: null,
-                message: 'Error completing quiz: ' + (error?.message || error)
+                message: 'Error completing quiz: ' + (error?.message || error),
             };
         }
     }
@@ -819,7 +908,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: true,
                 data: quiz,
-                message: 'Complete quiz created successfully'
+                message: 'Complete quiz created successfully',
             };
         }
         catch (error) {
@@ -827,7 +916,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: false,
                 data: null,
-                message: 'Error creating complete quiz: ' + (error?.message || error)
+                message: 'Error creating complete quiz: ' + (error?.message || error),
             };
         }
     }
@@ -839,7 +928,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: true,
                 data: quizzes,
-                message: `Found ${quizzes.length} quizzes for group`
+                message: `Found ${quizzes.length} quizzes for group`,
             };
         }
         catch (error) {
@@ -847,7 +936,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: false,
                 data: null,
-                message: 'Error fetching quizzes: ' + (error?.message || error)
+                message: 'Error fetching quizzes: ' + (error?.message || error),
             };
         }
     }
@@ -859,7 +948,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: true,
                 data: quiz,
-                message: 'Quiz retrieved successfully'
+                message: 'Quiz retrieved successfully',
             };
         }
         catch (error) {
@@ -867,7 +956,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: false,
                 data: null,
-                message: 'Error fetching quiz: ' + (error?.message || error)
+                message: 'Error fetching quiz: ' + (error?.message || error),
             };
         }
     }
@@ -879,7 +968,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: true,
                 data: result,
-                message: 'Quiz attempt started successfully'
+                message: 'Quiz attempt started successfully',
             };
         }
         catch (error) {
@@ -887,7 +976,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: false,
                 data: null,
-                message: 'Error starting quiz attempt: ' + (error?.message || error)
+                message: 'Error starting quiz attempt: ' + (error?.message || error),
             };
         }
     }
@@ -899,7 +988,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: true,
                 data: result,
-                message: 'Answer saved successfully'
+                message: 'Answer saved successfully',
             };
         }
         catch (error) {
@@ -907,7 +996,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: false,
                 data: null,
-                message: 'Error saving answer: ' + (error?.message || error)
+                message: 'Error saving answer: ' + (error?.message || error),
             };
         }
     }
@@ -919,7 +1008,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: true,
                 data: result,
-                message: 'Quiz attempt completed successfully'
+                message: 'Quiz attempt completed successfully',
             };
         }
         catch (error) {
@@ -927,7 +1016,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: false,
                 data: null,
-                message: 'Error completing quiz attempt: ' + (error?.message || error)
+                message: 'Error completing quiz attempt: ' + (error?.message || error),
             };
         }
     }
@@ -939,7 +1028,7 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: true,
                 data: result,
-                message: 'User quiz attempts retrieved successfully'
+                message: 'User quiz attempts retrieved successfully',
             };
         }
         catch (error) {
@@ -947,9 +1036,14 @@ let QuizLeaderboardServiceController = class QuizLeaderboardServiceController {
             return {
                 success: false,
                 data: null,
-                message: 'Error retrieving user quiz attempts: ' + (error?.message || error)
+                message: 'Error retrieving user quiz attempts: ' + (error?.message || error),
             };
         }
+    }
+    async getQuizResultsForLeaderboard(data) {
+        const results = await this.quizLeaderboardServiceService.getQuizResultsForLeaderboard(data.groupId);
+        console.log(results);
+        return results;
     }
 };
 exports.QuizLeaderboardServiceController = QuizLeaderboardServiceController;
@@ -1007,6 +1101,12 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], QuizLeaderboardServiceController.prototype, "getUserQuizAttempts", null);
+__decorate([
+    (0, microservices_1.MessagePattern)('get_quiz_results_for_leaderboard'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], QuizLeaderboardServiceController.prototype, "getQuizResultsForLeaderboard", null);
 exports.QuizLeaderboardServiceController = QuizLeaderboardServiceController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof quiz_leaderboard_service_service_1.QuizLeaderboardServiceService !== "undefined" && quiz_leaderboard_service_service_1.QuizLeaderboardServiceService) === "function" ? _a : Object])
@@ -1039,7 +1139,8 @@ const quiz_entity_1 = __webpack_require__(/*! ./entities/quiz.entity */ "./apps/
 const question_entity_1 = __webpack_require__(/*! ./entities/question.entity */ "./apps/quiz-leaderboard-service/src/entities/question.entity.ts");
 const question_option_entity_1 = __webpack_require__(/*! ./entities/question-option.entity */ "./apps/quiz-leaderboard-service/src/entities/question-option.entity.ts");
 const quizattempt_entity_1 = __webpack_require__(/*! ./entities/quizattempt.entity */ "./apps/quiz-leaderboard-service/src/entities/quizattempt.entity.ts");
-const attemptanswer_entity_1 = __webpack_require__(/*! ./entities/attemptanswer.entity */ "./apps/quiz-leaderboard-service/src/entities/attemptanswer.entity.ts");
+const attemptAnswer_entity_1 = __webpack_require__(/*! ./entities/attemptAnswer.entity */ "./apps/quiz-leaderboard-service/src/entities/attemptAnswer.entity.ts");
+const user_entity_1 = __webpack_require__(/*! ./entities/user.entity */ "./apps/quiz-leaderboard-service/src/entities/user.entity.ts");
 let QuizLeaderboardServiceModule = class QuizLeaderboardServiceModule {
 };
 exports.QuizLeaderboardServiceModule = QuizLeaderboardServiceModule;
@@ -1060,16 +1161,34 @@ exports.QuizLeaderboardServiceModule = QuizLeaderboardServiceModule = __decorate
                         username: configService.get('DB_USERNAME'),
                         password: configService.get('DB_PASSWORD'),
                         database: configService.get('DB_DATABASE'),
-                        entities: [quiz_entity_1.Quiz, question_entity_1.Question, question_option_entity_1.QuestionOption, quizattempt_entity_1.QuizAttempt, attemptanswer_entity_1.AttemptAnswer],
-                        synchronize: true,
+                        entities: [
+                            quiz_entity_1.Quiz,
+                            question_entity_1.Question,
+                            question_option_entity_1.QuestionOption,
+                            quizattempt_entity_1.QuizAttempt,
+                            attemptAnswer_entity_1.AttemptAnswer,
+                            user_entity_1.User
+                        ],
+                        synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
                         ssl: {
                             rejectUnauthorized: configService.get('DB_SSL_REJECT_UNAUTHORIZED') ===
                                 'true',
                         },
+                        poolSize: 5,
+                        connectionTimeoutMillis: 2000,
+                        idleTimeoutMillis: 30000,
+                        maxQueryExecutionTime: 1000,
                     };
                 },
             }),
-            typeorm_1.TypeOrmModule.forFeature([quiz_entity_1.Quiz, question_entity_1.Question, question_option_entity_1.QuestionOption, quizattempt_entity_1.QuizAttempt, attemptanswer_entity_1.AttemptAnswer]),
+            typeorm_1.TypeOrmModule.forFeature([
+                quiz_entity_1.Quiz,
+                question_entity_1.Question,
+                question_option_entity_1.QuestionOption,
+                quizattempt_entity_1.QuizAttempt,
+                attemptAnswer_entity_1.AttemptAnswer,
+                user_entity_1.User
+            ]),
         ],
         controllers: [quiz_leaderboard_service_controller_1.QuizLeaderboardServiceController],
         providers: [quiz_leaderboard_service_service_1.QuizLeaderboardServiceService],
@@ -1108,7 +1227,7 @@ const quiz_entity_1 = __webpack_require__(/*! ./entities/quiz.entity */ "./apps/
 const question_entity_1 = __webpack_require__(/*! ./entities/question.entity */ "./apps/quiz-leaderboard-service/src/entities/question.entity.ts");
 const question_option_entity_1 = __webpack_require__(/*! ./entities/question-option.entity */ "./apps/quiz-leaderboard-service/src/entities/question-option.entity.ts");
 const quizattempt_entity_1 = __webpack_require__(/*! ./entities/quizattempt.entity */ "./apps/quiz-leaderboard-service/src/entities/quizattempt.entity.ts");
-const attemptanswer_entity_1 = __webpack_require__(/*! ./entities/attemptanswer.entity */ "./apps/quiz-leaderboard-service/src/entities/attemptanswer.entity.ts");
+const attemptAnswer_entity_1 = __webpack_require__(/*! ./entities/attemptAnswer.entity */ "./apps/quiz-leaderboard-service/src/entities/attemptAnswer.entity.ts");
 let QuizLeaderboardServiceService = class QuizLeaderboardServiceService {
     quizRepository;
     questionRepository;
@@ -1148,7 +1267,7 @@ let QuizLeaderboardServiceService = class QuizLeaderboardServiceService {
         await queryRunner.startTransaction();
         try {
             const quiz = await queryRunner.manager.findOne(quiz_entity_1.Quiz, {
-                where: { quizId: completeQuizDto.quizId }
+                where: { quizId: completeQuizDto.quizId },
             });
             if (!quiz) {
                 throw new Error('Quiz not found');
@@ -1302,27 +1421,33 @@ let QuizLeaderboardServiceService = class QuizLeaderboardServiceService {
                 throw new Error('Question not found');
             }
             let isCorrect = null;
-            if (question.questionType === 'MCQ' && createAttemptAnswerDto.selectedOptionId) {
-                const selectedOption = question.questionOptions.find(option => option.optionId === createAttemptAnswerDto.selectedOptionId);
+            if (question.questionType === 'MCQ' &&
+                createAttemptAnswerDto.selectedOptionId) {
+                const selectedOption = question.questionOptions.find((option) => option.optionId === createAttemptAnswerDto.selectedOptionId);
                 isCorrect = selectedOption ? selectedOption.isCorrect : false;
             }
-            else if (question.questionType === 'TRUE_FALSE' && createAttemptAnswerDto.selectedOptionId) {
-                const selectedOption = question.questionOptions.find(option => option.optionId === createAttemptAnswerDto.selectedOptionId);
+            else if (question.questionType === 'TRUE_FALSE' &&
+                createAttemptAnswerDto.selectedOptionId) {
+                const selectedOption = question.questionOptions.find((option) => option.optionId === createAttemptAnswerDto.selectedOptionId);
                 isCorrect = selectedOption ? selectedOption.isCorrect : false;
             }
-            else if (question.questionType === 'SHORT_ANSWER' && createAttemptAnswerDto.userAnswer) {
-                const userAnswer = createAttemptAnswerDto.userAnswer.trim().toLowerCase();
+            else if (question.questionType === 'SHORT_ANSWER' &&
+                createAttemptAnswerDto.userAnswer) {
+                const userAnswer = createAttemptAnswerDto.userAnswer
+                    .trim()
+                    .toLowerCase();
                 const correctAnswer = question.correctAnswer?.trim().toLowerCase();
                 isCorrect = userAnswer === correctAnswer;
             }
             const existingAnswer = await this.attemptAnswerRepository.findOne({
                 where: {
                     attemptId: createAttemptAnswerDto.attemptId,
-                    questionId: createAttemptAnswerDto.questionId
-                }
+                    questionId: createAttemptAnswerDto.questionId,
+                },
             });
             if (existingAnswer) {
-                existingAnswer.selectedOptionId = createAttemptAnswerDto.selectedOptionId || null;
+                existingAnswer.selectedOptionId =
+                    createAttemptAnswerDto.selectedOptionId || null;
                 existingAnswer.userAnswer = createAttemptAnswerDto.userAnswer || null;
                 existingAnswer.isCorrect = isCorrect;
                 const updatedAnswer = await this.attemptAnswerRepository.save(existingAnswer);
@@ -1349,7 +1474,7 @@ let QuizLeaderboardServiceService = class QuizLeaderboardServiceService {
         try {
             const quizAttempt = await this.quizAttemptRepository.findOne({
                 where: { attemptId, userId },
-                relations: ['answers']
+                relations: ['answers'],
             });
             if (!quizAttempt) {
                 throw new Error('Quiz attempt not found');
@@ -1358,19 +1483,19 @@ let QuizLeaderboardServiceService = class QuizLeaderboardServiceService {
                 throw new Error('Quiz attempt is already completed');
             }
             const questions = await this.questionRepository.find({
-                where: { quizId: quizAttempt.quizId }
+                where: { quizId: quizAttempt.quizId },
             });
             const totalPossiblePoints = questions.reduce((sum, question) => sum + question.points, 0);
             let userPoints = 0;
             const answers = await this.attemptAnswerRepository.find({
                 where: { attemptId },
-                relations: []
+                relations: [],
             });
             const questionPointsMap = new Map();
-            questions.forEach(question => {
+            questions.forEach((question) => {
                 questionPointsMap.set(question.questionId, question.points);
             });
-            answers.forEach(answer => {
+            answers.forEach((answer) => {
                 if (answer.isCorrect) {
                     const questionPoints = questionPointsMap.get(answer.questionId) || 0;
                     userPoints += questionPoints;
@@ -1393,9 +1518,9 @@ let QuizLeaderboardServiceService = class QuizLeaderboardServiceService {
                 where: {
                     userId,
                     quizId,
-                    isCompleted: true
+                    isCompleted: true,
                 },
-                order: { attemptAt: 'DESC' }
+                order: { attemptAt: 'DESC' },
             });
             if (attempts.length === 0) {
                 return {
@@ -1406,10 +1531,10 @@ let QuizLeaderboardServiceService = class QuizLeaderboardServiceService {
                 };
             }
             const questions = await this.questionRepository.find({
-                where: { quizId }
+                where: { quizId },
             });
             const totalQuestions = questions.length;
-            const formattedAttempts = attempts.map(attempt => {
+            const formattedAttempts = attempts.map((attempt) => {
                 const timeTaken = 0;
                 return {
                     id: attempt.attemptId,
@@ -1420,12 +1545,16 @@ let QuizLeaderboardServiceService = class QuizLeaderboardServiceService {
                     percentage: attempt.score,
                     startedAt: attempt.attemptAt.toISOString(),
                     completedAt: attempt.attemptAt.toISOString(),
-                    status: attempt.isCompleted ? 'COMPLETED' : 'IN_PROGRESS'
+                    status: attempt.isCompleted ? 'COMPLETED' : 'IN_PROGRESS',
                 };
             });
-            const scores = attempts.map(attempt => parseFloat(attempt.score.toString())).filter(score => !isNaN(score));
+            const scores = attempts
+                .map((attempt) => parseFloat(attempt.score.toString()))
+                .filter((score) => !isNaN(score));
             const bestScore = scores.length > 0 ? Math.max(...scores) : 0;
-            const averageScore = scores.length > 0 ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
+            const averageScore = scores.length > 0
+                ? scores.reduce((sum, score) => sum + score, 0) / scores.length
+                : 0;
             return {
                 attempts: formattedAttempts,
                 bestScore: Math.round(bestScore * 100) / 100,
@@ -1438,6 +1567,73 @@ let QuizLeaderboardServiceService = class QuizLeaderboardServiceService {
             throw error;
         }
     }
+    async getQuizResultsForLeaderboard(groupId) {
+        const quizzes = await this.quizRepository.find({
+            where: { groupId },
+            select: ['quizId'],
+        });
+        if (!quizzes.length)
+            return {
+                success: true,
+                message: 'No quizzes found in this group',
+                data: [],
+            };
+        const quizIds = quizzes.map((q) => q.quizId);
+        const results = await this.quizAttemptRepository
+            .createQueryBuilder('attempt')
+            .innerJoin('attempt.user', 'user')
+            .innerJoin('attempt.quiz', 'quiz')
+            .select('user.userId', 'userId')
+            .addSelect('user.fullName', 'name')
+            .addSelect(`
+      SUM(
+        (attempt.score / 100) *
+        CASE 
+          WHEN quiz.difficulty = 'HARD' THEN 1.0
+          WHEN quiz.difficulty = 'MEDIUM' THEN 0.9
+          WHEN quiz.difficulty = 'EASY' THEN 0.8
+          ELSE 1.0
+        END
+      )
+      `, 'totalPoints')
+            .addSelect('COUNT(DISTINCT attempt.quizId)', 'quizCount')
+            .where('attempt.quizId IN (:...quizIds)', { quizIds })
+            .andWhere((qb) => {
+            const subQuery = qb
+                .subQuery()
+                .select('MIN(a2.attemptAt)')
+                .from('quizattempt', 'a2')
+                .where('a2.userId = attempt.userId')
+                .andWhere('a2.quizId = attempt.quizId')
+                .getQuery();
+            return 'attempt.attemptAt = ' + subQuery;
+        })
+            .groupBy('user.userId')
+            .addGroupBy('user.fullName')
+            .orderBy(`
+      SUM(
+        (attempt.score / 100) *
+        CASE 
+          WHEN quiz.difficulty = 'HARD' THEN 1.0
+          WHEN quiz.difficulty = 'MEDIUM' THEN 0.9
+          WHEN quiz.difficulty = 'EASY' THEN 0.8
+          ELSE 1.0
+        END
+      ) / COUNT(DISTINCT attempt.quizId)
+      `, 'DESC')
+            .getRawMany();
+        return {
+            success: true,
+            message: 'Leaderboard fetched successfully',
+            data: results.map((r) => ({
+                userId: r.userId,
+                name: r.name,
+                avgPoints: (Number(r.totalPoints) / Number(r.quizCount)).toFixed(2),
+                totalPoints: Number(r.totalPoints).toFixed(2),
+                quizzesTaken: Number(r.quizCount),
+            })),
+        };
+    }
 };
 exports.QuizLeaderboardServiceService = QuizLeaderboardServiceService;
 exports.QuizLeaderboardServiceService = QuizLeaderboardServiceService = __decorate([
@@ -1446,7 +1642,7 @@ exports.QuizLeaderboardServiceService = QuizLeaderboardServiceService = __decora
     __param(1, (0, typeorm_1.InjectRepository)(question_entity_1.Question)),
     __param(2, (0, typeorm_1.InjectRepository)(question_option_entity_1.QuestionOption)),
     __param(3, (0, typeorm_1.InjectRepository)(quizattempt_entity_1.QuizAttempt)),
-    __param(4, (0, typeorm_1.InjectRepository)(attemptanswer_entity_1.AttemptAnswer)),
+    __param(4, (0, typeorm_1.InjectRepository)(attemptAnswer_entity_1.AttemptAnswer)),
     __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object, typeof (_d = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _d : Object, typeof (_e = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _e : Object, typeof (_f = typeof typeorm_2.DataSource !== "undefined" && typeorm_2.DataSource) === "function" ? _f : Object])
 ], QuizLeaderboardServiceService);
 

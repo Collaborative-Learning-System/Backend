@@ -7,10 +7,12 @@ import {
   Param,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import type { Response } from 'express';
 import { lastValueFrom } from 'rxjs';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @Controller('notification')
 export class NotificationGatewayController {
@@ -59,6 +61,7 @@ export class NotificationGatewayController {
     return res.status(HttpStatus.OK).json(result);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('share-document/:documentId')
   async sendShareDocumentEmail(
     @Param('documentId') documentId: string,
@@ -82,6 +85,7 @@ export class NotificationGatewayController {
     return res.status(HttpStatus.OK).json(result);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('send-notifications')
   async sendNotifications(@Body() body: any, @Res() res: Response) {
     const result = await lastValueFrom(
@@ -94,6 +98,7 @@ export class NotificationGatewayController {
     return res.status(HttpStatus.OK).json(result);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('get-notifications/:userId')
   async getNotifications(@Param('userId') userId: string, @Res() res: Response) {
     const result = await lastValueFrom(
@@ -105,6 +110,7 @@ export class NotificationGatewayController {
     return res.status(HttpStatus.OK).json(result);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('mark-as-read/:notificationId')
   async markAsRead(
     @Param('notificationId') notificationId: string,
@@ -113,6 +119,18 @@ export class NotificationGatewayController {
     const result = await lastValueFrom(
       this.notificationClient.send({ cmd: 'mark-as-read' }, notificationId),
     );
+    if (!result.success) {
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+    return res.status(HttpStatus.OK).json(result);
+  }
+
+
+  @Post('send-quiz-notification')  async sendQuizNotification(@Body() body: any, @Res() res: Response) {
+    const result = await lastValueFrom(
+      this.notificationClient.send({ cmd: 'send-quiz-notification' }, body),
+    );
+    console.log(body);
     if (!result.success) {
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }

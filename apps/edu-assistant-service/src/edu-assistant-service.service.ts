@@ -6,6 +6,7 @@ import { StudyTask } from './entities/study-task.entity';
 import { GenerateStudyPlanDto } from './dtos/generate-study-plan.dto';
 import { StudyPlanResponseDto, StudyTaskResponseDto } from './dtos/study-plan-response.dto';
 import { GeminiService } from './services/gemini.service';
+import { SuggestedWorkspacesDto } from './dtos/suggestWorkspace.dto';
 
 @Injectable()
 export class EduAssistantServiceService {
@@ -137,5 +138,54 @@ export class EduAssistantServiceService {
     }
 
     await this.studyPlanRepository.remove(studyPlan);
+  }
+
+  async getPersonalizedWorkspaceSuggestions(suggestedWorkspaceDto: SuggestedWorkspacesDto) {
+    const { myWorkspaces, suggestedWorkspaces } = suggestedWorkspaceDto;
+
+    try {
+      // Get AI-powered workspace suggestions from Gemini
+      const geminiResponse = await this.geminiService.getPersonalizedWorkspaceSuggestions(suggestedWorkspaceDto);
+      
+      this.logger.log('Gemini workspace suggestions response:', JSON.stringify(geminiResponse, null, 2));
+
+      // If Gemini returns suggestions, use them; otherwise, provide a fallback
+      let finalSuggestions = geminiResponse.suggestedWorkspaces || [];
+      
+      // Fallback: if no AI suggestions or empty, use original suggestions with smart filtering
+      if (!finalSuggestions || finalSuggestions.length === 0) {
+        finalSuggestions = suggestedWorkspaces.slice(0, 3).map(ws => ({
+          workspaceId: ws.workspaceid,
+          workspaceName: ws.workspacename,
+          description: `Recommended based on similar users' interests: ${ws.description}`
+        }));
+      }
+
+      return {
+        success: true,
+        data: {
+          suggestedWorkspacesForYou: finalSuggestions,
+          source: geminiResponse.suggestedWorkspaces?.length > 0 ? 'AI' : 'fallback'
+        },
+      };
+
+    } catch (error) { 
+      this.logger.error('Error getting personalized workspace suggestions:', error);
+      
+      // Fallback on error: return original suggestions
+      const fallbackSuggestions = suggestedWorkspaces.slice(0, 3).map(ws => ({
+        workspaceId: ws.workspaceid,
+        workspaceName: ws.workspacename,
+        description: `Recommended workspace: ${ws.description}`
+      }));
+
+      return {
+        success: true,
+        data: {
+          suggestedWorkspacesForYou: fallbackSuggestions,
+          source: 'error_fallback',
+        },
+      };
+    }
   }
 }

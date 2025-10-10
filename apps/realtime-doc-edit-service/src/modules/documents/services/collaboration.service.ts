@@ -35,7 +35,7 @@ export class CollaborationService {
           collaborators: result.map((collaborator) => ({
             id: collaborator.user.userId,
             name: collaborator.user.fullName,
-            role: collaborator.role, // This should be the collaboration role (owner, editor, viewer)
+            role: collaborator.role, 
             email: collaborator.user.email,
             joinedAt: collaborator.joinedAt,
             isActive: collaborator.isActive,

@@ -17,14 +17,15 @@ RUN npm ci && npm cache clean --force
 # Copy the entire project (needed for monorepo structure)
 COPY . .
 
-# Build the auth-service application
-RUN npm run build auth-service
+# Build the api-gateway application
+RUN npm run build api-gateway
 
 # Expose the port the app runs on
-EXPOSE 3001
+EXPOSE 3000
 
 # Set environment variables
 ENV NODE_ENV=production
+ENV PORT=3000
 
 # Define the command to run the application
-CMD ["node", "dist/apps/auth-service/main"]
+CMD ["node", "dist/apps/api-gateway/main"]

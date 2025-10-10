@@ -136,7 +136,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('send_message')
   async handleSendMessage(
     @ConnectedSocket() client: AuthenticatedSocket,
-    @MessageBody() data: { groupId: string; text: string },
+    @MessageBody()
+    data: {
+      groupId: string;
+      text?: string;
+      attachment?: {
+        fileName: string;
+        mimeType: string;
+        base64Data: string;
+        title?: string;
+        description?: string;
+      };
+    },
   ) {
     try {
       if (!client.userId) {
@@ -144,10 +155,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      console.log(
-        `User ${client.userId} sending message to group ${data.groupId}:`,
-        data.text,
-      );
+      if (!data?.groupId) {
+        client.emit('error', { message: 'Group ID is required' });
+        return;
+      }
+
+      if (!data.text?.trim() && !data.attachment) {
+        client.emit('error', {
+          message: 'Message must include text or an attachment',
+        });
+        return;
+      }
+
+      console.log('[ChatGateway] send_message received', {
+        socketId: client.id,
+        userId: client.userId,
+        groupId: data.groupId,
+        hasText: Boolean(data.text?.trim()),
+        hasAttachment: Boolean(data.attachment),
+      });
 
       // Send message to workspace service for persistence
       const savedMessage = await firstValueFrom(
@@ -156,11 +182,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           sendChatMessageDto: {
             groupId: data.groupId,
             text: data.text,
+            attachment: data.attachment,
           },
         }),
       );
 
-      console.log('Message saved:', savedMessage);
+      console.log('[ChatGateway] Message persisted', {
+        chatId: savedMessage.chatId,
+        groupId: savedMessage.groupId,
+        userId: savedMessage.userId,
+        messageType: savedMessage.messageType,
+        hasResource: Boolean(savedMessage.resource),
+      });
 
       // Broadcast the message to all members of the group
       this.server.to(`group_${data.groupId}`).emit('new_message', {
@@ -168,13 +201,37 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         groupId: savedMessage.groupId,
         userId: savedMessage.userId,
         text: savedMessage.text,
+        messageType: savedMessage.messageType,
+        resource: savedMessage.resource,
         sentAt: savedMessage.sentAt,
+      });
+
+      console.log('[ChatGateway] Broadcast dispatched', {
+        groupId: data.groupId,
+        chatId: savedMessage.chatId,
+        // Guard against potential undefined adapter (e.g., during initialization or custom adapters)
+        recipients: (() => {
+          try {
+            const adapter: any = this.server?.sockets?.adapter;
+            const room = adapter?.rooms?.get(`group_${data.groupId}`);
+            return room?.size ?? 0;
+          } catch (e) {
+            return 0;
+          }
+        })(),
       });
 
       // Send confirmation to sender
       client.emit('message_sent', {
         chatId: savedMessage.chatId,
         status: 'delivered',
+        messageType: savedMessage.messageType,
+        resource: savedMessage.resource,
+      });
+
+      console.log('[ChatGateway] Acknowledgement emitted', {
+        chatId: savedMessage.chatId,
+        userId: client.userId,
       });
     } catch (error) {
       console.error('Error sending message:', error);

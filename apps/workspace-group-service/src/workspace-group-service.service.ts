@@ -13,9 +13,10 @@ import { WorkspaceMember } from './entities/workspace_user.entity';
 import { Group } from './entities/group.entity';
 import { GroupMember } from './entities/group-member.entity';
 import { ChatMessage } from './entities/chat-message.entity';
-import {
-  CreateWorkspaceDto,
-  JoinWorkspaceDto,
+import { Resource } from './entities/resource.entity';
+import { 
+  CreateWorkspaceDto, 
+  JoinWorkspaceDto, 
   LeaveWorkspaceDto,
   WorkspaceResponseDto,
   UserWorkspacesResponseDto,
@@ -30,8 +31,12 @@ import {
   GetChatHistoryDto,
   ChatHistoryResponseDto,
   AssignAdminDto,
+  AddMemberDto,
 } from './dtos/workspace.dto';
 import { ClientProxy } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
+import { SupabaseClient, createClient } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class WorkspaceGroupServiceService {
@@ -46,9 +51,106 @@ export class WorkspaceGroupServiceService {
     private groupMemberRepository: Repository<GroupMember>,
     @InjectRepository(ChatMessage)
     private chatMessageRepository: Repository<ChatMessage>,
-    @Inject('auth-service')
+    @InjectRepository(Resource)
+    private resourceRepository: Repository<Resource>,
+    @Inject('auth-service') 
     private readonly authClient: ClientProxy,
-  ) {}
+    @Inject('notification-service')
+    private readonly notificationClient: ClientProxy,
+    private readonly configService: ConfigService,
+  ) {
+    this.supabaseBucket = this.configService.get<string>('SUPABASE_BUCKET') ?? 'S5P';
+  }
+
+  private supabaseInstance: SupabaseClient | null = null;
+
+  private getSupabaseClient(): SupabaseClient {
+    if (!this.supabaseInstance) {
+      const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+      const supabaseKey = this.configService.get<string>('SUPABASE_KEY');
+      console.log('Initializing Supabase client', { supabaseUrl, hasKey: Boolean(supabaseKey) }); 
+      if (!supabaseUrl || !supabaseKey) {
+        console.warn(
+          'Supabase credentials are missing. Resource uploads will fail until SUPABASE_URL and SUPABASE_KEY are configured.',
+        );
+        throw new ConflictException(
+          'Unable to upload file: Supabase credentials are not configured.',
+        );
+      }
+
+      this.supabaseInstance = createClient(supabaseUrl, supabaseKey);
+    }
+
+    return this.supabaseInstance;
+  }
+
+  private readonly supabaseBucket: string;
+
+  private determineResourceType(mimeType: string): 'image' | 'video' | 'pdf' {
+    if (mimeType.startsWith('image/')) {
+      return 'image';
+    }
+
+    if (mimeType.startsWith('video/')) {
+      return 'video';
+    }
+
+    if (mimeType === 'application/pdf') {
+      return 'pdf';
+    }
+
+    throw new BadRequestException(
+      'Unsupported file type. Only images, videos, and PDFs are allowed.',
+    );
+  }
+
+  private async uploadResourceToSupabase(
+    groupId: string,
+    fileName: string,
+    mimeType: string,
+    fileBuffer: Buffer,
+  ): Promise<string> {
+    const supabase = this.getSupabaseClient();
+    const safeFileName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+    const storagePath = `${groupId}/${uuidv4()}-${safeFileName}`;
+
+    console.log('[uploadResourceToSupabase] Upload starting', {
+      groupId,
+      fileName,
+      mimeType,
+      storagePath,
+      bucket: this.supabaseBucket,
+    });
+
+    const { error: uploadError } = await supabase.storage
+      .from(this.supabaseBucket)
+      .upload(storagePath, fileBuffer, {
+        contentType: mimeType,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error('Supabase upload error:', uploadError);
+      throw new ConflictException('Failed to upload file to storage');
+    }
+
+    const { data } = supabase.storage
+      .from(this.supabaseBucket)
+      .getPublicUrl(storagePath);
+
+    if (!data?.publicUrl) {
+      throw new ConflictException(
+        'Failed to obtain public URL for uploaded file',
+      );
+    }
+
+    console.log('[uploadResourceToSupabase] Upload successful', {
+      storagePath,
+      publicUrl: data.publicUrl,
+    });
+
+    return data.publicUrl;
+  }
 
   async createWorkspace(
     userId: string,
@@ -375,7 +477,7 @@ export class WorkspaceGroupServiceService {
 
   // Grant Admin Role
   async assignAdmin(assignAdminDto: AssignAdminDto) {
-    console.log(assignAdminDto)
+    console.log(assignAdminDto);
     const { workspaceId, newAdminId } = assignAdminDto;
 
     // Validate input
@@ -435,7 +537,78 @@ export class WorkspaceGroupServiceService {
       message: 'Admin role assigned successfully',
     };
   }
+  async addMembers(addMembersDto: AddMemberDto) {
+    try {
+      const { workspaceId, emails, workspaceName } = addMembersDto;
+      const failUsers: string[] = [];
+      const alreadyMembers: string[] = [];
+      let successUsers: string[] = [];
 
+      await Promise.all(
+        emails.map(async (email) => {
+          const result = await this.authClient
+            .send({ cmd: 'find-user-by-email' }, email)
+            .toPromise();
+
+          if (result.success) {
+            const isUser = await this.workspaceMemberRepository.findOne({
+              where: { userid: result.data.userId, workspaceid: workspaceId },
+            });
+
+            if (isUser) {
+              alreadyMembers.push(email);
+              return;
+            }
+
+            const member = this.workspaceMemberRepository.create({
+              userid: result.data.userId,
+              workspaceid: workspaceId,
+              role: 'member',
+            });
+
+            successUsers.push(result.data.userId);
+
+            await this.workspaceMemberRepository.save(member);
+          } else {
+            failUsers.push(email);
+          }
+        }),
+      );
+
+      if (successUsers.length > 0) {
+        const notificationPayload = {
+          users: successUsers,
+          notification: `You have been added to a new workspace: ${workspaceName}.`,
+          timestamp: new Date().toISOString(),
+          isRead: false,
+          link: `/workspace/${workspaceId}`,
+        };
+
+        try {
+          // Send notification to the user
+          await this.notificationClient
+            .send({ cmd: 'send-notifications' }, notificationPayload)
+            .toPromise();
+        } catch (error) {
+          console.error('Failed to send notification:', error);
+        }
+      }
+
+      return {
+        success: true,
+        data: {
+          failedUsers: failUsers,
+          alreadyMembers: alreadyMembers,
+        },
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        success: false,
+        message: 'Failed to add members. Please try again.',
+      };
+    }
+  }
 
   // Group-related methods
   async createGroup(
@@ -632,6 +805,7 @@ export class WorkspaceGroupServiceService {
         };
       }
     } catch (error) {
+      console.log(error)
       throw new ConflictException(
         'Failed to perform group operation. Please try again.',
       );
@@ -643,10 +817,22 @@ export class WorkspaceGroupServiceService {
     userId: string,
     sendChatMessageDto: SendChatMessageDto,
   ): Promise<ChatMessageResponseDto> {
-    const { groupId, text } = sendChatMessageDto;
+    const { groupId, text, attachment } = sendChatMessageDto;
+
+    console.log('[sendChatMessage] Received request', {
+      userId,
+      groupId,
+      hasText: Boolean(text?.trim()),
+      hasAttachment: Boolean(attachment),
+    });
+
+    if (!text?.trim() && !attachment) {
+      throw new BadRequestException(
+        'Message must include text or an attachmengggt.',
+      );
+    }
 
     try {
-      // Verify that the group exists
       const group = await this.groupRepository.findOne({
         where: { groupid: groupId },
       });
@@ -654,6 +840,8 @@ export class WorkspaceGroupServiceService {
       if (!group) {
         throw new NotFoundException(`Group with ID ${groupId} not found`);
       }
+
+      console.log('[sendChatMessage] Group validated', { groupId });
 
       // Verify that the user is a member of the group
       const groupMember = await this.groupMemberRepository.findOne({
@@ -666,20 +854,124 @@ export class WorkspaceGroupServiceService {
         );
       }
 
+      console.log('[sendChatMessage] User membership confirmed', { userId, groupId });
+
+      let savedResource: Resource | null = null;
+      if (attachment) {
+        console.log('[sendChatMessage] Processing attachment', {
+          fileName: attachment.fileName,
+          mimeType: attachment.mimeType,
+          title: attachment.title,
+        });
+        const resourceType = this.determineResourceType(attachment.mimeType);
+        console.log('[sendChatMessage] Determined resource type', {
+          mimeType: attachment.mimeType,
+          resourceType,
+        });
+
+        let fileBuffer: Buffer;
+        try {
+          fileBuffer = Buffer.from(attachment.base64Data, 'base64');
+        } catch (conversionError) {
+          console.error('Invalid base64 data provided for attachment', conversionError);
+          throw new BadRequestException('Attachment data is not valid base64');
+        }
+
+        if (!fileBuffer || fileBuffer.length === 0) {
+          throw new BadRequestException('Attachment data is empty');
+        }
+
+        console.log('[sendChatMessage] Attachment decoded', {
+          fileName: attachment.fileName,
+          sizeBytes: fileBuffer.length,
+        });
+
+        const publicUrl = await this.uploadResourceToSupabase(
+          groupId,
+          attachment.fileName,
+          attachment.mimeType,
+          fileBuffer,
+        );
+
+        console.log('[sendChatMessage] Upload completed', {
+          fileName: attachment.fileName,
+          publicUrl,
+        });
+
+        const resourceEntity = this.resourceRepository.create({
+          userid: userId,
+          groupid: groupId,
+          title: attachment.title?.trim() || attachment.fileName,
+          type: resourceType,
+          storageurl: publicUrl,
+          description: attachment.description?.trim() || undefined,
+        });
+
+        savedResource = await this.resourceRepository.save(resourceEntity);
+
+        console.log('[sendChatMessage] Resource persisted', {
+          resourceId: savedResource.resourceid,
+          groupId,
+          userId,
+        });
+      }
+
+      const messageType: 'text' | 'resource' = savedResource ? 'resource' : 'text';
+
       // Create and save the chat message
       const chatMessage = this.chatMessageRepository.create({
         groupid: groupId,
         userid: userId,
-        text: text,
+        text: text?.trim() || undefined,
+        resourceid: savedResource?.resourceid,
+        messagetype: messageType,
+        sentat: new Date()
       });
 
       const savedMessage = await this.chatMessageRepository.save(chatMessage);
+      console.log('[sendChatMessage] Chat message saved', {
+        chatId: savedMessage.chatid,
+        groupId,
+        userId,
+        messageType,
+      });
+
+      if (savedResource) {
+        savedMessage.resource = savedResource;
+      }
+
+      // Fetch sender's username (fullName)
+      let senderName = '';
+      try {
+        const userDetails = await this.getUserDetails(savedMessage.userid);
+        senderName = userDetails?.fullName || '';
+      } catch (e) {
+        senderName = '';
+      }
+
+      console.log('[sendChatMessage] Preparing response payload', {
+        chatId: savedMessage.chatid,
+        hasResource: Boolean(savedResource),
+        messageType,
+      });
 
       return {
         chatId: savedMessage.chatid,
         groupId: savedMessage.groupid,
         userId: savedMessage.userid,
-        text: savedMessage.text,
+        userName: senderName,
+        text: savedMessage.text || undefined,
+        messageType,
+        resource: savedResource
+          ? {
+              resourceId: savedResource.resourceid,
+              title: savedResource.title,
+              type: savedResource.type as 'image' | 'video' | 'pdf',
+              storageUrl: savedResource.storageurl,
+              description: savedResource.description || undefined,
+              uploadedAt: savedResource.uploadat,
+            }
+          : undefined,
         sentAt: savedMessage.sentat,
       };
     } catch (error) {
@@ -721,23 +1013,45 @@ export class WorkspaceGroupServiceService {
       }
 
       // Get chat messages with pagination
-      const [messages, totalCount] =
-        await this.chatMessageRepository.findAndCount({
-          where: { groupid: groupId },
-          order: { sentat: 'DESC' },
-          take: limit,
-          skip: offset,
-        });
+      const [messages, totalCount] = await this.chatMessageRepository.findAndCount({
+        where: { groupid: groupId },
+        order: { sentat: 'DESC' },
+        take: limit,
+        skip: offset,
+        relations: ['resource'],
+      });
 
-      const chatMessages: ChatMessageResponseDto[] = messages.map(
-        (message) => ({
-          chatId: message.chatid,
-          groupId: message.groupid,
-          userId: message.userid,
-          text: message.text,
-          sentAt: message.sentat,
-        }),
-      );
+      // Fetch all unique userIds in the messages
+      const userIds = Array.from(new Set(messages.map(m => m.userid)));
+      const userIdToName: Record<string, string> = {};
+      await Promise.all(userIds.map(async (uid) => {
+        try {
+          const userDetails = await this.getUserDetails(uid);
+          userIdToName[uid] = userDetails?.fullName || '';
+        } catch (e) {
+          userIdToName[uid] = '';
+        }
+      }));
+
+      const chatMessages: ChatMessageResponseDto[] = messages.map((message) => ({
+        chatId: message.chatid,
+        groupId: message.groupid,
+        userId: message.userid,
+        userName: userIdToName[message.userid] || '',
+        text: message.text || undefined,
+        messageType: message.messagetype,
+        resource: message.resource
+          ? {
+              resourceId: message.resource.resourceid,
+              title: message.resource.title,
+              type: message.resource.type as 'image' | 'video' | 'pdf',
+              storageUrl: message.resource.storageurl,
+              description: message.resource.description || undefined,
+              uploadedAt: message.resource.uploadat,
+            }
+          : undefined,
+        sentAt: message.sentat,
+      }));
 
       return {
         messages: chatMessages,
@@ -785,14 +1099,14 @@ export class WorkspaceGroupServiceService {
 
       return groupMemberDetails;
     } catch (error) {
-
       throw new ConflictException(
         'Failed to fetch group members. Please try again.',
       );
     }
   }
 
-  async getUserDetails(userId: string): Promise<any> {
+
+  async getUserDetails(userId: string): Promise<any> { 
     try {
       const result = await this.authClient
         .send({ cmd: 'find-user-by-id' }, userId)
@@ -802,6 +1116,56 @@ export class WorkspaceGroupServiceService {
       throw new ConflictException(
         'Failed to get user details. Please try again.',
       );
+    }
+  }
+
+  /**
+   * Delete a group if the user is admin of the workspace
+   * @param workspaceId string
+   * @param groupId string
+   * @param userId string
+   */
+  async deleteGroup(workspaceId: string, groupId: string, userId: string): Promise<{ message: string }> {
+    console.log('[deleteGroup] workspaceId:', workspaceId, 'groupId:', groupId, 'userId:', userId);
+    // Validate input
+    if (!workspaceId || !groupId || !userId) {
+      console.error('[deleteGroup] Missing required parameters');
+      throw new BadRequestException('workspaceId, groupId, and userId are required');
+    }
+
+    // Check if group exists
+    const group = await this.groupRepository.findOne({ where: { groupid: groupId, workspaceid: workspaceId } });
+    if (!group) {
+      console.error('[deleteGroup] Group not found');
+      throw new NotFoundException('Group not found');
+    }
+
+    // Check if user is a member of the workspace
+    const membership = await this.workspaceMemberRepository.findOne({ where: { workspaceid: workspaceId, userid: userId } });
+    if (!membership) {
+      console.error('[deleteGroup] User is not a member of the workspace');
+      throw new ForbiddenException('You are not a member of this workspace');
+    }
+
+    // Only admin can delete group
+    if (membership.role !== 'admin') {
+      console.error('[deleteGroup] User is not admin');
+      throw new ForbiddenException('Only workspace admins can delete groups');
+    }
+
+    try {
+      // Delete all group members
+      await this.groupMemberRepository.delete({ groupid: groupId });
+      // Delete all chat messages in the group
+      await this.chatMessageRepository.delete({ groupid: groupId });
+      // Delete the group itself
+      await this.groupRepository.delete({ groupid: groupId });
+      console.log('[deleteGroup] Group deleted successfully');
+      return { message: 'Group deleted successfully' };
+    } catch (error) {
+      console.error('[deleteGroup] Error deleting group:', error?.message || error);
+      // Propagate the real error message if available
+      throw new ConflictException(error?.message || 'Failed to delete group. Please try again.');
     }
   }
 }

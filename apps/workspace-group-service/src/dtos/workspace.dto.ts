@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsUUID, IsArray,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateWorkspaceDto {
   @IsString()
@@ -102,22 +109,61 @@ export class GroupActionResponseDto {
 }
 
 // Chat DTOs
+export class ResourceAttachmentDto {
+  @IsString()
+  @IsNotEmpty()
+  fileName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mimeType: string;
+
+  @IsString()
+  @IsNotEmpty()
+  base64Data: string;
+
+  @IsString()
+  @IsOptional()
+  title?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+}
+
 export class SendChatMessageDto {
   @IsUUID()
   @IsNotEmpty()
   groupId: string;
 
   @IsString()
-  @IsNotEmpty()
-  text: string;
+  @IsOptional()
+  text?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ResourceAttachmentDto)
+  attachment?: ResourceAttachmentDto;
 }
 
 export class ChatMessageResponseDto {
   chatId: string;
   groupId: string;
   userId: string;
-  text: string;
+  userName?: string;
+  text?: string;
+  messageType: 'text' | 'resource';
+  resource?: ResourceResponseDto;
   sentAt: Date;
+}
+
+export class ResourceResponseDto {
+  resourceId: string;
+  title: string;
+  type: 'image' | 'video' | 'pdf';
+  storageUrl: string;
+  description?: string;
+  uploadedAt: Date;
 }
 
 export class GetChatHistoryDto {
@@ -135,4 +181,13 @@ export class GetChatHistoryDto {
 export class ChatHistoryResponseDto {
   messages: ChatMessageResponseDto[];
   totalCount: number;
+}
+
+export class AddMemberDto {
+  @IsNotEmpty()
+  workspaceId: string;
+  @IsArray()
+  emails: string[];
+  @IsString()
+  workspaceName: string;
 }

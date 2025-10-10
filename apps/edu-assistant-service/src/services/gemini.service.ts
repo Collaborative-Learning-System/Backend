@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { GenerateStudyPlanDto } from '../dtos/generate-study-plan.dto';
 import { GeminiApiResponse, GeminiStudyPlanResponse } from '../dtos/gemini-api.dto';
+import { SuggestedWorkspacesDto } from '../dtos/suggestWorkspace.dto';
 
 @Injectable()
 export class GeminiService {
@@ -44,6 +45,116 @@ export class GeminiService {
       throw new Error('Failed to generate study plan from AI service');
     }
   }
+
+  async getPersonalizedWorkspaceSuggestions(suggestedWorkspaceDto: SuggestedWorkspacesDto): Promise<any> { 
+    const apiKey = this.configService.get('GEMINI_API_KEY');
+    const apiUrl = `${this.geminiApiBaseUrl}?key=${apiKey}`;
+    const prompt = this.buildPromptForWorkspaces(suggestedWorkspaceDto);
+
+    try { 
+      const response = await firstValueFrom(
+        this.httpService.post<GeminiApiResponse>(
+          apiUrl,
+          {
+            contents: [{
+              role: 'user',
+              parts: [{ text: prompt }]
+            }]
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          }
+        )
+      );
+
+      this.logger.log('Gemini API response status:', response.status);
+      this.logger.log('Full Gemini response:', JSON.stringify(response.data, null, 2));
+
+      // Parse the Gemini response to extract the actual content
+      if (response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        const aiResponseText = response.data.candidates[0].content.parts[0].text;
+        this.logger.log('Raw AI response text:', aiResponseText);
+        
+        try {
+          // Clean the response text (remove markdown code blocks if present)
+          let cleanedText = aiResponseText.trim();
+          if (cleanedText.startsWith('```json')) {
+            cleanedText = cleanedText.replace(/```json\s*/, '').replace(/```\s*$/, '');
+          } else if (cleanedText.startsWith('```')) {
+            cleanedText = cleanedText.replace(/```\s*/, '').replace(/```\s*$/, '');
+          }
+          
+          this.logger.log('Cleaned text for parsing:', cleanedText);
+          
+          // Try to parse the JSON response from Gemini
+          const parsedResponse = JSON.parse(cleanedText);
+          this.logger.log('Successfully parsed Gemini response:', JSON.stringify(parsedResponse, null, 2));
+          return parsedResponse;
+        } catch (parseError) {
+          this.logger.error('Failed to parse Gemini JSON response', parseError);
+          this.logger.error('Raw Gemini response text:', aiResponseText);
+          // Return a fallback structure if parsing fails
+          return {
+            suggestedWorkspaces: []
+          };
+        }
+      } else {
+        this.logger.error('Unexpected Gemini API response structure');
+        this.logger.error('Response data:', JSON.stringify(response.data, null, 2));
+        return {
+          suggestedWorkspaces: []
+        };
+      }
+
+    } catch (error) {
+      this.logger.error('Failed to get workspace suggestions from Gemini API', error);
+      throw new Error('Failed to get workspace suggestions from AI service');
+    }
+  }
+
+  private buildPromptForWorkspaces(request: SuggestedWorkspacesDto): string { 
+    return `
+You are an intelligent workspace recommendation engine designed to help users discover new, relevant workspaces based on their current interests and participation patterns.
+
+Your goal is to analyze the user's **current workspaces** and **available workspaces from similar users** to generate the top 5 personalized workspace recommendations.
+
+Instructions:
+1. Carefully study the topics, descriptions, tags, or names of the user's current workspaces to understand their learning and professional interests.
+2. Compare these with the available workspaces from similar users.
+3. Select 5 workspaces that most closely align with or complement the user’s current interests.
+4. Provide short, meaningful descriptions explaining **why** each workspace is relevant for the user.
+5. Be diverse but relevant — suggest both closely related and a few new but complementary areas.
+
+Input Data:
+- Current User Workspaces: 
+${JSON.stringify(request.myWorkspaces, null, 2)}
+
+- Available Workspaces from Similar Users: 
+${JSON.stringify(request.suggestedWorkspaces, null, 2)}
+
+Output Format:
+Respond with ONLY a valid JSON object in this exact format:
+{
+  "suggestedWorkspaces": [
+    {
+      "workspaceId": "actual_workspace_id",
+      "workspaceName": "Actual Workspace Name",
+      "description": "Brief description of why this workspace is recommended for the user"
+    }
+  ]
+}
+
+Rules:
+- The output must be **strictly valid JSON** (no markdown, no extra text).
+- Include **exactly 5** recommended workspaces.
+- Descriptions must be concise (under 25 words) and show clear relevance to the user's interests.
+- If there are fewer than 5 suitable workspaces, include only those that are genuinely relevant.
+
+    `;
+  }
+
 
   private buildPrompt(request: GenerateStudyPlanDto): string {
     const startDate = new Date(request.startDate);

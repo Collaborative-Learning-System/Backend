@@ -8,7 +8,9 @@ import {
   Request,
   HttpException,
   HttpStatus,
+  Res,
 } from '@nestjs/common';
+import {type Response } from 'express';
 import {
   ClientProxy,
   ClientProxyFactory,
@@ -36,7 +38,7 @@ export class WorkspaceGatewayController {
     this.workspaceServiceClient = ClientProxyFactory.create({
       transport: Transport.TCP,
       options: {
-        host: '127.0.0.1',
+        host: 'workspace-group-service',
         port: 3003,
       },
     });
@@ -700,6 +702,90 @@ export class WorkspaceGatewayController {
     }
   }
 
+  @Post(':workspaceId/groups/:groupId/delete')
+  async deleteGroup(
+    @Param('workspaceId') workspaceId: string,
+    @Param('groupId') groupId: string,
+    @Request() req: any,
+  ) {
+    const userId = req.user.sub || req.user.userId || req.user.id;
+
+    if (!userId) {
+      throw new HttpException(
+        'User ID not found in token',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    try {
+      const result = await this.workspaceServiceClient
+        .send('delete_group', { workspaceId, groupId, userId })
+        .pipe(
+          timeout(5000),
+          catchError((err) => {
+            console.error('Error deleting group:', err);
+            if (err instanceof TimeoutError) {
+              return throwError(
+                () =>
+                  new HttpException(
+                    'Request to workspace service timed out',
+                    HttpStatus.REQUEST_TIMEOUT,
+                  ),
+              );
+            }
+            // Handle different types of errors
+            if (err.error) {
+              const error = err.error;
+              if (error.statusCode === 404) {
+                return throwError(
+                  () =>
+                    new HttpException(
+                      error.message || 'Group not found',
+                      HttpStatus.NOT_FOUND,
+                    ),
+                );
+              } else if (error.statusCode === 403) {
+                return throwError(
+                  () =>
+                    new HttpException(
+                      error.message || 'You do not have permission to delete this group',
+                      HttpStatus.FORBIDDEN,
+                    ),
+                );
+              } else if (error.statusCode === 400) {
+                return throwError(
+                  () =>
+                    new HttpException(
+                      error.message || 'Invalid request',
+                      HttpStatus.BAD_REQUEST,
+                    ),
+                );
+              }
+            }
+            return throwError(
+              () =>
+                new HttpException(
+                  'Failed to delete group',
+                  HttpStatus.INTERNAL_SERVER_ERROR,
+                ),
+            );
+          }),
+        )
+        .toPromise();
+
+      return {
+        success: true,
+        message: 'Group deleted successfully',
+        data: result,
+      };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to delete group',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async onModuleDestroy() {
     await this.workspaceServiceClient.close();
   }
@@ -725,9 +811,9 @@ export class WorkspaceGatewayController {
 
   @Post('assign-admin')
   async assignAdmin(@Body() assignAdminDto: AssignAdminDto) {
-    try { 
+    try {
       const result = await this.workspaceServiceClient
-        .send('assign-admin',  assignAdminDto)
+        .send('assign-admin', assignAdminDto)
         .toPromise();
       return result;
     } catch (error) {
@@ -736,5 +822,28 @@ export class WorkspaceGatewayController {
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-  } 
+  }
+
+  @Post('add-members/:workspaceId')
+  async addMembers(
+    @Param('workspaceId') workspaceId: string,
+    @Body() body: any,
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.workspaceServiceClient
+        .send('add_members', {
+          workspaceId,
+          emails: body.emails,
+          workspaceName: body.workspaceName,
+        })
+        .toPromise();
+      return res.status(HttpStatus.OK).json(result);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to add members',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

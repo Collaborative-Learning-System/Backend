@@ -1,12 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Group } from './entities/group.entity';
 import { GroupMember } from './entities/group_member.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { WorkspaceMember } from './entities/workspace_user.entity';
 import { Workspace } from './entities/workspace.entity';
 import { Logging } from './entities/logging.entity';
 import { UserSettings } from './entities/user_settings.entity';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class UserServiceService {
@@ -23,6 +24,8 @@ export class UserServiceService {
     private readonly loggingRepository: Repository<Logging>,
     @InjectRepository(UserSettings)
     private readonly userSettingsRepository: Repository<UserSettings>,
+    @Inject('edu-assistant-service')
+    private readonly eduAssistantClient: ClientProxy,
   ) {}
 
   async getWorkspaceData(userId: string) {
@@ -150,6 +153,107 @@ export class UserServiceService {
         success: false,
         statusCode: 404,
         message: 'User settings changed failed',
+      };
+    }
+  }
+
+  async getSuggestedWorkspaces(userId: string) { 
+    try {
+      // fetch all the workspace Ids that the user is already a member of
+      const workspacesIamIn = await this.workspaceMemberRepository.find({
+        where: { userid: userId },
+      });
+
+      // // fetch all the users in all those workspaces where user is a member
+      // const usersInMyWorkspaces = await this.workspaceMemberRepository.find({
+      //   where: workspacesIamIn.map(w => ({ workspaceid: w.workspaceid })),
+      // })
+
+      // // fetch all the workspace ids of those users that the user is not a member of
+      // const suggestedWorkspaceIds = await this.workspaceMemberRepository.find({
+      //   where: {
+      //     usersInMyWorkspaces
+      //     .filter(u => u.userid !== userId) // exclude the user himself
+      //       .map(u => ({ userid: u.userid })),
+      //     workspacesIamIn
+      //       .filter(w => w.workspaceid !== u.workspaceid) // exclude the workspaces that the user is already a member of
+      //   }
+      // })
+      // Get all users who share at least one workspace with the current user
+      const usersInMyWorkspaces = await this.workspaceMemberRepository.find({
+        where: { workspaceid: In(workspacesIamIn.map((w) => w.workspaceid)) },
+      });
+
+      // Exclude the current user
+      const otherUserIds = usersInMyWorkspaces
+        .map((u) => u.userid)
+        .filter((id) => id !== userId);
+
+      // Find all workspaces those users are in
+      const allWorkspacesOfOtherUsers =
+        await this.workspaceMemberRepository.find({
+          where: { userid: In(otherUserIds) },
+        });
+
+      // Exclude the workspaces the current user is already in
+      const suggestedWorkspaceIds = [
+        ...new Set(
+          allWorkspacesOfOtherUsers
+            .map((w) => w.workspaceid)
+            .filter(
+              (id) => !workspacesIamIn.some((my) => my.workspaceid === id),
+            ),
+        ),
+      ];
+
+      //  Get workspace details
+      const suggestedWorkspaces = await this.workspaceRepository.findByIds(
+        suggestedWorkspaceIds,
+      );
+
+      // My workspace details
+      const myWorkspaces = await this.workspaceRepository.findByIds(
+        workspacesIamIn.map((w) => w.workspaceid),
+      );
+
+      // Call Gemini API to get personalized suggestions
+      const resultFromGemini = await this.eduAssistantClient
+        .send(
+          {
+            cmd: 'get-personalized-workspace-suggestions',
+          },
+          {
+            myWorkspaces,
+            suggestedWorkspaces,
+          },
+        )
+        .toPromise();
+
+      if (!resultFromGemini || !resultFromGemini.success) {
+        return {
+          success: false,
+          statusCode: 500,
+          message: 'Failed to fetch suggestions from Edu Assistant Service',
+          error: resultFromGemini?.message || 'Unknown error',
+        };
+      }
+
+      // get the count of members in each suggested workspace
+      for (const ws of resultFromGemini.data.suggestedWorkspacesForYou) {
+        ws.memberCount = await this.countMembers(ws.workspaceId);
+      }
+
+      return {
+        success: true,
+        statusCode: 200,
+        data: resultFromGemini.data,
+      };
+    } catch (error) { 
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Failed to fetch suggested workspaces',
+        error: error.message,
       };
     }
   }

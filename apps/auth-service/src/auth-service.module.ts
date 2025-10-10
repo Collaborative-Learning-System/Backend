@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { CloudinaryService } from './services/cloudinary.service';
 
 @Module({
   imports: [
@@ -56,13 +57,13 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         name: 'user-service',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'user-service',
           port: 3004,
         },
       },
     ]),
   ],
   controllers: [AuthServiceController],
-  providers: [AuthServiceService],
+  providers: [AuthServiceService, CloudinaryService],
 })
 export class AuthServiceModule {}

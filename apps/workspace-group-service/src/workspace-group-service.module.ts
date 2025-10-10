@@ -8,6 +8,7 @@ import { WorkspaceMember } from './entities/workspace_user.entity';
 import { Group } from './entities/group.entity';
 import { GroupMember } from './entities/group-member.entity';
 import { ChatMessage } from './entities/chat-message.entity';
+import { Resource } from './entities/resource.entity';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { User } from './entities/user.entity';
 
@@ -16,44 +17,67 @@ import { User } from './entities/user.entity';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-     TypeOrmModule.forRootAsync({
-          imports: [ConfigModule],
-          inject: [ConfigService],
-          useFactory: (configService: ConfigService) => {
-            return {
-              type: 'postgres',
-              host: configService.get<string>('DB_HOST'),
-              port: configService.get<number>('DB_PORT'),
-              username: configService.get<string>('DB_USERNAME'),
-              password: configService.get<string>('DB_PASSWORD'),
-              database: configService.get<string>('DB_DATABASE'),
-              entities: [Workspace, WorkspaceMember, Group, GroupMember, ChatMessage, User],
-              synchronize:
-                configService.get<string>('DB_SYNCHRONIZE') === 'true',
-              ssl: {
-                rejectUnauthorized:
-                  configService.get<string>('DB_SSL_REJECT_UNAUTHORIZED') ===
-                  'true',
-              },
-              // Connection pool settings
-              poolSize: 5, // Maximum number of connections in the pool
-              connectionTimeoutMillis: 2000, // Connection timeout in milliseconds
-              idleTimeoutMillis: 30000, // Idle connection timeout
-              maxQueryExecutionTime: 1000, // Query execution timeout
-            };
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return {
+          type: 'postgres',
+          host: configService.get<string>('DB_HOST'),
+          port: configService.get<number>('DB_PORT'),
+          username: configService.get<string>('DB_USERNAME'),
+          password: configService.get<string>('DB_PASSWORD'),
+          database: configService.get<string>('DB_DATABASE'),
+          entities: [
+            Workspace,
+            WorkspaceMember,
+            Group,
+            GroupMember,
+            ChatMessage,
+            Resource,
+            User
+          ],
+          synchronize: configService.get<string>('DB_SYNCHRONIZE') === 'true',
+          ssl: {
+            rejectUnauthorized:
+              configService.get<string>('DB_SSL_REJECT_UNAUTHORIZED') ===
+              'true',
           },
-        }),
-    TypeOrmModule.forFeature([Workspace, WorkspaceMember, Group, GroupMember, ChatMessage, User]),
+          // Connection pool settings
+          poolSize: 5, // Maximum number of connections in the pool
+          connectionTimeoutMillis: 2000, // Connection timeout in milliseconds
+          idleTimeoutMillis: 30000, // Idle connection timeout
+          maxQueryExecutionTime: 1000, // Query execution timeout
+        };
+      },
+    }),
+  TypeOrmModule.forFeature([
+      Workspace,
+      WorkspaceMember,
+      Group,
+      GroupMember,
+      ChatMessage,
+    Resource,
+      User
+    ]),
     ClientsModule.register([
       {
         name: 'auth-service',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'auth-service',
           port: 3001,
         },
       },
-    ])
+      {
+        name: 'notification-service',
+        transport: Transport.TCP,
+        options: {
+          host: 'notification-service',
+          port: 3002,
+        },
+      },
+    ]),
   ],
   controllers: [WorkspaceGroupServiceController],
   providers: [WorkspaceGroupServiceService],
