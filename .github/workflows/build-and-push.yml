@@ -33,7 +33,7 @@ jobs:
         run: |
           for file in docker/*.Dockerfile; do
             SERVICE_NAME=$(basename "$file" .Dockerfile)
-            ECR_REPO="learni/$SERVICE_NAME"
+            ECR_REPO="educollab/$SERVICE_NAME"
             echo "🚀 Building and pushing $SERVICE_NAME"
 
             docker build -t "$ECR_REGISTRY/$ECR_REPO:${{ env.IMAGE_TAG }}" -f "$file" .
