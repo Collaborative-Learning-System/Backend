@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { CloudinaryService } from './services/cloudinary.service';
 
 @Module({
   imports: [
@@ -63,6 +64,6 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     ]),
   ],
   controllers: [AuthServiceController],
-  providers: [AuthServiceService],
+  providers: [AuthServiceService, CloudinaryService],
 })
 export class AuthServiceModule {}

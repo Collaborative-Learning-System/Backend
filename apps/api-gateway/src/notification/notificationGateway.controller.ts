@@ -124,4 +124,16 @@ export class NotificationGatewayController {
     }
     return res.status(HttpStatus.OK).json(result);
   }
+
+
+  @Post('send-quiz-notification')  async sendQuizNotification(@Body() body: any, @Res() res: Response) {
+    const result = await lastValueFrom(
+      this.notificationClient.send({ cmd: 'send-quiz-notification' }, body),
+    );
+    console.log(body);
+    if (!result.success) {
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+    return res.status(HttpStatus.OK).json(result);
+  }
 }

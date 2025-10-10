@@ -10,11 +10,14 @@ import {
   Inject,
   Delete,
   Req,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { type Response } from 'express';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 export interface RequestWithCookies extends Request {
   cookies: { [key: string]: string };
@@ -162,6 +165,65 @@ export class AuthGatewayController {
       return res.status(HttpStatus.OK).json(result);
     } else {
       return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+  }
+
+  @Post('update-profile-picture')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('image'))
+  async updateProfilePicture(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('userId') userId: string,
+    @Res() res: Response
+  ) {
+    if (!file) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        success: false,
+        message: 'No image file provided'
+      });
+    }
+
+    // Convert file buffer to base64
+    const imageBase64 = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    
+    const updateProfilePictureData = {
+      userId,
+      imageBase64
+    };
+
+    const result = await lastValueFrom(
+      this.authClient.send({ cmd: 'update-profile-picture-from-file' }, updateProfilePictureData),
+    );
+    
+    if (result.success) {
+      return res.status(HttpStatus.OK).json(result);
+    } else {
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+  }
+
+  // Debug endpoint to check cookies
+  @Get('debug-cookies')
+  async debugCookies(@Req() req: RequestWithCookies, @Res() res: Response) {
+    return res.status(HttpStatus.OK).json({
+      cookies: req.cookies,
+      hasAccessToken: !!req.cookies?.accessToken,
+      hasRefreshToken: !!req.cookies?.refreshToken,
+      headers: req.headers,
+    });
+  }
+
+  @Get('profile-picture/:userId')
+  @UseGuards(JwtAuthGuard)
+  async getProfilePicture(@Param('userId') userId: string, @Res() res: Response) {
+    const result = await lastValueFrom(
+      this.authClient.send({ cmd: 'get-profile-picture' }, userId),
+    );
+    
+    if (result.success) {
+      return res.status(HttpStatus.OK).json(result);
+    } else {
+      return res.status(HttpStatus.NOT_FOUND).json(result);
     }
   }
 }
