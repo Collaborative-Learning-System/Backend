@@ -28,7 +28,7 @@ jobs:
 
       - name: Build and push all Dockerfiles
         run: |
-          shopt -s nullglob
+
           for file in docker/Dockerfile.*; do
             SERVICE_NAME=$(basename "$file" | cut -d. -f2)
             ECR_REPO="educollab/$SERVICE_NAME"
