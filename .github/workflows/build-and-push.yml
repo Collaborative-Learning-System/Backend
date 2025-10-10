@@ -5,8 +5,9 @@ on:
     branches: [ main ]  
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: eu-north-1
   IMAGE_TAG: ${{ github.sha }}
+  ECR_REGISTRY: 405351595190.dkr.ecr.eu-north-1.amazonaws.com
 
 jobs:
   build-and-push:
@@ -24,12 +25,9 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push all dockerfiles
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           for file in docker/*.Dockerfile; do
             SERVICE_NAME=$(basename "$file" .Dockerfile)
