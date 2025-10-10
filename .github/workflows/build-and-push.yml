@@ -1,4 +1,4 @@
-name: Build and Push all microservices to Amazon ECR
+name: Build and Push all microservices to AWS ECR
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
 env:
   AWS_REGION: eu-north-1
   IMAGE_TAG: ${{ github.sha }}
-  ECR_REGISTRY: 405351595190.dkr.ecr.eu-north-1.amazonaws.com
 
 jobs:
   build-and-push:
