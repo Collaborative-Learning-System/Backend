@@ -33,7 +33,7 @@ jobs:
         run: |
           echo "🪣 Using registry: $ECR_REGISTRY"
 
-          for file in docker/Dockerfile.*; do
+          for file in Docker/Dockerfile.*; do
             SERVICE_NAME=$(basename "$file" | cut -d. -f2)
             ECR_REPO="$SERVICE_NAME"
             
