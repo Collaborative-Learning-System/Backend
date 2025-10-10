@@ -49,4 +49,8 @@ export class UserServiceController {
     return this.userServiceService.toggleActivityTracking(data.userId, data.trackUser);
   }
 
+  @MessagePattern({ cmd: 'get-suggested-workspaces' })
+  async getSuggestedWorkspaces(userId: string) {
+    return this.userServiceService.getSuggestedWorkspaces(userId);
+  }
 }
