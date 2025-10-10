@@ -20,14 +20,18 @@ export class ChatMessage {
   @Column({ type: 'uuid', nullable: false })
   userid: string;
 
-  @Column({ type: 'text', nullable: true })
-  text?: string;
+
+  @Column({ type: 'text', nullable: false })
+  text: string; 
+
+  
 
   @Column({ type: 'uuid', nullable: true })
   resourceid?: string;
 
   @Column({ type: 'varchar', length: 20, default: 'text' })
   messagetype: 'text' | 'resource';
+
 
   @CreateDateColumn()
   sentat: Date;
