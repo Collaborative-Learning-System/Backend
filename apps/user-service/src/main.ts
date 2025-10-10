@@ -5,7 +5,7 @@ import * as path from 'path';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 // for .env loads
-const envPath = path.resolve(process.cwd(), 'apps', 'auth-service', '.env');
+const envPath = path.resolve(process.cwd(), 'apps', 'user-service', '.env');
 console.log('Loading .env from:', envPath);
 dotenv.config({ path: envPath });
 
