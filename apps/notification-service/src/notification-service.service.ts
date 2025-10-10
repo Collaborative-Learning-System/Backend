@@ -85,6 +85,8 @@ export class NotificationServiceService implements OnModuleInit {
       html,
     );
   }
+ 
+  
 
   resetPasswordTemplate = (link: string | undefined) => `
 <!DOCTYPE html>
