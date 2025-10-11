@@ -52,11 +52,13 @@ export class AuthGatewayController {
         httpOnly: true,
         secure: true,
         sameSite: 'none',
+        domain: '.localhost', 
       });
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: true,
         sameSite: 'none',
+        domain: '.localhost',
       });
       return res.status(HttpStatus.OK).json(result);
     } else {
