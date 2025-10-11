@@ -50,12 +50,12 @@ export class AuthGatewayController {
       const refreshToken = result.data.tokens.refreshToken;
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: false,
+        secure: true,
         sameSite: 'none',
       });
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: false,
+        secure: true,
         sameSite: 'none',
       });
       return res.status(HttpStatus.OK).json(result);
