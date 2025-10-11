@@ -51,12 +51,12 @@ export class AuthGatewayController {
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: false,
-        sameSite: 'lax',
+        sameSite: 'none',
       });
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: false,
-        sameSite: 'lax',
+        sameSite: 'none',
       });
       return res.status(HttpStatus.OK).json(result);
     } else {
