@@ -49,17 +49,19 @@ export class AuthGatewayController {
       const accessToken = result.data.tokens.accessToken;
       const refreshToken = result.data.tokens.refreshToken;
       res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-        domain: '.localhost', 
+      httpOnly: true,
+      secure: true, // must be true for HTTPS
+      sameSite: 'none', // because frontend is on a different origin
+    // domain: '.educollab.duckdns.org', // optional
       });
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        domain: '.localhost',
-      });
+
+     res.cookie('refreshToken', refreshToken, {
+     httpOnly: true,
+     secure: true,
+     sameSite: 'none',
+    // domain: '.educollab.duckdns.org', // optional
+     });
+
       return res.status(HttpStatus.OK).json(result);
     } else {
       return res.status(HttpStatus.BAD_REQUEST).json(result);
