@@ -17,7 +17,7 @@ export class GroupMember {
   @JoinColumn({ name: 'groupid' })
   group: Group;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userid' })
   user: User;
 }
