@@ -4,7 +4,10 @@ import { Repository } from 'typeorm';
 import { StudyPlan } from './entities/study_plan.entity';
 import { StudyTask } from './entities/study-task.entity';
 import { GenerateStudyPlanDto } from './dtos/generate-study-plan.dto';
-import { StudyPlanResponseDto, StudyTaskResponseDto } from './dtos/study-plan-response.dto';
+import {
+  StudyPlanResponseDto,
+  StudyTaskResponseDto,
+} from './dtos/study-plan-response.dto';
 import { GeminiService } from './services/gemini.service';
 import { SuggestedWorkspacesDto } from './dtos/suggestWorkspace.dto';
 
@@ -20,9 +23,9 @@ export class EduAssistantServiceService {
     private readonly geminiService: GeminiService,
   ) {}
 
-  
-
-  async generateStudyPlan(request: GenerateStudyPlanDto): Promise<StudyPlanResponseDto> {
+  async generateStudyPlan(
+    request: GenerateStudyPlanDto,
+  ): Promise<StudyPlanResponseDto> {
     try {
       this.logger.log('Generating study plan for subjects:', request.subjects);
 
@@ -63,8 +66,11 @@ export class EduAssistantServiceService {
       const savedTasks = await this.studyTaskRepository.save(tasks);
       this.logger.log(`Saved ${savedTasks.length} study tasks`);
 
-      
-      return this.buildStudyPlanResponse(savedPlan, savedTasks, aiResponse.title);
+      return this.buildStudyPlanResponse(
+        savedPlan,
+        savedTasks,
+        aiResponse.title,
+      );
     } catch (error) {
       this.logger.error('Error generating study plan:', error);
       throw new Error('Failed to generate study plan');
@@ -76,9 +82,12 @@ export class EduAssistantServiceService {
     tasks: StudyTask[],
     aiTitle: string,
   ): StudyPlanResponseDto {
-    const taskResponses: StudyTaskResponseDto[] = tasks.map(task => ({
+    const taskResponses: StudyTaskResponseDto[] = tasks.map((task) => ({
       id: task.id,
-      date: task.date instanceof Date ? task.date.toISOString().split('T')[0] : task.date,
+      date:
+        task.date instanceof Date
+          ? task.date.toISOString().split('T')[0]
+          : task.date,
       title: task.title,
       description: task.description,
       type: task.type,
@@ -95,8 +104,14 @@ export class EduAssistantServiceService {
       studyGoal: studyPlan.studyGoal,
       learningStyle: studyPlan.learningStyle,
       difficultyLevel: studyPlan.difficultyLevel,
-      startDate: studyPlan.startDate instanceof Date ? studyPlan.startDate.toISOString().split('T')[0] : studyPlan.startDate,
-      endDate: studyPlan.endDate instanceof Date ? studyPlan.endDate.toISOString().split('T')[0] : studyPlan.endDate,
+      startDate:
+        studyPlan.startDate instanceof Date
+          ? studyPlan.startDate.toISOString().split('T')[0]
+          : studyPlan.startDate,
+      endDate:
+        studyPlan.endDate instanceof Date
+          ? studyPlan.endDate.toISOString().split('T')[0]
+          : studyPlan.endDate,
       dailyHours: studyPlan.dailyHours,
       preferredTimeSlots: JSON.parse(studyPlan.preferredTimeSlots),
       includeRegularBreaks: studyPlan.includeRegularBreaks,
@@ -115,7 +130,11 @@ export class EduAssistantServiceService {
       throw new Error('Study plan not found');
     }
 
-    return this.buildStudyPlanResponse(studyPlan, studyPlan.tasks, `Study Plan ${id}`);
+    return this.buildStudyPlanResponse(
+      studyPlan,
+      studyPlan.tasks,
+      `Study Plan ${id}`,
+    );
   }
 
   async getStudyPlansByUserId(userId: string): Promise<StudyPlanResponseDto[]> {
@@ -125,14 +144,14 @@ export class EduAssistantServiceService {
       order: { createdAt: 'DESC' },
     });
 
-    return studyPlans.map(plan => 
-      this.buildStudyPlanResponse(plan, plan.tasks, `Study Plan ${plan.id}`)
+    return studyPlans.map((plan) =>
+      this.buildStudyPlanResponse(plan, plan.tasks, `Study Plan ${plan.id}`),
     );
   }
 
   async deleteStudyPlan(id: number): Promise<void> {
     const studyPlan = await this.studyPlanRepository.findOne({ where: { id } });
-    
+
     if (!studyPlan) {
       throw new Error('Study plan not found');
     }
@@ -140,24 +159,41 @@ export class EduAssistantServiceService {
     await this.studyPlanRepository.remove(studyPlan);
   }
 
-  async getPersonalizedWorkspaceSuggestions(suggestedWorkspaceDto: SuggestedWorkspacesDto) {
+  async getPersonalizedWorkspaceSuggestions(
+    suggestedWorkspaceDto: SuggestedWorkspacesDto,
+  ) {
     const { myWorkspaces, suggestedWorkspaces } = suggestedWorkspaceDto;
 
     try {
+      if (!suggestedWorkspaces || suggestedWorkspaces.length === 0) {
+        return {
+          success: true,
+          data: {
+            suggestedWorkspacesForYou: [],
+            source: 'no_suggestions_available',
+          },
+        };
+      }
       // Get AI-powered workspace suggestions from Gemini
-      const geminiResponse = await this.geminiService.getPersonalizedWorkspaceSuggestions(suggestedWorkspaceDto);
-      
-      this.logger.log('Gemini workspace suggestions response:', JSON.stringify(geminiResponse, null, 2));
+      const geminiResponse =
+        await this.geminiService.getPersonalizedWorkspaceSuggestions(
+          suggestedWorkspaceDto,
+        );
+
+      this.logger.log(
+        'Gemini workspace suggestions response:',
+        JSON.stringify(geminiResponse, null, 2),
+      );
 
       // If Gemini returns suggestions, use them; otherwise, provide a fallback
       let finalSuggestions = geminiResponse.suggestedWorkspaces || [];
-      
+
       // Fallback: if no AI suggestions or empty, use original suggestions with smart filtering
       if (!finalSuggestions || finalSuggestions.length === 0) {
-        finalSuggestions = suggestedWorkspaces.slice(0, 3).map(ws => ({
+        finalSuggestions = suggestedWorkspaces.slice(0, 3).map((ws) => ({
           workspaceId: ws.workspaceid,
           workspaceName: ws.workspacename,
-          description: `Recommended based on similar users' interests: ${ws.description}`
+          description: `Recommended based on similar users' interests: ${ws.description}`,
         }));
       }
 
@@ -165,18 +201,21 @@ export class EduAssistantServiceService {
         success: true,
         data: {
           suggestedWorkspacesForYou: finalSuggestions,
-          source: geminiResponse.suggestedWorkspaces?.length > 0 ? 'AI' : 'fallback'
+          source:
+            geminiResponse.suggestedWorkspaces?.length > 0 ? 'AI' : 'fallback',
         },
       };
+    } catch (error) {
+      this.logger.error(
+        'Error getting personalized workspace suggestions:',
+        error,
+      );
 
-    } catch (error) { 
-      this.logger.error('Error getting personalized workspace suggestions:', error);
-      
       // Fallback on error: return original suggestions
-      const fallbackSuggestions = suggestedWorkspaces.slice(0, 3).map(ws => ({
+      const fallbackSuggestions = suggestedWorkspaces.slice(0, 3).map((ws) => ({
         workspaceId: ws.workspaceid,
         workspaceName: ws.workspacename,
-        description: `Recommended workspace: ${ws.description}`
+        description: `Recommended workspace: ${ws.description}`,
       }));
 
       return {

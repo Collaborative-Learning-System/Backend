@@ -9,34 +9,39 @@ import { SuggestedWorkspacesDto } from '../dtos/suggestWorkspace.dto';
 @Injectable()
 export class GeminiService {
   private readonly logger = new Logger(GeminiService.name);
-  private readonly geminiApiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  private readonly geminiApiBaseUrl =
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {}
 
-  async generateStudyPlan(request: GenerateStudyPlanDto): Promise<GeminiStudyPlanResponse> {
+  async generateStudyPlan(
+    request: GenerateStudyPlanDto,
+  ): Promise<GeminiStudyPlanResponse> {
     const prompt = this.buildPrompt(request);
     const apiKey = this.configService.get('GEMINI_API_KEY');
     const apiUrl = `${this.geminiApiBaseUrl}?key=${apiKey}`;
-    
+
     try {
       const response = await firstValueFrom(
         this.httpService.post<GeminiApiResponse>(
           apiUrl,
           {
-            contents: [{
-              role: 'user',
-              parts: [{ text: prompt }]
-            }]
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: prompt }],
+              },
+            ],
           },
           {
             headers: {
               'Content-Type': 'application/json',
-            }
-          }
-        )
+            },
+          },
+        ),
       );
 
       return this.parseGeminiResponse(response.data);
@@ -46,120 +51,151 @@ export class GeminiService {
     }
   }
 
-  async getPersonalizedWorkspaceSuggestions(suggestedWorkspaceDto: SuggestedWorkspacesDto): Promise<any> { 
+  async getPersonalizedWorkspaceSuggestions(
+    suggestedWorkspaceDto: SuggestedWorkspacesDto,
+  ): Promise<any> {
     const apiKey = this.configService.get('GEMINI_API_KEY');
     const apiUrl = `${this.geminiApiBaseUrl}?key=${apiKey}`;
     const prompt = this.buildPromptForWorkspaces(suggestedWorkspaceDto);
 
-    try { 
+    try {
       const response = await firstValueFrom(
         this.httpService.post<GeminiApiResponse>(
           apiUrl,
           {
-            contents: [{
-              role: 'user',
-              parts: [{ text: prompt }]
-            }]
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: prompt }],
+              },
+            ],
           },
           {
             headers: {
               'Content-Type': 'application/json',
-            }
-          }
-        )
+            },
+          },
+        ),
       );
 
       this.logger.log('Gemini API response status:', response.status);
-      this.logger.log('Full Gemini response:', JSON.stringify(response.data, null, 2));
+      this.logger.log(
+        'Full Gemini response:',
+        JSON.stringify(response.data, null, 2),
+      );
 
       // Parse the Gemini response to extract the actual content
       if (response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        const aiResponseText = response.data.candidates[0].content.parts[0].text;
+        const aiResponseText =
+          response.data.candidates[0].content.parts[0].text;
         this.logger.log('Raw AI response text:', aiResponseText);
-        
+
         try {
           // Clean the response text (remove markdown code blocks if present)
           let cleanedText = aiResponseText.trim();
           if (cleanedText.startsWith('```json')) {
-            cleanedText = cleanedText.replace(/```json\s*/, '').replace(/```\s*$/, '');
+            cleanedText = cleanedText
+              .replace(/```json\s*/, '')
+              .replace(/```\s*$/, '');
           } else if (cleanedText.startsWith('```')) {
-            cleanedText = cleanedText.replace(/```\s*/, '').replace(/```\s*$/, '');
+            cleanedText = cleanedText
+              .replace(/```\s*/, '')
+              .replace(/```\s*$/, '');
           }
-          
+
           this.logger.log('Cleaned text for parsing:', cleanedText);
-          
+
           // Try to parse the JSON response from Gemini
           const parsedResponse = JSON.parse(cleanedText);
-          this.logger.log('Successfully parsed Gemini response:', JSON.stringify(parsedResponse, null, 2));
+          this.logger.log(
+            'Successfully parsed Gemini response:',
+            JSON.stringify(parsedResponse, null, 2),
+          );
           return parsedResponse;
         } catch (parseError) {
           this.logger.error('Failed to parse Gemini JSON response', parseError);
           this.logger.error('Raw Gemini response text:', aiResponseText);
           // Return a fallback structure if parsing fails
           return {
-            suggestedWorkspaces: []
+            suggestedWorkspaces: [],
           };
         }
       } else {
         this.logger.error('Unexpected Gemini API response structure');
-        this.logger.error('Response data:', JSON.stringify(response.data, null, 2));
+        this.logger.error(
+          'Response data:',
+          JSON.stringify(response.data, null, 2),
+        );
         return {
-          suggestedWorkspaces: []
+          suggestedWorkspaces: [],
         };
       }
-
     } catch (error) {
-      this.logger.error('Failed to get workspace suggestions from Gemini API', error);
+      this.logger.error(
+        'Failed to get workspace suggestions from Gemini API',
+        error,
+      );
       throw new Error('Failed to get workspace suggestions from AI service');
     }
   }
 
-  private buildPromptForWorkspaces(request: SuggestedWorkspacesDto): string { 
+  private buildPromptForWorkspaces(request: SuggestedWorkspacesDto): string {
     return `
-You are an intelligent workspace recommendation engine designed to help users discover new, relevant workspaces based on their current interests and participation patterns.
+You are an intelligent workspace recommendation engine that helps users discover relevant workspaces **only from a given list** of available workspaces.
 
-Your goal is to analyze the user's **current workspaces** and **available workspaces from similar users** to generate the top 5 personalized workspace recommendations.
+Your task:
+Recommend up to 5 workspaces that the user is not already part of, based on similarity between:
+- The user's current workspaces.
+- The available workspaces from similar users.
 
-Instructions:
-1. Carefully study the topics, descriptions, tags, or names of the user's current workspaces to understand their learning and professional interests.
-2. Compare these with the available workspaces from similar users.
-3. Select 5 workspaces that most closely align with or complement the user’s current interests.
-4. Provide short, meaningful descriptions explaining **why** each workspace is relevant for the user.
-5. Be diverse but relevant — suggest both closely related and a few new but complementary areas.
+Strict Rules (you must follow all of them):
+1. **You can ONLY choose from the provided list of "Available Workspaces from Similar Users".**
+   - Do NOT invent, rename, modify, or create any workspace names or IDs.
+   - Use the "workspaceId" and "workspaceName" exactly as they appear.
+2. If **no relevant workspaces** are found, return an empty array: 
+   \`{ "suggestedWorkspaces": [] }\`
+3. Return **exactly 5 workspaces** only if at least 5 are clearly relevant.
+4. Output must be **strictly valid JSON** — no markdown, no extra text.
+5. Descriptions must be concise (under 25 words) and must explain *why* that workspace matches or complements the user's interests.
+6. Do not provide duplicate workspaces. Give each recommended workspace only once.
+
+---
 
 Input Data:
-- Current User Workspaces: 
+
+- Current User Workspaces:
 ${JSON.stringify(request.myWorkspaces, null, 2)}
 
-- Available Workspaces from Similar Users: 
+- Available Workspaces from Similar Users:
 ${JSON.stringify(request.suggestedWorkspaces, null, 2)}
 
+---
+
 Output Format:
-Respond with ONLY a valid JSON object in this exact format:
 {
   "suggestedWorkspaces": [
     {
-      "workspaceId": "actual_workspace_id",
-      "workspaceName": "Actual Workspace Name",
-      "description": "Brief description of why this workspace is recommended for the user"
+      "workspaceId": "exact_workspace_id_from_input",
+      "workspaceName": "exact_workspace_name_from_input",
+      "description": "Brief reason for recommendation"
     }
   ]
 }
 
-Rules:
-- The output must be **strictly valid JSON** (no markdown, no extra text).
-- Include **exactly 5** recommended workspaces.
-- Descriptions must be concise (under 25 words) and show clear relevance to the user's interests.
-- If there are fewer than 5 suitable workspaces, include only those that are genuinely relevant.
-
-    `;
+Remember:
+- Do NOT output anything besides valid JSON.
+- Only pick from the provided "Available Workspaces from Similar Users".
+- Return an empty list if no matches exist.
+  `;
   }
-
 
   private buildPrompt(request: GenerateStudyPlanDto): string {
     const startDate = new Date(request.startDate);
     const endDate = new Date(request.endDate);
-    const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const totalDays =
+      Math.ceil(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+      ) + 1;
 
     return `
 Generate a comprehensive study plan in JSON format with the following requirements:
@@ -208,7 +244,9 @@ INSTRUCTIONS:
 Generate the study plan now:`;
   }
 
-  private parseGeminiResponse(response: GeminiApiResponse): GeminiStudyPlanResponse {
+  private parseGeminiResponse(
+    response: GeminiApiResponse,
+  ): GeminiStudyPlanResponse {
     try {
       const content = response.candidates[0]?.content?.parts[0]?.text;
       if (!content) {
@@ -222,7 +260,7 @@ Generate the study plan now:`;
       }
 
       const studyPlan = JSON.parse(jsonMatch[0]) as GeminiStudyPlanResponse;
-      
+
       // Validate the structure
       if (!studyPlan.tasks || !Array.isArray(studyPlan.tasks)) {
         throw new Error('Invalid study plan structure: missing tasks array');
