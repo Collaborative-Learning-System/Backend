@@ -4,7 +4,7 @@ export class SignupDto {
   @IsNotEmpty()
   fullName: string;
 
-  @IsEmail()
+  @IsEmail({}, { message: 'Please provide a valid email address.' })
   email: string;
 
   @IsNotEmpty()
