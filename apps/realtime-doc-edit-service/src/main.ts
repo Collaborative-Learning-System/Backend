@@ -27,6 +27,7 @@ async function bootstrap() {
        'http://localhost:3000',
        'http://127.0.0.1:5500',
        'http://localhost:8080',
+       'https://educollab-snowy.vercel.app',
      ],
      credentials: true,
      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
