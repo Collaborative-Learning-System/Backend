@@ -66,7 +66,7 @@ export class AuthServiceService {
       return {
         success: false,
         statusCode: 401,
-        message: 'Wrong Credentials',
+        message: 'User not found',
       };
     }
     // compare by password
@@ -75,7 +75,7 @@ export class AuthServiceService {
       return {
         success: false,
         statusCode: 401,
-        message: 'Wrong Credentials',
+        message: 'Wrong Password',
       };
     }
     // Generate tokens
