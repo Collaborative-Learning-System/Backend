@@ -64,7 +64,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         name: 'edu-assistant-service',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'edu-assistant-service',
           port: 3007,
         },
       },
