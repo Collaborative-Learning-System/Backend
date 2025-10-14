@@ -1,14 +1,11 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { WorkspaceMember } from './workspace_user.entity';
-import { on } from 'events';
-import { GroupMember } from './group-member.entity';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum UserRole {
   USER = 'user',
   ADMIN = 'admin',
 }
 
-@Entity('user')
+@Entity('user', { synchronize: false })
 export class User {
   @PrimaryGeneratedColumn('uuid', { name: 'userid' })
   userId: string;
@@ -36,13 +33,17 @@ export class User {
   @Column({ name: 'profilepicurl', nullable: true })
   profilePicUrl: string;
 
-  @OneToMany(() => WorkspaceMember, (workspaceMember) => workspaceMember.user, {
-    onDelete: 'CASCADE',
-  })
-  workspaces: WorkspaceMember[];
 
-  @OneToMany(() => GroupMember, (groupMember) => groupMember.user, {
-    onDelete: 'CASCADE',
-  })
-  groups: GroupMember[];
+  
+  
+  // @OneToMany(() => WorkspaceMember, (workspaceMember) => workspaceMember.user, {
+  //   onDelete: 'CASCADE',
+  // })
+  // workspaces: WorkspaceMember[];
+
+  // @OneToMany(() => GroupMember, (groupMember) => groupMember.user, {
+  //   onDelete: 'CASCADE',
+  // })
+  // groups: GroupMember[];
+
 }

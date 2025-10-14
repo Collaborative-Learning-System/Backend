@@ -25,7 +25,7 @@ export class WorkspaceMember {
   @JoinColumn({ name: 'workspaceid' })
   workspace: Workspace;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userid' })
   user: User;
 }

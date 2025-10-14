@@ -164,22 +164,6 @@ export class UserServiceService {
         where: { userid: userId },
       });
 
-      // // fetch all the users in all those workspaces where user is a member
-      // const usersInMyWorkspaces = await this.workspaceMemberRepository.find({
-      //   where: workspacesIamIn.map(w => ({ workspaceid: w.workspaceid })),
-      // })
-
-      // // fetch all the workspace ids of those users that the user is not a member of
-      // const suggestedWorkspaceIds = await this.workspaceMemberRepository.find({
-      //   where: {
-      //     usersInMyWorkspaces
-      //     .filter(u => u.userid !== userId) // exclude the user himself
-      //       .map(u => ({ userid: u.userid })),
-      //     workspacesIamIn
-      //       .filter(w => w.workspaceid !== u.workspaceid) // exclude the workspaces that the user is already a member of
-      //   }
-      // })
-      // Get all users who share at least one workspace with the current user
       const usersInMyWorkspaces = await this.workspaceMemberRepository.find({
         where: { workspaceid: In(workspacesIamIn.map((w) => w.workspaceid)) },
       });
@@ -248,7 +232,8 @@ export class UserServiceService {
         statusCode: 200,
         data: resultFromGemini.data,
       };
-    } catch (error) { 
+    } catch (error) {
+      console.log(error);
       return {
         success: false,
         statusCode: 500,

@@ -19,9 +19,6 @@ export class Quiz {
     @Column({ type: 'int', nullable: true, name: 'timelimit' })
     timeLimit?: number; 
 
-    // @Column({ type: 'int', default: 0, name: 'fullmarks' })
-    // fullMarks: number;
-
     @Column({
       type: 'varchar',
       length: 20,
