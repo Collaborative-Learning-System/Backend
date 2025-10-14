@@ -1,0 +1,51 @@
+name: Build and Push all microservices to AWS ECR
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  AWS_REGION: eu-north-1
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push all Dockerfiles
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          echo "🪣 Using registry: $ECR_REGISTRY"
+
+          for file in Docker/Dockerfile.*; do
+            SERVICE_NAME=$(basename "$file" | cut -d. -f2)
+            ECR_REPO="educollab/$SERVICE_NAME"
+            
+            echo "🚀 Building and pushing $SERVICE_NAME"
+
+            # Build image
+            docker build -t "$ECR_REGISTRY/$ECR_REPO:${IMAGE_TAG}" -f "$file" .
+
+            # Push versioned tag
+            docker push "$ECR_REGISTRY/$ECR_REPO:${IMAGE_TAG}"
+
+            # Tag and push latest
+            docker tag "$ECR_REGISTRY/$ECR_REPO:${IMAGE_TAG}" "$ECR_REGISTRY/$ECR_REPO:latest"
+            docker push "$ECR_REGISTRY/$ECR_REPO:latest"
+          done
