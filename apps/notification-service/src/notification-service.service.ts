@@ -315,7 +315,7 @@ export class NotificationServiceService implements OnModuleInit {
       });
       if (notifications.length === 0) {
         return {
-          success: false,
+          success: true,
           message: 'No notifications found',
         };
       }
