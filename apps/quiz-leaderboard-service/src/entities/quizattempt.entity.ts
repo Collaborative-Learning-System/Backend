@@ -25,10 +25,10 @@ export class QuizAttempt {
     isCompleted: boolean;
 
     
-    @OneToMany(() => AttemptAnswer, attemptAnswer => attemptAnswer.attempt)
+    @OneToMany(() => AttemptAnswer, attemptAnswer => attemptAnswer.attempt, { cascade: true, onDelete: 'CASCADE' })
     answers: AttemptAnswer[];
 
-    @ManyToOne(() => Quiz)
+    @ManyToOne(() => Quiz, quiz => quiz.attempts, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'quizid' })
     quiz: Quiz;
 

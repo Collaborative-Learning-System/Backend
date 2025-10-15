@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn , Column, OneToMany } from "typeorm";
 import { Question } from './question.entity';
+import { QuizAttempt } from './quizattempt.entity';
 
 @Entity('quiz')
 
@@ -31,7 +32,11 @@ export class Quiz {
     instructions?: string;
 
     // Relationship to Questions
-    @OneToMany(() => Question, question => question.quiz)
+    @OneToMany(() => Question, question => question.quiz, { cascade: true, onDelete: 'CASCADE' })
     questions: Question[];
+
+    // Relationship to Quiz Attempts
+    @OneToMany(() => QuizAttempt, quizAttempt => quizAttempt.quiz, { cascade: true, onDelete: 'CASCADE' })
+    attempts: QuizAttempt[];
 
 }
