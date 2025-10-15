@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { DocumentModule } from './modules/documents/document.module';
+import { RedisModule } from './modules/redis/redis.module';
 import { Documents } from './modules/documents/entities/documents.entity';
 import { DocumentSnapshots } from './modules/documents/entities/document-snapshots.entity';
 import { Collaborators } from './modules/documents/entities/collaborators.entity';
@@ -57,6 +58,7 @@ import { User } from './modules/documents/entities/user.entity';
        
       }),
     }),
+    RedisModule,
     DocumentModule,
   ],
   controllers: [RealtimeDocEditServiceController],

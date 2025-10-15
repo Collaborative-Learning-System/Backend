@@ -30,4 +30,22 @@ export class CollaboratorsController {
       return res.status(200).json(result)
   }
 
+  @Get('get-online-users/:docId')
+  async getOnlineUsers(@Param('docId') docId: string, @Res() res) {
+      try {
+          const users = await this.collaboratorService.getOnlineUsers(docId);
+          return res.status(200).json({
+              success: true,
+              data: { users },
+              message: 'Online users fetched successfully'
+          });
+      } catch (error) {
+          return res.status(400).json({
+              success: false,
+              message: 'Failed to fetch online users',
+              error: error.message
+          });
+      }
+  }
+
 }
