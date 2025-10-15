@@ -21,17 +21,18 @@ async function bootstrap() {
   // Enable cookie parsing
   app.use(cookieParser());
 
-   app.enableCors({
-     origin: [
-       'http://localhost:5173',
-       'http://localhost:3000',
-       'http://127.0.0.1:5500',
-       'http://localhost:8080',
-     ],
-     credentials: true,
-     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-     allowedHeaders: ['Content-Type', 'Authorization'],
-   });
+  app.enableCors({
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:5500',
+      'http://localhost:8080',
+      'https://educollab-snowy.vercel.app',
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
   await app.startAllMicroservices();
 
