@@ -11,15 +11,16 @@ import { ChatMessage } from './entities/chat-message.entity';
 import { Resource } from './entities/resource.entity';
 
 describe('WorkspaceGroupServiceService - sendChatMessage', () => {
-  const createMockRepository = <T extends object>() => ({
-    findOne: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-    findAndCount: jest.fn(),
-    count: jest.fn(),
-    remove: jest.fn(),
-    delete: jest.fn(),
-  }) as unknown as jest.Mocked<Repository<T>>;
+  const createMockRepository = <T extends object>() =>
+    ({
+      findOne: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+      findAndCount: jest.fn(),
+      count: jest.fn(),
+      remove: jest.fn(),
+      delete: jest.fn(),
+    }) as unknown as jest.Mocked<Repository<T>>;
 
   let workspaceRepository: jest.Mocked<Repository<Workspace>>;
   let workspaceMemberRepository: jest.Mocked<Repository<WorkspaceMember>>;
@@ -28,6 +29,7 @@ describe('WorkspaceGroupServiceService - sendChatMessage', () => {
   let chatMessageRepository: jest.Mocked<Repository<ChatMessage>>;
   let resourceRepository: jest.Mocked<Repository<Resource>>;
   let authClient: jest.Mocked<ClientProxy>;
+  let notificationClient: jest.Mocked<ClientProxy>;
   let configService: jest.Mocked<ConfigService>;
   let service: WorkspaceGroupServiceService;
 
@@ -43,6 +45,10 @@ describe('WorkspaceGroupServiceService - sendChatMessage', () => {
       send: jest.fn(),
     } as unknown as jest.Mocked<ClientProxy>;
 
+    notificationClient = {
+      send: jest.fn(),
+    } as unknown as jest.Mocked<ClientProxy>;
+
     configService = {
       get: jest.fn().mockReturnValue(undefined),
     } as unknown as jest.Mocked<ConfigService>;
@@ -55,6 +61,7 @@ describe('WorkspaceGroupServiceService - sendChatMessage', () => {
       chatMessageRepository,
       resourceRepository,
       authClient,
+      notificationClient,
       configService,
     );
   });
@@ -83,12 +90,13 @@ describe('WorkspaceGroupServiceService - sendChatMessage', () => {
       (entity: Partial<ChatMessage>) => ({ ...entity }) as ChatMessage,
     );
     chatMessageRepository.save.mockImplementation(
-      async (entity: ChatMessage) => ({
-        ...entity,
-        chatid: 'chat-1',
-        messagetype: 'text',
-        sentat: now,
-      }) as ChatMessage,
+      async (entity: ChatMessage) =>
+        ({
+          ...entity,
+          chatid: 'chat-1',
+          messagetype: 'text',
+          sentat: now,
+        }) as ChatMessage,
     );
 
     jest
