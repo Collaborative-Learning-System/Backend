@@ -90,7 +90,7 @@ export class ChatController {
       if (!body.text?.trim() && !body.attachment) {
         return {
           success: false,
-          message: 'Message must include text or an attachmenyyyyyyt',
+          message: 'Message must include text or an attachment',
         };
       }
 
