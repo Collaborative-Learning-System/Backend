@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Post, Res, UseGuards } from '@nestjs/comm
 import { DocumentsService } from '../services/documents.service';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
 
-@Controller('documents')
+@Controller('doc/documents')
 @UseGuards(JwtAuthGuard)
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
