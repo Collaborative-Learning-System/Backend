@@ -33,8 +33,9 @@ import {
       'http://localhost:8080',
       'https://educollab-snowy.vercel.app',
     ],
-    credentials: true 
-  } 
+    credentials: true,
+  },
+  namespace: '/doc',
 })
 @UseGuards(WsJwtAuthGuard)
 export class DocGateway implements OnGatewayConnection, OnGatewayDisconnect {
