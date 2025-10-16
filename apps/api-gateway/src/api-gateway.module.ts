@@ -13,7 +13,6 @@ import { EduAssistantGatewayController } from './edu-assistant/eduAssistantGatew
 import { ChatGateway } from './chat/chat.gateway';
 import { ChatController } from './chat/chat.controller';
 import { UserGatewayController } from './user/userGateway.controller';
-import { DocEditGatewayController } from './doc-editing/doc-editGateway.controller';
 
 @Module({
   imports: [
@@ -55,14 +54,6 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
         },
       },
       {
-        name: 'doc-editing-service',
-        transport: Transport.TCP,
-        options: {
-          host: 'realtime-doc-edit-service',
-          port: 4000,
-        },
-      },
-      {
         name: 'quiz-leaderboard-service',
         transport: Transport.TCP,
         options: {
@@ -89,7 +80,6 @@ import { DocEditGatewayController } from './doc-editing/doc-editGateway.controll
     EduAssistantGatewayController,
     ChatController,
     UserGatewayController,
-    DocEditGatewayController,
   ],
   providers: [ApiGatewayService, JwtAuthGuard, WsJwtAuthGuard, ChatGateway],
   exports: [JwtAuthGuard],
