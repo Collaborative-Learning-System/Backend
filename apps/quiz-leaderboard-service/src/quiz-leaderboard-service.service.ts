@@ -546,4 +546,14 @@ export class QuizLeaderboardServiceService {
      })),
    };
   }
+
+
+  async deleteQuiz(quizId: string): Promise<void> {
+    try {
+      await this.quizRepository.delete({ quizId });
+    } catch (error) {
+      console.error('Error deleting quiz:', error);
+      throw error;
+    }
+  }
 }

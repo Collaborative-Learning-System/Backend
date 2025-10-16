@@ -304,4 +304,28 @@ export class QuizGatewayController {
       });
     }
   }
+
+
+  @Delete('delete/:quizId')
+  async deleteQuiz(
+    @Param('quizId') quizId: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await lastValueFrom(
+        this.quizClient.send('delete_quiz', { quizId }),
+      );
+      if (!result?.success) {
+        return res.status(HttpStatus.BAD_REQUEST).json(result);
+      }
+      return res.status(HttpStatus.OK).json(result);
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'Error deleting quiz: ' + (error?.message || error),
+        data: null,
+        errorDetails: error,
+      });
+    }
+  }
 }

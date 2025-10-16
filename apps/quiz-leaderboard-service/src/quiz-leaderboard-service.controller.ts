@@ -240,4 +240,25 @@ export class QuizLeaderboardServiceController {
     console.log(results)
     return results;
   }
+
+  @MessagePattern('delete_quiz')
+  async deleteQuiz(data: { quizId: string }) {
+    try {
+      console.log('Deleting quiz with ID:', data.quizId);
+      await this.quizLeaderboardServiceService.deleteQuiz(data.quizId);
+      console.log('Quiz deleted successfully');
+      return {
+        success: true,
+        data: null,
+        message: 'Quiz deleted successfully',
+      };
+    } catch (error) {
+      console.error('Delete quiz error:', error);
+      return {
+        success: false,
+        data: null,
+        message: 'Error deleting quiz: ' + (error?.message || error),
+      };
+    } 
+  }
 }
