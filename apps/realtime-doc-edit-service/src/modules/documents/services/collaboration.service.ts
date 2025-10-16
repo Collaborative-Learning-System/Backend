@@ -62,7 +62,7 @@ export class CollaborationService {
       if (existingCollaborator) {
         if (existingCollaborator.isActive) {
           return {
-            success: false,
+            success: true,
             message: 'User is already a collaborator on this document',
           };
         } else {

@@ -34,7 +34,7 @@ export class Question {
   quiz: Quiz;
 
   // Relationship to Question Options
-  @OneToMany(() => QuestionOption, questionOption => questionOption.question)
+  @OneToMany(() => QuestionOption, questionOption => questionOption.question, { cascade: true, onDelete: 'CASCADE' })
   questionOptions: QuestionOption[];
 
   
