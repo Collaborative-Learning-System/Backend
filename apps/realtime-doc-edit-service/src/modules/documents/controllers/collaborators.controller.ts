@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Post, Res, UseGuards } from "@nestjs/comm
 import { CollaborationService } from "../services/collaboration.service";
 import { JwtAuthGuard } from "../../../guards/jwt-auth.guard";
 
-@Controller('collaborators')
+@Controller('doc/collaborators')
 @UseGuards(JwtAuthGuard)
 export class CollaboratorsController {
   constructor(private readonly collaboratorService: CollaborationService) {}
